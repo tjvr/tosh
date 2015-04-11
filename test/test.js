@@ -243,7 +243,7 @@ var Test = (function(Earley) {
       throw "No rule named " + ruleName;
     }
 
-    if (ruleName == "n4") {
+    if (ruleName == "n6") {
       if (Math.random() < 0.6) {
         return "3.14";
       }
@@ -289,11 +289,28 @@ var Test = (function(Earley) {
     g.addRule(Rule("SpriteList", [["list"]], literal));
     g.addRule(Rule("BlockParam", [["height"]], literal));
 
-    var lines = []
+    var lines = [
+      "score = 0",
+      "foo = 0",
+      "list = ()",
+      "define block (height)",
+    ];
     for (var i=0; i<n; i++) {
+      try {
         var text = expand(g);
-        lines.push(text);
+      } catch (e) {
+        continue;
+      }
+      if (!text) continue;
+      try {
         new Earley.Parser(g).parse(Language.tokenize(text));
+      } catch (e) {
+        lines.push("");
+        lines.push(text);
+        lines.push(e.stack);
+        break;
+      }
+      lines.push(text);
     }
     return lines.join("\n");
   }

@@ -3,7 +3,9 @@ var Language = (function(Earley) {
   function assert(x, message) {
     if (!x) {
       var err = new Error("Assertion failed: " + (message || ''));
-      console.log(err.stack);
+      var lines = err.stack.split("\n");
+      lines.splice(1, 1);
+      console.log(lines.join("\n"));
       throw err;
     }
   }
@@ -35,11 +37,11 @@ var Language = (function(Earley) {
 //    ['string',  /\[((?:\\[\]\\]|[^\]])*)\]/],
     ['string',  /"((?:\\['"\\]|[^"])*)"/],
     ['string',  /'((?:\\['"\\]|[^'])*)'/],
-    ['lparen',  /\(/],
-    ['rparen',  /\)/],
-    ['langle',  /\</],
-    ['rangle',  /\>/],
-    ['symbol',  /[-%#+*/=^,↻↺?]/],               // single character
+    ['lparen',  /\(/],   ['rparen',  /\)/],
+    ['langle',  /\</],   ['rangle',  /\>/],
+    ['lsquare', /\[/],   ['rsquare', /\]/],
+    ['symbol',  /\.{3}/],                        // ellipsis
+    ['symbol',  /[-%#+*/=^,↻↺⚑?]/],              // single character
 //  ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',]*/],   // words
     ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',.]*/],  // TODO ew
   ];
@@ -173,6 +175,7 @@ var Language = (function(Earley) {
     11: "parameter",
     12: "list",
     20: "extension",
+    42: "grey",
   };
 
   var blocks = [];
@@ -185,6 +188,7 @@ var Language = (function(Earley) {
   scratchCommands.push(["%m.param", "r", 11, "getParam"]); // TODO
   scratchCommands.push(["else", " ", 6, "<else>"]);
   scratchCommands.push(["end", " ", 6, "<end>"]);
+  scratchCommands.push(["...", " ", 42, "<ellipsis>"]);
 
   var typeShapes = {
     " ": "stack",
@@ -309,14 +313,15 @@ var Language = (function(Earley) {
     // warning: mutates arguments
     a.category = c.category = "parameter";
     switch (a.kind) {
-      case "lparen": return {arg: "r", name: b};
+      case "lparen": return {arg: "n", name: b};
       case "langle": return {arg: "b", name: b};
+      case "lsquare": return {arg: "s", name: b};
     }
   };
 
   function stringParam(a) {
     a.category = "parameter";
-    return {arg: "r", name: a.value};
+    return {arg: "s", name: a.value};
   }
 
   function variableDefinition(a, b, c) {
@@ -342,7 +347,7 @@ var Language = (function(Earley) {
       Rule("spec", [{kind: 'symbol'}], paintLiteral("custom")),
       Rule("spec", [{kind: 'lparen'}, "arg-words", {kind: 'rparen'}], param),
       Rule("spec", [{kind: 'langle'}, "arg-words", {kind: 'rangle'}], param),
-      Rule("spec", [{kind: 'string'}], stringParam), // cheat: string tokens
+      Rule("spec", [{kind: 'lsquare'}, "arg-words", {kind: 'rsquare'}], param),
 
       Rule("arg-words", ["word-seq"], paintList("parameter")),
       Rule("word-seq", ["word-seq", "word"], push),
@@ -449,7 +454,8 @@ var Language = (function(Earley) {
    *  [loosest]
    *              stack blocks              eg. move … steps
    *              numeric reporter blocks   eg. sin of …
-   *              arithmetic                eg. + - * /
+   *              arithmetic                eg. + -
+   *                                        eg. * /
    *              simple reporters          eg. x position
    *  [tightest]
    *
@@ -489,30 +495,32 @@ var Language = (function(Earley) {
     /* --------------------------------------------------------------------- */
 
     Rule("n", ["n5"], identity),
+    Rule("n", ["b2"], identity),
 
     Rule("sb", ["s"], identity),
+    Rule("sb", ["b0"], identity),
 
     Rule("b", ["b8"], identity),
 
-    Rule("c", ["parens"], identity),
+    Rule("c", ["r-parens"], identity),
     Rule("c", ["c0"], identity),
-
-    // custom blocks use "r"
-
-    Rule("r", ["value"], identity),
-    Rule("r", ["s0"], identity),
 
     /* --------------------------------------------------------------------- */
 
     Rule("s", ["value"], identity),
     Rule("s", ["s0"], identity),
 
-    Rule("parens", [{kind: 'lparen'}, "value", {kind: 'rparen'}], brackets),
-    // TODO: disallow literals from inside parens?
-
     Rule("value", ["reporter"], identity),
     Rule("value", ["n5"], identity),
-    Rule("value", ["b8"], identity),
+
+    Rule("r-parens", [{kind: 'lparen'}, "r-value", {kind: 'rparen'}], brackets),
+
+    Rule("r-value", ["reporter"], identity),
+    Rule("r-value", ["n5"], identity),
+    Rule("r-value", ["b8"], identity),
+    // TODO: disallow literals from inside parens?
+
+    Rule("b-parens", [{kind: 'langle'}, "b8", {kind: 'rangle'}], brackets),
 
     // ---
 
@@ -524,8 +532,6 @@ var Language = (function(Earley) {
 
     // The rest get defined here, because I like my sanity.
 
-    Rule("reporter", [["letter"], "n", ["of"], "s"], block("letter:of:", 1, 3)),
-
     Rule("reporter", ["join"], identity),
 
     Rule("join", [["join"], "jpart", "jpart"],
@@ -533,7 +539,10 @@ var Language = (function(Earley) {
 
     Rule("jpart", ["s0"], identity),
     Rule("jpart", ["join"], identity),
-    Rule("jpart", ["parens"], identity),
+    Rule("jpart", ["r-parens"], identity),
+    Rule("jpart", ["b-parens"], identity),
+
+    // "join" on the LHS of a comparison is *confusing*
 
     Rule("predicate", [["touching"], ["color"], "c", ["?"]],
                                             block("touchingColor:", 2)),
@@ -541,6 +550,8 @@ var Language = (function(Earley) {
                                             block("color:sees:", 1, 4)),
 
     /* --------------------------------------------------------------------- */
+
+    // all the reporters which are right-recursive
 
     Rule("right-reporter", [["round"], "n5"], block("rounded", 1)),
     Rule("right-reporter", [["round"], "n5"], block("rounded", 1)),
@@ -550,6 +561,12 @@ var Language = (function(Earley) {
                                           infix("computeFunction:of:")),
     Rule("right-reporter", [["pick"], ["random"], "n5", ["to"], "n5"],
                                           block("randomFrom:to:", 2, 4)),
+    Rule("right-reporter", [["letter"], "n", ["of"], "s"],
+                                          block("letter:of:", 1, 3)),
+    Rule("right-reporter", ["m_attribute", ["of"], "m_spriteOrStage"],
+                                          block("getAttribute:of:", 0, 2)),
+    Rule("right-reporter", [["distance"], ["to"], "m_spriteOrMouse"],
+                                          block("distanceTo:", 2)),
 
     // ---
 
@@ -571,7 +588,7 @@ var Language = (function(Earley) {
     Rule("n3", ["n2"], identity),
 
     Rule("n2", ["simple-reporter"], identity),
-    Rule("n2", ["parens"], identity),
+    Rule("n2", ["r-parens"], identity),
     Rule("n2", ["n0"], identity),
 
     // ---
@@ -591,7 +608,7 @@ var Language = (function(Earley) {
     Rule("b6", ["predicate"], identity),
     Rule("b6", ["b2"], identity),
 
-    Rule("b2", ["parens"], identity),
+    Rule("b2", ["b-parens"], identity),
     Rule("b2", ["b0"], identity),
 
     /* --------------------------------------------------------------------- */
@@ -609,6 +626,7 @@ var Language = (function(Earley) {
 
     Rule("@greenFlag", [["green"], ["flag"]], paint("green")),
     Rule("@greenFlag", [["flag"]], paint("green")),
+    Rule("@greenFlag", [["⚑"]], paint("green")),
 
     Rule("@turnLeft",  [["left"]], identity),
     Rule("@turnLeft",  [["ccw"]], identity),
@@ -740,6 +758,8 @@ var Language = (function(Earley) {
     "=", "<", ">", "list:contains:",
 
     "randomFrom:to:", "stringLength:", "rounded", "computeFunction:of:",
+    "getAttribute:of:", "distanceTo:",
+
     "*", "/", "%",
     "+", "-", 
   ];

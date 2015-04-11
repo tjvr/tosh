@@ -1,0 +1,138 @@
+<!doctype html>
+<meta charset=utf8>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+
+<title>test :: tosh</title>
+
+<link href="http://fonts.googleapis.com/css?family=Noto+Sans:400,700|Source+Code+Pro:400,600" rel="stylesheet" type="text/css">
+<link rel=stylesheet href=/style.css>
+
+<!---------------------------------------------------------------------------->
+
+<h1>
+  <a href="/app/test/">tosh tests <strong>/</strong></a>
+  <strong>fuzz</strong>
+</h1>
+
+<pre id=fuzz></pre>
+
+<!---------------------------------------------------------------------------->
+
+<script src=/app/commands.js></script>
+<script src=/app/earley.js></script>
+<script src=/app/language.js></script>
+<script src=/app/test/test.js></script>
+
+<script src=/app/lib/codemirror-compressed.js></script>
+<script src=/app/lib/runmode.js></script>
+<script src=/app/mode.js></script>
+
+<script>
+
+function $(selector) {
+  return [].slice.apply(document.querySelectorAll(selector));
+}
+
+var el = (function() {
+  var directProperties = {
+    'class': 'className',
+    className: 'className',
+    defaultValue: 'defaultValue',
+    'for': 'htmlFor',
+    html: 'innerHTML',
+    text: 'textContent',
+    value: 'value',
+  };
+   
+  var booleanProperties = {
+    checked: 1,
+    defaultChecked: 1,
+    disabled: 1,
+    multiple: 1,
+    selected: 1,
+  };
+
+  var setProperty = function(el, key, value) {
+    var prop = directProperties[key];
+    if (prop) {
+      if (prop === 'className' && value instanceof Array) {
+        value.forEach(function(v) {
+          el.classList.add(v);
+        });
+        return;
+      }
+      el[prop] = (value == null ? '' : '' + value);
+    } else if (booleanProperties[key]) {
+      if (value) {
+        el.setAttribute(key, '');
+      } else {
+        el.removeAttribute(key);
+      }
+    } else if (value == null) {
+      el.removeAttribute(key);
+    } else {
+      el.setAttribute(key, '' + value);
+    }
+  };
+
+  return function(selectors, attrs, children) {
+    if (attrs instanceof Array || typeof attrs === "string"
+                               || (attrs && attrs.appendChild)) {
+      children = attrs;
+      attrs = {};
+    }
+    attrs = attrs || {};
+    children = children ? (children instanceof Array ? children : [children])
+                        : [];
+
+    var topParent;
+    var result;
+    selectors.split(/ +/g).forEach(function(selector) {
+      var parts = selector.split(/([#.])/g);
+      var tagName = parts[0] || 'div';
+      var el = document.createElement(tagName);
+
+      for (i=1, j=2; j < parts.length; i+=2, j+=2) {
+        var value = parts[j];
+        if (parts[i] == '#') {
+          el.id = value;
+        } else { // parts[i] == '.'
+          el.classList.add(value);
+        }
+      }
+
+      if (!topParent) topParent = el;
+      if (result) result.appendChild(el);
+      result = el;
+    });
+
+    for (key in attrs) {
+      setProperty(result, key, attrs[key]);
+    }
+
+    (children || []).forEach(function(c) {
+      if (c.appendChild === undefined) {
+        c = document.createTextNode(c);
+      }
+      result.appendChild(c);
+    });
+    return topParent;
+  };
+}());
+
+function heading(fragment, text) {
+  $('ul.toc')[0].appendChild(
+    el('li', el('a', {href: fragment}, text))
+  );
+  return el('h2' + fragment, [
+      el('a', {href: fragment}, text),
+      el('p', el('a', {href: '#top'}, 'top ↑')),
+  ]);
+}
+
+var output = $('#fuzz')[0];
+var text = Test.fuzz();
+CodeMirror.runMode(text, "tosh", output);
+
+</script>
+
