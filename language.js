@@ -1,3 +1,5 @@
+// TODO stop other scripts in stage
+
 var Language = (function(Earley) {
 
   function assert(x, message) {
