@@ -27,7 +27,7 @@ var Earley = (function() {
       }
     });
     this.name = name;
-    this.symbols = symbols; // Array of nonterminals and/or 
+    this.symbols = symbols; // Array of nonterminals and/or
                             // objects with match() method
     this.process = process;
     this.definedAt = new Error().stack.split("\n")[3].trim();

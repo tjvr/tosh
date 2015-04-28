@@ -26,6 +26,8 @@ var Language = (function(Earley) {
     return "Token(" + args.map(JSON.stringify).join(", ") + ")";
   };
 
+  // TODO accept .3
+
   var TOKENS = [
     ['comment', /\/{2}(.*)$/],
     ['false',   /\<\>/],
@@ -127,6 +129,11 @@ var Language = (function(Earley) {
   SymbolSpec.prototype.match = function(token) {
     return (this.kind === token.kind
         && (this.value === undefined || this.value === token.value));
+  };
+
+  SymbolSpec.prototype.generate = function() {
+    var text = this.kind + ' '; // TODO which side?
+    return new Token(this.kind, text, this.value || this.toString());
   };
 
   SymbolSpec.prototype.toString = function() {
@@ -576,7 +583,7 @@ var Language = (function(Earley) {
     Rule("n5", ["n4"], identity),
 
     Rule("n4", ["n3", ["+"], "n4"], infix("+")),
-    Rule("n4", ["n3", ["-"], "n4"], infix("-")),
+    Rule("n4", ["n4", ["-"], "n3"], infix("-")), // left-recursive! :D
     Rule("n4", ["n3", ["+"], "right-reporter"], infix("+")),
     Rule("n4", ["n3", ["-"], "right-reporter"], infix("-")),
     Rule("n4", ["n2", ["*"], "right-reporter"], infix("*")),
@@ -585,7 +592,7 @@ var Language = (function(Earley) {
     Rule("n4", ["n3"], identity),
 
     Rule("n3", ["n2", ["*"], "n3"], infix("*")),
-    Rule("n3", ["n2", ["/"], "n3"], infix("/")),
+    Rule("n3", ["n3", ["/"], "n2"], infix("/")), // left-recursive! :D
     Rule("n3", ["n2", ["mod"], "n3"], infix("%")),
     Rule("n3", ["n2"], identity),
 
