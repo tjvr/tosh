@@ -1,17 +1,6 @@
 // TODO stop other scripts in stage
 
 var Language = (function(Earley) {
-
-  function assert(x, message) {
-    if (!x) {
-      var err = new Error("Assertion failed: " + (message || ''));
-      var lines = err.stack.split("\n");
-      lines.splice(1, 1);
-      console.log(lines.join("\n"));
-      throw err;
-    }
-  }
-
     
   /* Tokenizer */
 
@@ -32,6 +21,7 @@ var Language = (function(Earley) {
     ['comment', /\/{2}(.*)$/],
     ['false',   /\<\>/],
     ['zero',    /\(\)/],
+    ['empty',   /_/],
 //    ['number',  /\(([0-9]+e-?[0-9]+)(?:(?: v)?\)|$)/],
     ['number',  /([0-9]+e-?[0-9]+)/],
 //    ['number',  /\((-?[0-9]+(\.([0-9]+)?)?)(?:(?: v)?\)|$)/],
@@ -127,8 +117,19 @@ var Language = (function(Earley) {
   };
 
   SymbolSpec.prototype.match = function(token) {
-    return (this.kind === token.kind
-        && (this.value === undefined || this.value === token.value));
+    if (this.kind === token.kind) {
+      if (this.value === undefined) {
+        return true;
+      } else {
+        if (token.isPartial) {
+          return this.value.indexOf(token.value) === 0;
+        } else {
+          return this.value === token.value;
+        }
+      }
+    } else {
+      return false;
+    }
   };
 
   SymbolSpec.prototype.generate = function() {
@@ -399,7 +400,7 @@ var Language = (function(Earley) {
 
   function blockArgs(info) {
     var indexes = [].slice.apply(arguments, [1]);
-    return function() {
+    var func = function() {
       var funcArgs = [].slice.apply(arguments);
       var args = indexes.map(function(i) {
         var arg = funcArgs[i];
@@ -424,6 +425,8 @@ var Language = (function(Earley) {
 
       return new Block(info, args, tokens);
     };
+    func._info = info;
+    return func;
   }
 
   function infix(info) {
@@ -624,6 +627,7 @@ var Language = (function(Earley) {
 
     Rule("n0", [["-"], {kind: 'number'}], unaryMinus),
     Rule("n0", [{kind: 'number'}], num),
+    Rule("n0", [{kind: 'empty'}], constant("")),
 
     Rule("s0", [{kind: 'string'}], literal),
 
@@ -633,16 +637,16 @@ var Language = (function(Earley) {
 
     /* --------------------------------------------------------------------- */
 
-    Rule("@greenFlag", [["green"], ["flag"]], paint("green")),
     Rule("@greenFlag", [["flag"]], paint("green")),
+    Rule("@greenFlag", [["green"], ["flag"]], paint("green")),
     Rule("@greenFlag", [["⚑"]], paint("green")),
 
-    Rule("@turnLeft",  [["left"]], identity),
     Rule("@turnLeft",  [["ccw"]], identity),
+    Rule("@turnLeft",  [["left"]], identity),
     Rule("@turnLeft",  [["↺"]], identity),
 
-    Rule("@turnRight", [["right"]], identity),
     Rule("@turnRight", [["cw"]], identity),
+    Rule("@turnRight", [["right"]], identity),
     Rule("@turnRight", [["↻"]], identity),
 
   ], ["SpriteVariable", "SpriteList", "AnyVariable", "BlockParam"]);
@@ -728,6 +732,7 @@ var Language = (function(Earley) {
         g.addRule(Rule("m_" + name, symbols, embed));
       });
     }
+    g.addRule(Rule("m_" + name, [{kind: 'empty'}], literal));
     /*if (name === "broadcast") {
       g.addRule(Rule("m_" + name, [{kind: 'menu'}], literal));
     } else {

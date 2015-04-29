@@ -85,6 +85,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     // - invalid input
 
     if (!results) {
+      // TODO mark error'd lines as red
       tokens.forEach(function(t) { t.category = "error"; });
       return;
     }

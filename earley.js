@@ -1,13 +1,5 @@
 var Earley = (function() {
 
-  function assert(x, message) {
-    if (!x) {
-      var err = new Error("Assertion failed: " + (message || ''));
-      console.log(err.stack);
-      throw err;
-    }
-  }
-
   function stringify(symbol) {
     var value = symbol.toString ? symbol.toString() : symbol;
     return JSON.stringify(value || symbol);
@@ -32,8 +24,6 @@ var Earley = (function() {
     this.process = process;
     this.definedAt = new Error().stack.split("\n")[3].trim();
   };
-
-  Rule.highestId = 0;
 
   Rule.prototype.toString = function(position) {
     var r = this.name + " →";
@@ -110,6 +100,25 @@ var Earley = (function() {
       copy.rulesByName[name] = myself.rulesByName[name];
     });
     return copy;
+  };
+
+  /*
+   * Return a copy of the grammar, reversing the symbols of each rule.
+   * The result is cached, so copy it before modifying it.
+   */
+  Grammar.prototype.reverse = function() {
+    if (!this._reversed) {
+      var rules = this.rules.map(function(r) {
+        var symbols = r.symbols.slice();
+        symbols.reverse();
+        var rule = new Rule(r.name, symbols, r.process);
+        rule._original = r;
+        return rule;
+      });
+      var undefinedRules = Object.keys(this.undefinedRulesSet)
+      this._reversed = new Grammar(rules, undefinedRules);
+    }
+    return this._reversed;
   };
 
 
@@ -196,25 +205,15 @@ var Earley = (function() {
     if (results.length) {
       return results;
     } else {
-      // There were no complete parses.
-      var rules = {};
-      column.forEach(function(state) {
-        rules[state.rule.name] = true;
-      });
-
-      // TODO: invalid, or incomplete?
-
       throw makeError("Incomplete input.");
     }
 
     function makeError(message) {
       var expected = [];
-      var suggest = [];
       var ruleNames = [];
       column.forEach(function(state) {
         if (state.isComplete) return;
         var expect = state.rule.symbols[state.position];
-        if (state.position > 0) suggest.push(expect);
         if (!(typeof expect === "string")) {
           expected.push(stringify(expect));
         } else {
@@ -247,18 +246,162 @@ var Earley = (function() {
       }
       var err = new Error(message);
       err.expected = expected;
-      err.suggest = suggest;
+
+      err._table = table;
 
       return err;
     }
 
   };
 
+
+
+  var Completer = function(grammar) {
+    this.beforeParser = new Parser(grammar);
+    this.afterParser = new Parser(grammar.reverse());
+  };
+
+  Completer.prototype.complete = function(tokens, cursorIndex, ruleNames) {
+    function tok(token) {
+      var r = token.isPartial ? "*" : "";
+      return JSON.stringify(token.value + r) || (token.kind + r);
+    }
+    function pretty(symbol) {
+      return (typeof symbol === "string" ? symbol : stringify(symbol));
+    }
+
+    console.log(tokens.slice(0, cursorIndex).map(tok)
+                .concat(["|"])
+                .concat(tokens.slice(cursorIndex).map(tok)).join(" "));
+
+    var cursorToken = { kind: "cursor" };
+    var before = tokens.slice(0, cursorIndex);
+    before.push(cursorToken);
+
+    var after = tokens.slice(cursorIndex);
+    after.reverse();
+    after.push(cursorToken);
+
+    var beforeTable;
+    var afterTable;
+    try {
+      this.beforeParser.parse(before); assert(false);
+    } catch (e) {
+      if (e.found !== cursorToken) {
+        // There was an error before finding the cursor...
+        return;
+      }
+      beforeTable = e._table;
+    }
+    try {
+      this.afterParser.parse(after); assert(false);
+    } catch (e) { 
+      if (e.found !== cursorToken) {
+        // There was an error before finding the cursor...
+        return;
+      }
+      afterTable = e._table;  
+    }
+
+    var leftColumn = beforeTable[beforeTable.length - 1];
+    var rightColumn = afterTable[afterTable.length  - 1];
+
+    var byName = {};
+
+    for (var i=0; i<leftColumn.length; i++) {
+      var l = leftColumn[i];
+      var name = l.rule.name;
+      if (!byName.hasOwnProperty(name)) byName[name] = [];
+      byName[name].push(l.rule.symbols);
+    }
+
+    var completions = [];
+
+    for (var i=0; i<leftColumn.length; i++) {
+      for (var j=0; j<rightColumn.length; j++) {
+        var l = leftColumn[i];
+        var r = rightColumn[j];
+        if (l.rule === r.rule._original 
+            && (l.position > 0 || r.position > 0)
+          ){
+
+          // TODO: compare ancestors list
+
+          var symbols = l.rule.symbols;
+          var li = l.position,
+              ri = symbols.length - r.position;
+          var completion = symbols.slice(li, ri);
+          var options = [completion];
+
+          options.forEach(function(option) {
+            completions.push({
+              start: l.origin,
+              pre: symbols.slice(0, li),
+              completion: option,
+              post: symbols.slice(ri),
+              end: tokens.length - r.origin,
+              rule: l.rule,
+            });
+          });
+        }
+      }
+    }
+
+    console.table(completions.map(function(s) {
+      var info = s.rule.process._info;
+      return {
+        start: s.start,
+        pre: s.pre.map(pretty).join(" "),
+        completion: s.completion.map(pretty).join(" "),
+        post: s.post.map(pretty).join(" "),
+        end: s.end,
+        rule: info ? info.selector : null,
+      };
+    }));
+
+    // cases it fails:
+    //
+    //    pick random | to 10 to 10       [sort of!]
+    //
+    //    repeat | < 3
+    //
+
+    // TODO, in language.js:
+    //
+    // Inspect completion.
+    //
+    // If the completion is a rule `s` or `m_effect`, treat it as completing an
+    // input.
+    //
+    // If the completion contains symbols, like: `x to _`
+    //                                           `_ and wait` or
+    // then treat it as completing a block.
+    //
+    // That way, we can get a sensible experience.
+    //
+    // Yay! :D
+
+    return completions;
+
+  };
+
+
+
   return {
     Rule: Rule,
     Grammar: Grammar,
     Parser: Parser,
+    Completer: Completer,
   };
 
 }());
 
+function tc(text) {
+  var pipeIndex = text.indexOf("|");
+  if (pipeIndex === -1) pipeIndex = text.length;
+  var beforeTokens = Language.tokenize(text.slice(0, pipeIndex));
+  var afterTokens = Language.tokenize(text.slice(pipeIndex + 1));
+  var tokens = beforeTokens.concat(afterTokens);
+  var completer = new Earley.Completer(g);
+  return completer.complete(tokens, beforeTokens.length);
+}
