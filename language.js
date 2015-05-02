@@ -15,6 +15,8 @@ var Language = (function(Earley) {
     return "Token(" + args.map(JSON.stringify).join(", ") + ")";
   };
 
+  // TODO should we allow () as an empty number input slot?
+
   var TOKENS = [
     ['comment', /\/{2}(.*)$/],
     ['false',   /\<\>/],
@@ -506,6 +508,7 @@ var Language = (function(Earley) {
     Rule("n", ["b2"], identity),
 
     Rule("sb", ["s"], identity),
+    Rule("sb", ["b-parens"], identity),
     Rule("sb", ["b0"], identity),
 
     Rule("b", ["b8"], identity),
@@ -525,7 +528,6 @@ var Language = (function(Earley) {
 
     Rule("r-value", ["reporter"], identity),
     Rule("r-value", ["n5"], identity),
-    Rule("r-value", ["b8"], identity),
     // TODO: disallow literals from inside parens?
 
     Rule("b-parens", [{kind: 'langle'}, "b8", {kind: 'rangle'}], brackets),
@@ -609,10 +611,11 @@ var Language = (function(Earley) {
     Rule("b7", ["b6"], identity),
 
     // nb.  "<" and ">" do not tokenize as normal symbols
-    Rule("b6", ["s", {kind: 'langle'}, "s"], infix("<")),
-    Rule("b6", ["s", {kind: 'rangle'}, "s"], infix(">")),
-    Rule("b6", ["s", ["="], "s"], infix("=")),
-    Rule("b6", ["m_list", ["contains"], "s"], infix("list:contains:")),
+    // also note comparison ops accept *booleans*!
+    Rule("b6", ["sb", {kind: 'langle'}, "sb"], infix("<")),
+    Rule("b6", ["sb", {kind: 'rangle'}, "sb"], infix(">")),
+    Rule("b6", ["sb", ["="], "sb"], infix("=")),
+    Rule("b6", ["m_list", ["contains"], "sb"], infix("list:contains:")),
     Rule("b6", ["predicate"], identity),
     Rule("b6", ["b2"], identity),
 
