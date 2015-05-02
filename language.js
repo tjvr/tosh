@@ -615,7 +615,7 @@ var Language = (function(Earley) {
     Rule("b6", ["sb", {kind: 'langle'}, "sb"], infix("<")),
     Rule("b6", ["sb", {kind: 'rangle'}, "sb"], infix(">")),
     Rule("b6", ["sb", ["="], "sb"], infix("=")),
-    Rule("b6", ["m_list", ["contains"], "sb"], infix("list:contains:")),
+    Rule("b6", ["m_list", ["contains"], "sb", ["?"]], infix("list:contains:")),
     Rule("b6", ["predicate"], identity),
     Rule("b6", ["b2"], identity),
 
