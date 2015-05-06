@@ -564,7 +564,6 @@ var Language = (function(Earley) {
     // all the reporters which are right-recursive
 
     Rule("right-reporter", [["round"], "n5"], block("rounded", 1)),
-    Rule("right-reporter", [["round"], "n5"], block("rounded", 1)),
     Rule("right-reporter", [["length"], ["of"], "s"],
                                           block("stringLength:", 2)),
     Rule("right-reporter", ["m_mathOp", ["of"], "n5"],
@@ -583,8 +582,8 @@ var Language = (function(Earley) {
     Rule("n5", ["right-reporter"], identity),
     Rule("n5", ["n4"], identity),
 
-    Rule("n4", ["n3", ["+"], "n4"], infix("+")),
-    Rule("n4", ["n4", ["-"], "n3"], infix("-")), // left-recursive! :D
+    Rule("n4", ["n4", ["+"], "n3"], infix("+")),
+    Rule("n4", ["n4", ["-"], "n3"], infix("-")),
     Rule("n4", ["n3", ["+"], "right-reporter"], infix("+")),
     Rule("n4", ["n3", ["-"], "right-reporter"], infix("-")),
     Rule("n4", ["n2", ["*"], "right-reporter"], infix("*")),
@@ -592,8 +591,8 @@ var Language = (function(Earley) {
     Rule("n4", ["n2", ["mod"], "right-reporter"], infix("%")),
     Rule("n4", ["n3"], identity),
 
-    Rule("n3", ["n2", ["*"], "n3"], infix("*")),
-    Rule("n3", ["n3", ["/"], "n2"], infix("/")), // left-recursive! :D
+    Rule("n3", ["n3", ["*"], "n2"], infix("*")),
+    Rule("n3", ["n3", ["/"], "n2"], infix("/")),
     Rule("n3", ["n2", ["mod"], "n3"], infix("%")),
     Rule("n3", ["n2"], identity),
 
