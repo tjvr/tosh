@@ -1,7 +1,7 @@
 // TODO stop other scripts in stage
 
 var Language = (function(Earley) {
-    
+
   /* Tokenizer */
 
   var Token = function(kind, text, value) {
@@ -166,7 +166,7 @@ var Language = (function(Earley) {
     return new Earley.Rule(name, ruleSymbols, process);
   };
 
-   
+
   /* define Scratch blocks */
 
   var categoriesById = {
@@ -228,7 +228,7 @@ var Language = (function(Earley) {
 
 
   /* helper functions */
-  
+
   function identity(x) {
     assert(arguments.length == 1);
     return x;
@@ -459,8 +459,6 @@ var Language = (function(Earley) {
 
   /* Precedence
    *
-   * Loosely, it works like this:
-   *
    *  [loosest]
    *              stack blocks              eg. move … steps
    *              numeric reporter blocks   eg. sin of …
@@ -469,23 +467,19 @@ var Language = (function(Earley) {
    *              simple reporters          eg. x position
    *  [tightest]
    *
-   * The actual concrete implementation of this is rather messy, and you don't
-   * want to think about it. Honest.
+   * Looks like this:
    *
-   * --I'm serious! That whole bit about "right-reporter" is really just a
-   * trick to make arguments greedy. You never understood how it worked; don't
-   * try now.
    *
-   *  9. [stack blocks]
-   *  8. and, or
-   *  7. not
-   *  6. <, >, =, [other predicates]
-   *  5. 
-   *  4. +, -  [infix]
-   *  3. *, /
-   *  2. 
-   *  1. // [variables, reporters with no inputs]
-   *  0. (literals, brackets)
+   *   [stack blocks]
+   * 8. and, or
+   * 7. not
+   * 6. <, >, =
+   *
+   * 4. +, -
+   * 3. *, /, mod
+   *   [right-recursive reporters] --which really go at about (5)
+   * 1. parentheses, simple reporters
+   * 0. literals
    *
    */
 
@@ -561,47 +555,6 @@ var Language = (function(Earley) {
 
     /* --------------------------------------------------------------------- */
 
-    // all the reporters which are right-recursive
-
-    Rule("right-reporter", [["round"], "n5"], block("rounded", 1)),
-    Rule("right-reporter", [["length"], ["of"], "s"],
-                                          block("stringLength:", 2)),
-    Rule("right-reporter", ["m_mathOp", ["of"], "n5"],
-                                          infix("computeFunction:of:")),
-    Rule("right-reporter", [["pick"], ["random"], "n5", ["to"], "n5"],
-                                          block("randomFrom:to:", 2, 4)),
-    Rule("right-reporter", [["letter"], "n", ["of"], "s"],
-                                          block("letter:of:", 1, 3)),
-    Rule("right-reporter", ["m_attribute", ["of"], "m_spriteOrStage"],
-                                          block("getAttribute:of:", 0, 2)),
-    Rule("right-reporter", [["distance"], ["to"], "m_spriteOrMouse"],
-                                          block("distanceTo:", 2)),
-
-    // ---
-
-    Rule("n5", ["right-reporter"], identity),
-    Rule("n5", ["n4"], identity),
-
-    Rule("n4", ["n4", ["+"], "n3"], infix("+")),
-    Rule("n4", ["n4", ["-"], "n3"], infix("-")),
-    Rule("n4", ["n3", ["+"], "right-reporter"], infix("+")),
-    Rule("n4", ["n3", ["-"], "right-reporter"], infix("-")),
-    Rule("n4", ["n2", ["*"], "right-reporter"], infix("*")),
-    Rule("n4", ["n2", ["/"], "right-reporter"], infix("/")),
-    Rule("n4", ["n2", ["mod"], "right-reporter"], infix("%")),
-    Rule("n4", ["n3"], identity),
-
-    Rule("n3", ["n3", ["*"], "n2"], infix("*")),
-    Rule("n3", ["n3", ["/"], "n2"], infix("/")),
-    Rule("n3", ["n2", ["mod"], "n3"], infix("%")),
-    Rule("n3", ["n2"], identity),
-
-    Rule("n2", ["simple-reporter"], identity),
-    Rule("n2", ["r-parens"], identity),
-    Rule("n2", ["n0"], identity),
-
-    // ---
-
     Rule("b8", ["b8", ["and"], "b7"], infix("&")),
     Rule("b8", ["b8", ["or"], "b7"], infix("|")),
     Rule("b8", ["b7"], identity),
@@ -620,6 +573,49 @@ var Language = (function(Earley) {
 
     Rule("b2", ["b-parens"], identity),
     Rule("b2", ["b0"], identity),
+
+    // ---
+
+    Rule("n5", ["rr4"], identity),
+
+    // all the reporters which are right-recursive
+
+    Rule("rr4", ["n4", ["+"], "rr3"], infix("+")),
+    Rule("rr4", ["n4", ["-"], "rr3"], infix("-")),
+    Rule("rr4", ["rr3"], identity),
+
+    Rule("rr3", ["n3", ["*"],   "rr2"], infix("*")),
+    Rule("rr3", ["n3", ["/"],   "rr2"], infix("/")),
+    Rule("rr3", ["n3", ["mod"], "rr2"], infix("%")),
+    Rule("rr3", ["rr2"], identity),
+
+    Rule("rr2", [["round"], "n5"],          block("rounded", 1)),
+    Rule("rr2", [["length"], ["of"], "s"],  block("stringLength:", 2)),
+    Rule("rr2", ["m_mathOp", ["of"], "n5"], infix("computeFunction:of:")),
+    Rule("rr2", [["pick"], ["random"], "n5", ["to"], "n5"],
+                                            block("randomFrom:to:", 2, 4)),
+    Rule("rr2", [["letter"], "n", ["of"], "s"],
+                                            block("letter:of:", 1, 3)),
+    Rule("rr2", ["m_attribute", ["of"], "m_spriteOrStage"],
+                                            block("getAttribute:of:", 0, 2)),
+    Rule("rr2", [["distance"], ["to"], "m_spriteOrMouse"],
+                                            block("distanceTo:", 2)),
+    Rule("rr2", ["n2"], identity),
+
+    // ---
+
+    Rule("n4", ["n4", ["+"], "n3"], infix("+")),
+    Rule("n4", ["n4", ["-"], "n3"], infix("-")),
+    Rule("n4", ["n3"], identity),
+
+    Rule("n3", ["n3", ["*"],   "n2"], infix("*")),
+    Rule("n3", ["n3", ["/"],   "n2"], infix("/")),
+    Rule("n3", ["n3", ["mod"], "n2"], infix("%")),
+    Rule("n3", ["n2"], identity),
+
+    Rule("n2", ["simple-reporter"], identity),
+    Rule("n2", ["r-parens"], identity),
+    Rule("n2", ["n0"], identity),
 
     /* --------------------------------------------------------------------- */
 
@@ -759,7 +755,7 @@ var Language = (function(Earley) {
   // g.addRule(Rule("m_spriteOrStage", ["AnyName"], identity));
   // g.addRule(Rule("m_touching", ["AnyName"], identity));
 
-   
+
 
   /* Add rules for blocks */
 
@@ -773,7 +769,7 @@ var Language = (function(Earley) {
     "getAttribute:of:", "distanceTo:",
 
     "*", "/", "%",
-    "+", "-", 
+    "+", "-",
   ];
 
   var doneSpecs = {};
