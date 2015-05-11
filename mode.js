@@ -81,7 +81,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     var p = new Earley.Parser(this.grammar);
 
     var define = tokens.definitionValue;
-    if (define) return; // TODO process define hats...
+    //if (define) return; // TODO process define hats...
     var result;
     try {
       results = p.parse(tokens);

@@ -17,6 +17,12 @@ var cm = CodeMirror(editor, {
   cursorHeight: 1,
 });
 
+var onResize = function() {
+  cm.setSize(editor.clientWidth, editor.clientHeight)
+};
+window.addEventListener('resize', onResize);
+onResize();
+
 /*****************************************************************************/
 
 /* editor */
@@ -409,16 +415,46 @@ function showHint() {
 
 /*****************************************************************************/
 
+/* ide */
+
+replaceChildren($('#sidebar')[0], [
+  el('ul#tabs', [
+    el('li.active span', "Data"),
+    el('li span', "Costumes"),
+    el('li span', "Sounds"),
+  ]),
+  el('#data.tab.active', [
+    el('h2', "Variable names"),
+    el('ul.variable.reporters', [
+      el('li span', "score"),
+      el('li span', "vx"),
+      el('li span', "vy"),
+      el('li span', "link.from"),
+      el('li span', "link.to"),
+      el('li span', "game over?"),
+      el('li.new a', "＋ for all sprites"),
+    ]),
+    el('h2', "List names"),
+    el('ul.list.reporters', [
+      el('li span', "nodes"),
+      el('li span', "links.from"),
+      el('li span', "links.to"),
+      el('li span.edit', el('input', { value: 'links.type' })),
+      el('li.new a', "＋ for all sprites"),
+    ]),
+  ]),
+  el('#costumes.tab'),
+  el('#sounds.tab'),
+]);
+
+
+
+/*****************************************************************************/
+
 /* compiling */
 
 cm.on('change', function(cm) {
   window.localStorage['editor_content'] = cm.getValue();
   showHint();
 });
-
-var onResize = function() {
-  cm.setSize(editor.clientWidth, editor.clientHeight)
-};
-window.addEventListener('resize', onResize);
-onResize();
 
