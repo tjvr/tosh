@@ -477,7 +477,7 @@ var Language = (function(Earley) {
    *
    * 4. +, -
    * 3. *, /, mod
-   *   [right-recursive reporters] --which really go at about (5)
+   * 2. right-recursive reporters
    * 1. parentheses, simple reporters
    * 0. literals
    *
@@ -498,7 +498,7 @@ var Language = (function(Earley) {
 
     /* --------------------------------------------------------------------- */
 
-    Rule("n", ["n5"], identity),
+    Rule("n", ["n4"], identity),
     Rule("n", ["b2"], identity),
 
     Rule("sb", ["s"], identity),
@@ -516,12 +516,12 @@ var Language = (function(Earley) {
     Rule("s", ["s0"], identity),
 
     Rule("value", ["reporter"], identity),
-    Rule("value", ["n5"], identity),
+    Rule("value", ["n4"], identity),
 
     Rule("r-parens", [{kind: 'lparen'}, "r-value", {kind: 'rparen'}], brackets),
 
     Rule("r-value", ["reporter"], identity),
-    Rule("r-value", ["n5"], identity),
+    Rule("r-value", ["n4"], identity),
     // TODO: disallow literals from inside parens?
 
     Rule("b-parens", [{kind: 'langle'}, "b8", {kind: 'rangle'}], brackets),
@@ -576,34 +576,6 @@ var Language = (function(Earley) {
 
     // ---
 
-    Rule("n5", ["rr4"], identity),
-
-    // all the reporters which are right-recursive
-
-    Rule("rr4", ["n4", ["+"], "rr3"], infix("+")),
-    Rule("rr4", ["n4", ["-"], "rr3"], infix("-")),
-    Rule("rr4", ["rr3"], identity),
-
-    Rule("rr3", ["n3", ["*"],   "rr2"], infix("*")),
-    Rule("rr3", ["n3", ["/"],   "rr2"], infix("/")),
-    Rule("rr3", ["n3", ["mod"], "rr2"], infix("%")),
-    Rule("rr3", ["rr2"], identity),
-
-    Rule("rr2", [["round"], "n5"],          block("rounded", 1)),
-    Rule("rr2", [["length"], ["of"], "s"],  block("stringLength:", 2)),
-    Rule("rr2", ["m_mathOp", ["of"], "n5"], infix("computeFunction:of:")),
-    Rule("rr2", [["pick"], ["random"], "n5", ["to"], "n5"],
-                                            block("randomFrom:to:", 2, 4)),
-    Rule("rr2", [["letter"], "n", ["of"], "s"],
-                                            block("letter:of:", 1, 3)),
-    Rule("rr2", ["m_attribute", ["of"], "m_spriteOrStage"],
-                                            block("getAttribute:of:", 0, 2)),
-    Rule("rr2", [["distance"], ["to"], "m_spriteOrMouse"],
-                                            block("distanceTo:", 2)),
-    Rule("rr2", ["n2"], identity),
-
-    // ---
-
     Rule("n4", ["n4", ["+"], "n3"], infix("+")),
     Rule("n4", ["n4", ["-"], "n3"], infix("-")),
     Rule("n4", ["n3"], identity),
@@ -613,9 +585,27 @@ var Language = (function(Earley) {
     Rule("n3", ["n3", ["mod"], "n2"], infix("%")),
     Rule("n3", ["n2"], identity),
 
-    Rule("n2", ["simple-reporter"], identity),
-    Rule("n2", ["r-parens"], identity),
-    Rule("n2", ["n0"], identity),
+    Rule("n2", [["round"], "n2"],           block("rounded", 1)),
+    Rule("n2", ["m_mathOp", ["of"], "n2"],  infix("computeFunction:of:")),
+    Rule("n2", [["pick"], ["random"], "n4", ["to"], "n2"],
+                                            block("randomFrom:to:", 2, 4)),
+    Rule("n2", ["m_attribute", ["of"], "m_spriteOrStage"],
+                                            block("getAttribute:of:", 0, 2)),
+    Rule("n2", [["distance"], ["to"], "m_spriteOrMouse"],
+                                            block("distanceTo:", 2)),
+    Rule("n2", [["length"], ["of"], "s2"],  block("stringLength:", 2)),
+    Rule("n2", [["letter"], "n", ["of"], "s2"],
+                                            block("letter:of:", 1, 3)),
+    Rule("n2", ["n1"], identity),
+
+    Rule("n1", ["simple-reporter"], identity),
+    Rule("n1", ["r-parens"], identity),
+    Rule("n1", ["n0"], identity),
+
+    // ---
+
+    Rule("s2", ["s0"], identity),
+    Rule("s2", ["n2"], identity),
 
     /* --------------------------------------------------------------------- */
 
@@ -712,7 +702,7 @@ var Language = (function(Earley) {
 
   menus.forEach(function(name) {
     if (menusThatAcceptReporters.indexOf(name) > -1) {
-      g.addRule(Rule("m_" + name, ["sb"], identity));
+      g.addRule(Rule("m_" + name, ["s2"], identity));
     }
     var options = menuOptions[name];
     if (options && options.length) {
