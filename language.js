@@ -27,8 +27,8 @@ var Language = (function(Earley) {
     ['number',  /([0-9]*\.[0-9]+)/],
     ['number',  /([0-9]+)/],
     ['color',   /(#[A-Fa-f0-9]{3}(?:[A-Fa-f0-9]{3})?)/],
-    ['string',  /"((?:\\['"\\]|[^"])*)"/],
-    ['string',  /'((?:\\['"\\]|[^'])*)'/],
+    ['string',   /"((\\["\\]|[^"\\])*)"/], // strings are backslash-escaped
+    ['string',   /'((\\['\\]|[^'\\])*)'/],
     ['lparen',  /\(/],   ['rparen',  /\)/],
     ['langle',  /\</],   ['rangle',  /\>/],
     ['lsquare', /\[/],   ['rsquare', /\]/],
@@ -37,6 +37,8 @@ var Language = (function(Earley) {
 //  ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',]*/],   // words
     ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',.]*/],  // TODO ew
   ];
+
+  var backslashEscape = /(\\["'\\])/g;
 
   var whitespacePat = /^(?:[ \t]+|$)/;
   var eolPat = /(.*)[ \t]*/;
@@ -106,6 +108,21 @@ var Language = (function(Earley) {
     return tokens;
   };
 
+  function splitStringToken(token) {
+    var parts = token.text.split(backslashEscape);
+    console.log(parts);
+    var isEscape = false;
+    var tokens = [];
+    for (var i=0; i<parts.length; i++) {
+      if (!parts[i]) continue;
+      var text = parts[i].replace(/^ +/, "");
+      // We have to trimLeft here because mode.js will run whitespacePat after
+      // matching the token
+      tokens.push(new Token(isEscape ? 'escape' : 'string', text, text));
+      isEscape = !isEscape;
+    }
+    return tokens;
+  }
 
   /* for match()ing tokens */
 
@@ -960,6 +977,7 @@ var Language = (function(Earley) {
     eolPat: eolPat,
     addDefinition: addDefinition,
     addCustomBlock: addCustomBlock,
+    splitStringToken: splitStringToken,
   };
 
 }(Earley));

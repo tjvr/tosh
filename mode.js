@@ -167,7 +167,16 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
         console.log(JSON.stringify(line));
         var tokens = Language.tokenize(line);
         state.parseAndPaint(tokens);
-        state.lineTokens = tokens;
+
+        state.lineTokens = [];
+        tokens.forEach(function(token) {
+          if (token.kind === 'string') {
+            var stringParts = Language.splitStringToken(token);
+            state.lineTokens = state.lineTokens.concat(stringParts);
+          } else {
+            state.lineTokens.push(token);
+          }
+        });
       }
 
       if (!state.lineTokens.length) {
@@ -176,7 +185,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
       }
 
       var token = state.lineTokens.shift();
-      stream.match(token.text);
+      assert(stream.match(token.text), token);
       stream.match(Language.whitespacePat);
       var className = "s-" + token.kind;
       if (token.category) className += " " + "s-" + token.category;
