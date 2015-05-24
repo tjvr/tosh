@@ -306,6 +306,9 @@ var Earley = (function() {
     var leftColumn = beforeTable[beforeTable.length - 1];
     var rightColumn = afterTable[afterTable.length  - 1];
 
+    // console.table(leftColumn.map(function(x) { return { x: x.toString() }; }));
+    // console.table(rightColumn.map(function(x) { return { x: x.toString() }; }));
+
     var byName = {};
 
     for (var i=0; i<leftColumn.length; i++) {
