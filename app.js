@@ -1,12 +1,12 @@
 
 var editor = document.getElementById('editor');
 
-var codeMirror = CodeMirror(editor, {
+var cm = CodeMirror(editor, {
   value: window.localStorage['editor-content'] || "",
   mode: "tosh",
 
-  indentUnit: 2,
-  tabSize: 2,
+  indentUnit: 4,
+  tabSize: 4,
   indentWithTabs: true,
 
   lineNumbers: true,
@@ -23,7 +23,7 @@ function sb(text) {
   return el('.sb2.inline-block', s);
 }
 
-codeMirror.on("keyup", function(cm, e) {
+cm.on("keyup", function(cm, e) {
   if (e.keyCode === 32 && e.ctrlKey) {
     showHint();
     e.preventDefault();
@@ -62,7 +62,7 @@ function showHint() {
     // - at beginning of line: indent
     // - otherwise: show hint
 
-    codeMirror.showHint({
+    cm.showHint({
       hint: function(cm, options) {
         var cursor = cm.getCursor();
         var line = cm.doc.getLine(cursor.line);
@@ -222,25 +222,17 @@ function showHint() {
         Enter:    function(_, menu) { menu.pick() },
         Tab:      function(_, menu) { menu.pick(); },
         Esc:      function(_, menu) { menu.close() },
-        // PageUp:   function(menu) { menu.moveFocus(-menu.menuSize() + 1, true); },
-        // PageDown: function(menu) { menu.moveFocus(menu.menuSize() - 1, true); },
       },
     });
-
-    // e.preventDefault();
-  // }
 };
 
-codeMirror.on('change', function(cm) {
-  window.localStorage['editor-content'] = codeMirror.getValue();
+cm.on('change', function(cm) {
+  window.localStorage['editor-content'] = cm.getValue();
   showHint();
 });
-// codeMirror.on('cursorActivity', function(cm) { showHint(); });
-
-// });
 
 var onResize = function() {
-  codeMirror.setSize(editor.clientWidth, editor.clientHeight)
+  cm.setSize(editor.clientWidth, editor.clientHeight)
 };
 window.addEventListener('resize', onResize);
 onResize();
