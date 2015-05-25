@@ -113,12 +113,24 @@ var Language = (function(Earley) {
     console.log(parts);
     var isEscape = false;
     var tokens = [];
+    var leftover = '';
     for (var i=0; i<parts.length; i++) {
-      if (!parts[i]) continue;
-      var text = parts[i].replace(/^ +/, "");
-      // We have to trimLeft here because mode.js will run whitespacePat after
-      // matching the token
-      tokens.push(new Token(isEscape ? 'escape' : 'string', text, text));
+      var text = parts[i];
+      if (!text) continue;
+
+      if (isEscape) {
+        tokens.push(new Token('escape', '\\', '\\'));
+        leftover = text.slice(1)
+      } else {
+        text = leftover + text;
+
+        // We have to trimLeft here because mode.js will run whitespacePat after
+        // matching the token
+        text = text.replace(/^ +/, "");
+
+        tokens.push(new Token('string', text, text));
+        leftover = '';
+      }
       isEscape = !isEscape;
     }
     return tokens;
