@@ -571,6 +571,7 @@ var Language = (function(Earley) {
                                             block("concatenate:with:", 1, 2)),
 
     Rule("jpart", ["s0"], identity),
+    Rule("jpart", [{kind: 'empty'}], constant("")),
     Rule("jpart", ["join"], identity),
     Rule("jpart", ["r-parens"], identity),
     Rule("jpart", ["b-parens"], identity),
