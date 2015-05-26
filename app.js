@@ -30,14 +30,50 @@ cm.on("keyup", function(cm, e) {
   }
 });
 
-/*
-editor.setOption("extraKeys", {
-  Tab: function(cm) {
-    var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
-    cm.replaceSelection(spaces);
+function inputSeek(dir) {
+  var l = tokenizeAtCursor({ splitSelection: false });
+  if (!l) return;
+
+  var index = l.cursor + dir;
+  if (dir > 0 && l.tokens[l.cursor] && l.tokens[l.cursor].text === '-') index += 1;
+  for (var i = index;
+       dir > 0 ? i < l.tokens.length : i >= 0;
+       i += dir
+  ) {
+    var token = l.tokens[i];
+    if (token.kind !== 'symbol') {
+      var start = l.start.ch + measureTokens(l.tokens.slice(0, i));
+      end = start + token.text.replace(/ *$/, "").length;
+      var line = l.from.line;
+      if (token.kind === 'number' && l.tokens[i - 1].text === '-') start--;
+      if (token.kind === 'string') { start++; end--; }
+      cm.setSelection({ line: line, ch: start }, { line: line, ch: end });
+      return;
+    }
   }
+
+  cm.setCursor(dir > 0 ? l.end : l.start);
+}
+
+cm.setOption("extraKeys", {
+  'Tab': function(cm) {
+    inputSeek(+1);
+  },
+  'Shift-Tab': function(cm) {
+    inputSeek(-1);
+  },
 });
-*/
+
+function indentify(text) {
+  text = text || '';
+  var indentation = '';
+  for (var i=0; i<indent; i++) indentation += '\t';
+  var lines = text.split('\n');
+  for (var j=1; j<lines.length; j++) {
+    lines[j] = indentation + lines[j];
+  }
+  return lines.join('\n');
+}
 
 function measureTokens(tokens) {
   var length = 0;
@@ -45,6 +81,67 @@ function measureTokens(tokens) {
     length += tokens[i].text.length;
   }
   return length;
+}
+
+function tokenizeAtCursor(options) {
+  var selection = cm.getSelection();
+  var cursor = cm.getCursor('from');
+  var text = cm.doc.getLine(cursor.line);
+
+  var indent = /^\t*/.exec(text)[0].length;
+  var prefix = text.slice(indent, cursor.ch);
+  var suffix = text.slice(cursor.ch);
+
+  var isPartial = !/ $/.test(prefix);
+
+  var tokens,
+      cursorIndex;
+  if (options.splitSelection) {
+    var beforeTokens = Language.tokenize(prefix);
+    var afterTokens = Language.tokenize(suffix);
+    tokens = beforeTokens.concat(afterTokens);
+    cursorIndex = beforeTokens.length;
+
+    if (isPartial && prefix) {
+      token = tokens[cursorIndex - 1];
+      if (token.kind === "symbol") {
+        token.isPartial = true;
+      }
+    }
+  } else {
+    var tokens = Language.tokenize(prefix + suffix);
+    var size = indent;
+    for (var i=0; i<tokens.length; i++) {
+      size += tokens[i].text.length;
+      if (size > cursor.ch) {
+        break;
+      }
+    }
+    cursorIndex = i;
+  }
+
+
+  var to = measureTokens(tokens.slice(0, cursorIndex));
+  var from;
+  if (isPartial) {
+    from = measureTokens(tokens.slice(0, cursorIndex - 1));
+  } else {
+    from = to;
+  }
+
+  return {
+    from:  { line: cursor.line, ch: indent + from },
+    to:    { line: cursor.line, ch: indent + to   },
+    end:   { line: cursor.line, ch: text.length   },
+    start: { line: cursor.line, ch: indent        },
+
+    selection: selection,
+
+    state: cm.getStateAfter(cursor.line),
+    cursor: cursorIndex,
+    tokens: tokens,
+    isPartial: isPartial,
+  }
 }
 
 function showHint() {
@@ -64,58 +161,27 @@ function showHint() {
 
     cm.showHint({
       hint: function(cm, options) {
-        var cursor = cm.getCursor();
-        var line = cm.doc.getLine(cursor.line);
-        var indent = /^\t*/.exec(line)[0].length;
-        var prefix = line.slice(indent, cursor.ch);
-        var suffix = line.slice(cursor.ch);
-        if (!prefix) return;
+        var l = tokenizeAtCursor({ splitSelection: true });
+        if (!l) return;
+        if (l.cursor === 0) return;
+        if (!(l.selection === "" || l.selection === "_" || l.selection === "<>")) return;
 
-        function indentify(text) {
-          text = text || '';
-          var indentation = '';
-          for (var i=0; i<indent; i++) indentation += '\t';
-          var lines = text.split('\n');
-          for (var j=1; j<lines.length; j++) {
-            lines[j] = indentation + lines[j];
-          }
-          return lines.join('\n');
-        }
-
-        var state = cm.getStateAfter(cursor.line);
-        var g = state.grammar;
+        var g = l.state.grammar;
         var parser = new Earley.Parser(g);
 
-        var tokens = Language.tokenize(line);
-        try {
-          parser.parse(tokens); return;
-        } catch (e) { console.log(e); }
+        if (l.isPartial && l.cursor === l.tokens.length) {
+          l.tokens[l.cursor - 1].isPartial = false;
+          try {
+            parser.parse(l.tokens); return;
+          } catch (e) { console.log(e); }
+          l.tokens[l.cursor - 1].isPartial = true;
+        }
 
         var completer = new Earley.Completer(g);
-
-        var beforeTokens = Language.tokenize(prefix);
-        var completingToken;
-        if (!/ $/.test(prefix)) {
-          token = beforeTokens[beforeTokens.length - 1];
-          if (token.kind === "symbol") {
-            completingToken = token;
-            token.isPartial = true;
-          }
-        }
-        var afterTokens = Language.tokenize(suffix);
-        var tokens = beforeTokens.concat(afterTokens);
-        var completions = completer.complete(tokens, beforeTokens.length);
-
+        var completions = completer.complete(l.tokens, l.cursor);
         if (!completions) {
           return; // There was an error!
         }
-
-        var from = measureTokens(beforeTokens);
-        if (completingToken) {
-          var index = beforeTokens.length - 1;
-          from = measureTokens(beforeTokens.slice(0, index));
-        }
-        from++;
 
         var list = [];
         completions.forEach(function(c) {
@@ -123,21 +189,12 @@ function showHint() {
             if (c.pre.length === 1 && typeof c.pre[0] === "string") return;
             if (c.pre[0] === "block") return;
 
-            var startToken = c.start + c.pre.length;
-            if (completingToken) {
-              var spec = c.pre[c.pre.length - 1]
-              if (spec.kind === "symbol" || spec === "@greenFlag") {
-                  // completingToken.value !== spec.value) {
-                symbols.splice(0, 0, spec);
-                startToken--;
-              }
+            if (l.isPartial) {
+              var spec = c.pre[c.pre.length - 1];
+              symbols.splice(0, 0, spec);
             }
-            var startIndex = measureTokens(tokens.slice(0, startToken));
 
             if (!symbols.length) return;
-
-            var endToken = c.end - c.post.length;
-            var endIndex = measureTokens(tokens.slice(0, endToken));
 
             // TODO:
             // - fix from/end
@@ -168,49 +225,99 @@ function showHint() {
 
             // TODO we need an auto-indenter!
 
-            assert(startIndex <= endIndex);
-            assert(endIndex <= line.length);
-            if (!completingToken) {
-              if (startIndex === endIndex) endIndex++;
-              startIndex++;
-            }
-
-            var parts = [];
+            var selection;
+            var text = "";
+            var displayText = "";
             for (var i=0; i<symbols.length; i++) {
+              if (i > 0) {
+                displayText += " ";
+                text += " ";
+              }
               var part = symbols[i];
+              var displayPart = undefined;
               if (typeof part === "string") {
                 var name = symbols[i];
                 if (name[0] === "@") {
                   part = g.rulesByName[name][0].symbols[0].value;
                 } else {
                   if (/^b[0-9]?$/.test(name)) {
+                    if (!selection) selection = { ch: text.length, size: 2 };
                     part = "<>";
                   } else {
+                    if (!selection) selection = { ch: text.length, size: 1 };
                     part = "_";
                   }
                 }
-              } else {
+
+                if (l.isPartial && i === 0) {
+                  displayPart = part;
+                  part = l.tokens[l.cursor - 1].text;
+                  selection = { ch: part.length };
+                }
+              } else if (part.kind === "symbol") {
                 part = part.value;
+              } else {
+                if (l.isPartial && symbols.length === 1) {
+                  part = l.tokens[l.cursor - 1].text;
+                } else {
+                  // The completion contains a non-symbol token.
+                  // We don't care about these
+                  return;
+                }
               }
-              parts.push(part);
+              text += part;
+              displayText += (displayPart === undefined ? part : displayPart);
             }
 
-            list.push({
-              from: { line: cursor.line, ch: indent + startIndex },
-              to:   { line: cursor.line, ch: indent + endIndex },
-              text: parts.join(" "),
-            })
+            if (text === "<>") return;
+
+            assert(text);
+
+            var completion = {
+              displayText: displayText,
+              text: text,
+              hint: applyHint,
+              selection: selection,
+            };
+
+            if (c.rule.process.name === 'unaryMinus') return;
+
+            if (l.isPartial) {
+              completion.text += " ";
+
+              if (text === "_") {
+                completion.selection = undefined;
+              }
+
+              var nextToken = l.tokens[l.cursor];
+              if (nextToken && /^ /.test(nextToken.text)) {
+                completion.to = { line: l.to.line, ch: l.to.ch + 1 };
+              }
+            }
+
+            list.push(completion);
         });
 
-        console.log(list);
+        function applyHint(cm, data, completion) {
+          var text = completion.text;
+          cm.replaceRange(text, completion.from || data.from,
+                                completion.to || data.to, "complete");
+          if (completion.selection) {
+            var line = result.from.line;
+            var start = result.from.ch + completion.selection.ch;
+            var end = start + (completion.selection.size || 0);
+            cm.setSelection({ line: line, ch: start }, { line: line, ch: end });
+          }
+        }
 
         if (!list) return;
 
-        return {
+        var result = {
           list: list,
-          from: {line: cursor.line, ch: indent + from},
-          to:   {line: cursor.line, ch: cursor.ch},
+          from: l.from,
+          to:   l.to,
         };
+        return result;
       },
       completeSingle: false,
       alignWithWord: true,
