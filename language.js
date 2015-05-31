@@ -373,8 +373,8 @@ var Language = (function(Earley) {
 
   var defineGrammar = new Grammar([
       Rule("line", ["define", "spec-seq"], second),
-      Rule("line", ["var-name", "var=", "value"], variableDefinition),
-      Rule("line", ["list-name", "list=", "items"], variableDefinition),
+      // Rule("line", ["var-name", "var=", "value"], variableDefinition),
+      // Rule("line", ["list-name", "list=", "items"], variableDefinition),
 
       Rule("define", [["define"]], paintLiteral("custom")),
 

@@ -11,6 +11,19 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     this.customBlocks = {};
     this.variables = {};
     this.lists = {};
+
+    Language.addDefinition(this.grammar, { name: 'foo', });
+    Language.addDefinition(this.grammar, { name: '# clones', });
+    Language.addDefinition(this.grammar, { name: 'clone id', });
+    Language.addDefinition(this.grammar, { name: 'vx', });
+    Language.addDefinition(this.grammar, { name: 'vy', });
+    Language.addDefinition(this.grammar, { name: 'index', });
+    Language.addDefinition(this.grammar, { name: 'R', });
+    Language.addDefinition(this.grammar, { name: 'G', });
+    Language.addDefinition(this.grammar, { name: 'B', });
+    Language.addDefinition(this.grammar, { name: 'A', });
+
+    Language.addDefinition(this.grammar, { name: 'list', value: [] });
   };
 
   State.prototype.copy = function() {
