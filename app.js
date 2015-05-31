@@ -120,7 +120,6 @@ function tokenizeAtCursor(options) {
     cursorIndex = i;
   }
 
-
   var to = measureTokens(tokens.slice(0, cursorIndex));
   var from;
   if (isPartial) {
@@ -197,27 +196,15 @@ function showHint() {
             if (!symbols.length) return;
 
             // TODO:
-            // - fix from/end
-            //    need a way to measure the size of productions like `n`...
-            //    or just set
             // - add space at end when suffix is non-empty
-            // - when completing a block or reporter, select first input
-            // - allow tab key to move between inputs?
             // - don't suggest completed things!
             //    - but do complete the space after them.
-            // - don't suggest "then" multiple times :p
             // - can we reverse the item order when the complete box is *above*
             //   the current line?
             // - can we autocomplete broadcasts, sprite names, etc? :D
             // - *please* can autocomplete work properly for
             //   "sin of" etc...
             //  - "mouse down ?" is spaced wrong
-
-            // return vs. tab?
-
-            // show completion if:
-            // - the line parses
-            // - there's no space at the end
 
             // <> and _  should trigger completion simply by cursor/select them
 
@@ -247,29 +234,35 @@ function showHint() {
                     if (!selection) selection = { ch: text.length, size: 1 };
                     part = "_";
                   }
-                }
 
-                if (l.isPartial && i === 0) {
-                  displayPart = part;
-                  part = l.tokens[l.cursor - 1].text;
-                  selection = { ch: part.length };
+                  if (l.isPartial && i === 0) {
+                    // Sometimes we need more than one token!
+                    // Not sure what to do about this…
+
+                    var token = l.tokens[l.cursor - 1];
+                    displayPart = part;
+                    part = token.text;
+                    selection = { ch: part.length };
+                  }
                 }
               } else if (part.kind === "symbol") {
                 part = part.value;
               } else {
-                if (l.isPartial && symbols.length === 1) {
-                  part = l.tokens[l.cursor - 1].text;
-                } else {
+                // if (l.isPartial && symbols.length === 1) {
+                //   part = l.tokens[l.cursor - 1].text;
+                // } else {
                   // The completion contains a non-symbol token.
                   // We don't care about these
                   return;
-                }
+                // }
               }
               text += part;
               displayText += (displayPart === undefined ? part : displayPart);
             }
 
-            if (text === "<>") return;
+            if (displayText === "<>" || displayText === "_") return;
+
+            console.log(text);
 
             assert(text);
 
@@ -287,6 +280,10 @@ function showHint() {
 
               if (text === "_") {
                 completion.selection = undefined;
+              }
+
+              if (!completion.selection) {
+                completion.seekInput = true;
               }
 
               var nextToken = l.tokens[l.cursor];
@@ -308,6 +305,9 @@ function showHint() {
             var end = start + (completion.selection.size || 0);
             cm.setSelection({ line: line, ch: start }, { line: line, ch: end });
           }
+          if (completion.seekInput) {
+            inputSeek(+1);
+          }
         }
 
         if (!list) return;
@@ -326,7 +326,7 @@ function showHint() {
         Down:     function(_, menu) { menu.moveFocus(1); },
         Home:     function(_, menu) { menu.setFocus(0);},
         End:      function(_, menu) { menu.setFocus(menu.length - 1); },
-        Enter:    function(_, menu) { menu.pick() },
+        // Enter:    function(_, menu) { menu.pick() },
         Tab:      function(_, menu) { menu.pick(); },
         Esc:      function(_, menu) { menu.close() },
       },
