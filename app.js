@@ -11,6 +11,7 @@ var cm = CodeMirror(editor, {
   indentWithTabs: true,
 
   lineNumbers: true,
+  gutters: ["CodeMirror-linenumbers", "errors"],
 
   autofocus: true,
 
@@ -22,6 +23,13 @@ var onResize = function() {
 };
 window.addEventListener('resize', onResize);
 onResize();
+
+document.addEventListener('keydown', function(e) {
+  if ((e.metaKey || e.ctrlKey) && e.keyCode === 13) {
+    e.preventDefault();
+    compile();
+  }
+});
 
 /*****************************************************************************/
 
@@ -58,7 +66,7 @@ cm.setOption("extraKeys", {
 /* vim mode */
 
 var fatCursor;
-var vimMode = !!JSON.parse(localStorage.vimMode);
+var vimMode = !!JSON.parse(localStorage.vimMode || false);
 cm.setOption('keyMap', vimMode ? 'vim' : 'default');
 
 function toggleVim() {
@@ -439,7 +447,7 @@ replaceChildren($('#sidebar')[0], [
       el('li span', "nodes"),
       el('li span', "links.from"),
       el('li span', "links.to"),
-      el('li span.edit', el('input', { value: 'links.type' })),
+      // el('li span.edit', el('input', { value: 'links.type' })),
       el('li.new a', "＋ for all sprites"),
     ]),
   ]),
@@ -457,4 +465,309 @@ cm.on('change', function(cm) {
   window.localStorage['editor_content'] = cm.getValue();
   showHint();
 });
+
+function exportPhosphorus(json) {
+  P.IO.init();
+
+  var request = P.IO.loadJSONProject(json);
+  P.player.load2(request, function(stage) {
+    stage.triggerGreenFlag();
+  });
+}
+
+function makeJson(scripts) {
+  var scriptCount = scripts.length;
+
+  /*var scripts = [
+    [20, 20, [
+      ['whenGreenFlag'],
+      ['doForever', [
+        ['forward:', 10],
+      ]],
+    ]],
+  ];*/
+
+  var turtle = {
+    objName: 'turtle',
+    indexInLibrary: 1,
+
+    direction: 90.0,
+    isDraggable: false,
+    rotationStyle: 'normal',
+    scale: 1.0,
+    scratchX: 0,
+    scratchY: 0,
+    visible: true,
+    spriteInfo: {},
+
+    variables: [],
+    lists: [],
+
+    scriptComments: [],
+    scripts: scripts,
+
+    costumes: [{
+      costumeName: "eyes",
+      baseLayerID: 1,
+      baseLayerMD5: "84f3647091b0f31dbb12d1bdddf72bf7.png",
+      bitmapResolution: 2,
+      rotationCenterX: 143,
+      rotationCenterY: 98
+    }, {
+      costumeName: "blink",
+      baseLayerID: 2,
+      baseLayerMD5: "0a1be9a3d3179ef883fc30787c9990a6.png",
+      bitmapResolution: 2,
+      rotationCenterX: 142,
+      rotationCenterY: 100
+    }],
+    currentCostumeIndex: 0,
+
+    sounds: [{
+      soundName: "meow",
+      soundID: 0,
+      md5: "83c36d806dc92327b9e7049a565c6bff.wav",
+      sampleCount: 18688,
+      rate: 22050,
+      format: "",
+    }],
+  };
+
+  var json = {
+    objName: 'Stage',
+
+    penLayerID: 0,
+    penLayerMD5: 'hi',
+    tempoBPM: 60,
+    videoAlpha: 0.5,
+    info: {
+      scriptCount: scriptCount,
+      spriteCount: 1,
+      videoOn: false,
+    },
+
+    variables: [],
+    lists: [],
+
+    scripts: [],
+    scriptComments: [],
+
+    costumes: [{
+      costumeName: "backdrop1",
+      baseLayerID: 3,
+      baseLayerMD5: "739b5e2a2435f6e1ec2993791b423146.png",
+      bitmapResolution: 1,
+      rotationCenterX: 240,
+      rotationCenterY: 180
+    }],
+    currentCostumeIndex: 0,
+
+    sounds: [{
+      soundName: "pop",
+      soundID: 1,
+      md5: "83a9787d4cb6f3b7632b4ddfebf74367.wav",
+      sampleCount: 258,
+      rate: 11025,
+      format: "",
+    }],
+
+    children: [turtle],
+  };
+
+  return json;
+};
+
+function measureHeight(blocks) {
+  return 100;
+}
+
+function compile() {
+  var finalState = cm.getStateAfter(cm.getDoc().size, true);
+  function compileLine(b) {
+    if (!b) return b;
+    if (b.info) {
+      return [b.info.selector].concat((b.args || []).map(compileLine));
+    } else {
+      if (b.value) return b.value;
+      return b;
+    }
+  }
+  console.log(finalState.lines.map(compileLine).join('\n'));
+
+  cm.clearGutter('errors');
+  var lines = finalState.lines.slice();
+  try {
+    var scriptBlocks = compileFile(lines);
+  } catch (e) {
+    console.log(e);
+    var line = finalState.lines.length - lines.length + 1;
+    var marker = el('div.error', { style: 'color: #822;'}, "●")
+    cm.setGutterMarker(line, 'errors', marker);
+    return;
+  }
+  console.log(JSON.stringify(scriptBlocks).replace(/],/g, "],\n"));
+
+  var y = 10;
+  var scripts = scriptBlocks.map(function(blocks) {
+    var script = [10, y, blocks];
+    y += measureHeight(blocks);
+    return script;
+  });
+
+  var json = makeJson(scripts);
+  exportPhosphorus(json);
+
+
+  var zip = new JSZip();
+  zip.file('project.json', JSON.stringify(json));
+  var file = zip.generate({type:"blob"});
+
+  var a = $('#save')[0];
+  a.href = URL.createObjectURL(file);
+  a.download = 'tosh.sb2';
+}
+
+function Stream(seq) {
+  this.seq = seq;
+}
+Stream.prototype.token = function() {
+  return this.seq[0];
+}
+Stream.prototype.next = function() {
+  this.shift();
+}
+
+function compileFile(lines) {
+  lines.push({info: {shape: 'eof'}});
+  var scripts = [];
+  while (true) {
+    switch (lines[0].info.shape) {
+      case 'blank':
+        lines.shift();
+        break;
+      case 'eof':
+        return scripts;
+      default:
+        scripts.push(compileScript(lines));
+        switch (lines[0].info.shape) {
+          case 'blank':
+            break;
+          case 'eof':
+            return scripts;
+          default:
+            assert(false);
+        }
+    }
+  }
+}
+
+function compileBlank(lines, isRequired) {
+  if (isRequired) {
+    assert(lines[0].info.shape === 'blank');
+    lines.shift();
+  }
+  while (true) {
+    if (lines[0].info.shape === 'blank') {
+      lines.shift();
+    } else {
+      return;
+    }
+  }
+}
+
+function compileScript(lines) {
+  // assert(lines[0].info.shape === 'hat');
+  // var hat = compileBlock(lines);
+  var blocks = compileBlocks(lines);
+  // blocks.insert(0, hat);
+  return blocks;
+}
+
+function compileBlocks(lines) {
+  var result = [];
+  if (lines[0].info.shape === 'ellipsis') {
+    lines.shift();
+    return [];
+  }
+  while (true) {
+    switch (lines[0].info.shape) {
+      case 'cap':
+        var block = compileBlock(lines);
+        if (block) result.push(block);
+        return result;
+      default:
+        var block = compileBlock(lines);
+        if (block) {
+          result.push(block);
+        } else {
+          assert(result.length, "Empty c-block mouth");
+          return result;
+        }
+    }
+  }
+}
+
+function compileBlock(lines) {
+  var selector;
+  var args;
+  switch (lines[0].info.shape) {
+    case 'c-block':
+      block = lines.shift();
+      selector = block.info.selector;
+      args = block.args.map(compileReporter);
+
+      args.push(compileBlocks(lines));
+      assert(lines[0].info.shape === 'end',
+          'Expected "end", not ' + lines[0].info.shape);
+      lines.shift();
+      break;
+    case 'if-block':
+      block = lines.shift();
+      args = block.args.map(compileReporter);
+
+      args.push(compileBlocks(lines));
+
+      selector = 'doIf';
+      switch (lines[0].info.shape) {
+        case 'else':
+          selector = 'doIfElse';
+          lines.shift();
+
+          args.push(compileBlocks(lines));
+
+          // FALL-THRU
+        case 'end':
+          assert(lines[0].info.shape === 'end',
+              'Expected "end", not ' + lines[0].info.shape);
+          lines.shift();
+          break;
+        default:
+          assert(false, 'Expected "else" or "end", not ' + lines[0].info.shape);
+      }
+      break;
+    case 'hat':
+    case 'stack':
+    case 'cap':
+      block = lines.shift();
+      selector = block.info.selector;
+      args = block.args.map(compileReporter);
+      break;
+    default:
+      console.log(lines[0]);
+      return;
+  }
+  console.log(selector, args);
+  return [selector].concat(args);
+}
+
+function compileReporter(b) {
+  if (b.info) {
+    return [b.info.selector].concat(b.args.map(compileReporter));
+  } else if (b.value) { // ie. a token
+    return b.value;
+  } else {
+    return b;
+  }
+}
+
 

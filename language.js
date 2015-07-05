@@ -26,7 +26,7 @@ var Language = (function(Earley) {
     ['number',  /([0-9]+\.[0-9]*)/],
     ['number',  /([0-9]*\.[0-9]+)/],
     ['number',  /([0-9]+)/],
-    ['color',   /(#[A-Fa-f0-9]{3}(?:[A-Fa-f0-9]{3})?)/],
+    ['color',   /#([A-Fa-f0-9]{3}(?:[A-Fa-f0-9]{3})?)/],
     ['string',   /"((\\["\\]|[^"\\])*)"/], // strings are backslash-escaped
     ['string',   /'((\\['\\]|[^'\\])*)'/],
     ['lparen',  /\(/],   ['rparen',  /\)/],
@@ -110,7 +110,6 @@ var Language = (function(Earley) {
 
   function splitStringToken(token) {
     var parts = token.text.split(backslashEscape);
-    console.log(parts);
     var isEscape = false;
     var tokens = [];
     var leftover = '';
@@ -223,19 +222,23 @@ var Language = (function(Earley) {
   scratchCommands.push(["%m.var", "r", 9, "readVariable"]);
   scratchCommands.push(["%m.list", "r", 12, "contentsOfList:"]);
   scratchCommands.push(["%m.param", "r", 11, "getParam"]); // TODO
-  scratchCommands.push(["else", " ", 6, "<else>"]);
-  scratchCommands.push(["end", " ", 6, "<end>"]);
-  scratchCommands.push(["...", " ", 42, "<ellipsis>"]);
+  scratchCommands.push(["else", "else", 6, "else"]);
+  scratchCommands.push(["end", "end", 6, "end"]);
+  scratchCommands.push(["...", "ellipsis", 42, "ellipsis"]);
 
   var typeShapes = {
     " ": "stack",
     "b": "predicate",
-    "c": "cap",
-    "e": "if-else",
-    "f": "c-block", // TODO
+    "c": "c-block",
+    "e": "if-block",
+    "f": "cap",
     "h": "hat",
     "r": "reporter",
     "cf": "c-block",
+
+    "else": "else",
+    "end": "end",
+    "ellipsis": "ellipsis",
   };
 
   scratchCommands.forEach(function(command) {
@@ -248,6 +251,7 @@ var Language = (function(Earley) {
       selector: command[3],
       defaults: command.slice(4),
     };
+    if (block.selector == 'doIf') return;
     blocks.push(block);
     blocksBySelector[block.selector] = block;
   });
@@ -295,6 +299,11 @@ var Language = (function(Earley) {
   function second(a, b) { return b; }
   function embed() {
     return {embed: [].slice.apply(arguments)};
+  }
+  function embedConstant(x) {
+    return function() {
+      return {constant: x, embed: [].slice.apply(arguments) };
+    };
   }
 
   function num(a) {
@@ -431,7 +440,9 @@ var Language = (function(Earley) {
       var funcArgs = [].slice.apply(arguments);
       var args = indexes.map(function(i) {
         var arg = funcArgs[i];
-        if (arg.embed) {
+        if (arg.constant) {
+          arg = arg.constant;
+        } else if (arg.embed) {
           arg = arg.embed.map(function(x) { return x.value; }).join(" ");
         }
         arg = arg.value || arg;
@@ -442,6 +453,8 @@ var Language = (function(Earley) {
       funcArgs.forEach(function(value) {
         if (value && value.embed) {
           tokens = tokens.concat(value.embed);
+        } else if (value && value.constant) {
+
         } else {
           if (value.kind === 'symbol' && info.display) {
             value.display = info.display;
@@ -478,6 +491,12 @@ var Language = (function(Earley) {
     var color = colors[a.value];
     if (color !== '#fff') a.color = color;
     return color;
+  }
+
+  function hexColor(a) {
+    var h = a.value;
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    return parseInt(h, 16);
   }
 
   function unaryMinus(a, b) {
@@ -647,7 +666,7 @@ var Language = (function(Earley) {
 
     Rule("b0", [{kind: 'false'}], identity), // "<>"
 
-    Rule("c0", [{kind: 'color'}], literal),
+    Rule("c0", [{kind: 'color'}], hexColor),
 
     /* --------------------------------------------------------------------- */
 
@@ -730,6 +749,12 @@ var Language = (function(Earley) {
     'videoState': ['off', 'on', 'on-flipped'],
   };
 
+  menuValues = {
+    'mouse-pointer': '_mouse_',
+    'myself': '_myself_',
+    'Stage': '_Stage_',
+  }
+
   menus.forEach(function(name) {
     if (menusThatAcceptReporters.indexOf(name) > -1) {
       g.addRule(Rule("m_" + name, ["s2"], identity));
@@ -743,7 +768,12 @@ var Language = (function(Earley) {
         } else {
           symbols = textSymbols(option);
         }
-        g.addRule(Rule("m_" + name, symbols, embed));
+        process = embed;
+        var value = menuValues[option];
+        if (value) {
+          process = embedConstant(value);
+        }
+        g.addRule(Rule("m_" + name, symbols, process));
       });
     }
     g.addRule(Rule("m_" + name, [{kind: 'empty'}], literal));
@@ -967,15 +997,6 @@ var Language = (function(Earley) {
 
       Rule("blank-line", [new LineSpec({blank: true})], constant(null)),
   ]);
-
-  var typeShapes = {
-    " ": "stack",
-    "c": "cap",
-    "e": "if-else",
-    "f": "c-block", // TODO
-    "h": "hat",
-    "cf": "c-block",
-  };
 
 
   /* foo */

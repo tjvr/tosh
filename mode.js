@@ -22,6 +22,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     Language.addDefinition(this.grammar, { name: 'G', });
     Language.addDefinition(this.grammar, { name: 'B', });
     Language.addDefinition(this.grammar, { name: 'A', });
+    Language.addDefinition(this.grammar, { name: 'acc', });
 
     Language.addDefinition(this.grammar, { name: 'list', value: [] });
   };
@@ -39,7 +40,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
 
   State.prototype.parseAndPaint = function(tokens) {
     if (!tokens.length) {
-      this.lines.push({blank: true});
+      this.lines.push({info: {shape: 'blank'}});
       return;
     }
 
@@ -69,7 +70,6 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
           if (token.kind == 'lparen') break;
           token.category = 'custom';
         }
-        console.log(info);
       }
       return;
     }
@@ -87,6 +87,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
       results = p.parse(tokens);
     } catch (err) {
       console.log(err);
+      this.lines.push({info: {shape: 'error'}});
       results = err.partialResult;
     }
 
@@ -107,7 +108,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     // var result = results[0];
     results.forEach(function(result) {
       // console.log(result);
-      console.log(JSON.stringify(repr(result)));
+      // console.log(JSON.stringify(repr(result)));
       // console.log(JSON.stringify(compile(result)));
     });
 
@@ -115,8 +116,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     paintBlocks(result);
 
     if (result) {
-      var block = compileLine(result);
-      this.lines.push(block);
+      this.lines.push(result);
     }
 
     window.lines = this.lines;
@@ -146,24 +146,6 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     }
   }
 
-  function compileLine(b) {
-    if (!b) return b;
-    if (b.info) {
-      return [b.info.selector].concat(b.args.map(compileLine));
-    } else {
-      if (b.value) return b.value;
-      return b;
-    }
-  }
-
-  window.compile = compile;
-  function compile(lines) {
-    var p = new Earley.Parser(blockGrammar);
-    var results = p.parse(lines);
-    var result = results[0];
-    return result;
-  }
-
   // TODO: parser remembers custom blocks between parses
 
   /* CodeMirror mode */
@@ -177,7 +159,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
 
         var m = stream.match(Language.eolPat, false); // don't consume
         var line = m[0];
-        console.log(JSON.stringify(line));
+        // console.log(JSON.stringify(line));
         var tokens = Language.tokenize(line);
         state.parseAndPaint(tokens);
 

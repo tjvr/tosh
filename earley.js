@@ -270,9 +270,9 @@ var Earley = (function() {
       return (typeof symbol === "string" ? symbol : stringify(symbol));
     }
 
-    console.log(tokens.slice(0, cursorIndex).map(tok)
-                .concat(["|"])
-                .concat(tokens.slice(cursorIndex).map(tok)).join(" "));
+    // console.log(tokens.slice(0, cursorIndex).map(tok)
+    //             .concat(["|"])
+    //             .concat(tokens.slice(cursorIndex).map(tok)).join(" "));
 
     var cursorToken = { kind: "cursor" };
     var before = tokens.slice(0, cursorIndex);
@@ -350,17 +350,17 @@ var Earley = (function() {
       }
     }
 
-    console.table(completions.map(function(s) {
-      var info = s.rule.process._info;
-      return {
-        start: s.start,
-        pre: s.pre.map(pretty).join(" "),
-        completion: s.completion.map(pretty).join(" "),
-        post: s.post.map(pretty).join(" "),
-        end: s.end,
-        rule: info ? info.selector : null,
-      };
-    }));
+    // console.table(completions.map(function(s) {
+    //   var info = s.rule.process._info;
+    //   return {
+    //     start: s.start,
+    //     pre: s.pre.map(pretty).join(" "),
+    //     completion: s.completion.map(pretty).join(" "),
+    //     post: s.post.map(pretty).join(" "),
+    //     end: s.end,
+    //     rule: info ? info.selector : null,
+    //   };
+    // }));
 
     // cases it fails:
     //
