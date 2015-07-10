@@ -195,71 +195,6 @@ var Language = (function(Earley) {
   };
 
 
-  /* define Scratch blocks */
-
-  var categoriesById = {
-    1:  "motion",
-    2:  "looks",
-    3:  "sound",
-    4:  "pen",
-    5:  "events",
-    6:  "control",
-    7:  "sensing",
-    8:  "operators",
-    9:  "variable",
-    10: "custom",
-    11: "parameter",
-    12: "list",
-    20: "extension",
-    42: "grey",
-  };
-
-  var blocks = [];
-  var blocksBySelector = {};
-
-  var inputPat = /(%[a-zA-Z](?:\.[a-zA-Z]+)?)/g;
-
-  scratchCommands.push(["%m.var", "r", 9, "readVariable"]);
-  scratchCommands.push(["%m.list", "r", 12, "contentsOfList:"]);
-  scratchCommands.push(["%m.param", "r", 11, "getParam"]); // TODO
-  scratchCommands.push(["else", "else", 6, "else"]);
-  scratchCommands.push(["end", "end", 6, "end"]);
-  scratchCommands.push(["...", "ellipsis", 42, "ellipsis"]);
-
-  var typeShapes = {
-    " ": "stack",
-    "b": "predicate",
-    "c": "c-block",
-    "e": "if-block",
-    "f": "cap",
-    "h": "hat",
-    "r": "reporter",
-    "cf": "c-block",
-
-    "else": "else",
-    "end": "end",
-    "ellipsis": "ellipsis",
-  };
-
-  scratchCommands.forEach(function(command) {
-    if (command[0] === "--" || command[0] === "-") return;
-    var block = {
-      spec: command[0],
-      parts: command[0].split(inputPat),
-      shape: typeShapes[command[1]], // /[ bcefhr]|cf/
-      category: categoriesById[command[2] % 100],
-      selector: command[3],
-      defaults: command.slice(4),
-    };
-    if (block.selector == 'doIf') return;
-    blocks.push(block);
-    blocksBySelector[block.selector] = block;
-  });
-
-  blocksBySelector['*'].display = '×';
-  blocksBySelector['/'].display = '÷';
-
-
   /* helper functions */
 
   function identity(x) {
@@ -429,7 +364,7 @@ var Language = (function(Earley) {
 
   function block(selector) {
     var indexes = [].slice.apply(arguments, [1]);
-    var info = blocksBySelector[selector];
+    var info = Scratch.blocksBySelector[selector];
     assert(info);
     return blockArgs.apply(null, [info].concat(indexes));
   }
@@ -470,7 +405,7 @@ var Language = (function(Earley) {
   }
 
   function infix(info) {
-    return blockArgs(blocksBySelector[info], 0, 2);
+    return blockArgs(Scratch.blocksBySelector[info], 0, 2);
   }
 
   var colors = {
@@ -664,7 +599,7 @@ var Language = (function(Earley) {
 
     Rule("s0", [{kind: 'string'}], literal),
 
-    Rule("b0", [{kind: 'false'}], identity), // "<>"
+    Rule("b0", [{kind: 'false'}], constant(false)), // "<>"
 
     Rule("c0", [{kind: 'color'}], hexColor),
 
@@ -820,16 +755,12 @@ var Language = (function(Earley) {
 
     "*", "/", "%",
     "+", "-",
+
+    "doIf", // doIf and doIfElse have the same grammar rule!
   ];
 
   var doneSpecs = {};
-  foo = [
-    blocksBySelector['say:'],
-    blocksBySelector['think:'],
-    blocksBySelector['%'],
-  ]
-  foo = blocks;
-  foo.forEach(function(block) {
+  Scratch.blocks.forEach(function(block) {
     if (alreadyDefined.indexOf(block.selector) > -1) return;
     if (doneSpecs[block.spec]) return;
     doneSpecs[block.spec] = true;
@@ -838,7 +769,7 @@ var Language = (function(Earley) {
     var argIndexes = [];
 
     block.parts.forEach(function(part, i) {
-      var m = inputPat.exec(part);
+      var m = Scratch.inputPat.exec(part);
       if (!m) {
         part.split(/(\?)|[ ]+/g).forEach(function(word) {
           if (!word) return;
@@ -935,7 +866,7 @@ var Language = (function(Earley) {
     var info = {
       isCustom: true,
       spec: spec,
-      parts: spec.split(inputPat),
+      parts: spec.split(Scratch.inputPat),
       category: "custom",
     };
 
@@ -998,8 +929,6 @@ var Language = (function(Earley) {
       Rule("blank-line", [new LineSpec({blank: true})], constant(null)),
   ]);
 
-
-  /* foo */
 
   return {
     tokenize: tokenize,

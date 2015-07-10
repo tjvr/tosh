@@ -1,5 +1,3 @@
-var localStorage = window.localStorage;
-
 var editor = document.getElementById('editor');
 
 var cm = CodeMirror(editor, {
@@ -23,13 +21,6 @@ var onResize = function() {
 };
 window.addEventListener('resize', onResize);
 onResize();
-
-document.addEventListener('keydown', function(e) {
-  if ((e.metaKey || e.ctrlKey) && e.keyCode === 13) {
-    e.preventDefault();
-    compile();
-  }
-});
 
 /*****************************************************************************/
 
@@ -464,16 +455,10 @@ replaceChildren($('#sidebar')[0], [
 cm.on('change', function(cm) {
   window.localStorage['editor_content'] = cm.getValue();
   showHint();
+  App.editorDirty = true;
+  App.phosphorusDirty = true;
+  App.projectDirty = true;
 });
-
-function exportPhosphorus(json) {
-  P.IO.init();
-
-  var request = P.IO.loadJSONProject(json);
-  P.player.load2(request, function(stage) {
-    stage.triggerGreenFlag();
-  });
-}
 
 function makeJson(scripts) {
   var scriptCount = scripts.length;
@@ -577,11 +562,127 @@ function makeJson(scripts) {
   return json;
 };
 
-function measureHeight(blocks) {
-  return 100;
+var Project = Format.Project;
+var Oops = Format.Oops;
+
+
+var App = new function() {
+  this.project = Project.new();
+  this.spriteIndex = 0;
+
+  this.editorDirty = false;
+  this.phosphorusDirty = true;
+  this.projectDirty = false;
+};
+
+App.drop = function(f, cb) {
+  var reader = new FileReader;
+  reader.onloadend = function() {
+    var ab = reader.result;
+    var zip = new JSZip(ab);
+    cb(Project.load(ab));
+  };
+  reader.readAsArrayBuffer(f);
+};
+
+App.sync = function() {
+  /* grab data out of phosphorus */
+  var phosphorus = App.stage;
+  if (!phosphorus) return;
+
+  [phosphorus].concat(phosphorus.children).forEach(function(s) {
+    if (s.isStage || s.isSprite) {
+      var t = s._tosh;
+      assert(t.objName === s.objName);
+
+      t.variables.forEach(function(variable) {
+        variable.value = s.vars[variable.name];
+      });
+      t.lists.forEach(function(list) {
+        list.contents = s.lists[list.listName];
+      });
+      t.currentCostumeIndex = s.currentCostumeIndex;
+
+      if (s.isStage) {
+        t.tempoBPM = s.tempoBPM;
+      } else {
+        t.scratchX = s.scratchX;
+        t.scratchY = s.scratchY;
+        t.direction = s.direction;
+        t.rotationStyle = s.rotationStyle;
+        t.visible = s.visible;
+      }
+
+    } else if (s.target) {
+      // Watcher
+    }
+
+  });
 }
 
-function compile() {
+App.makeZip = function() {
+  App.sync();
+  App.flushEditor();
+
+  var zip = Project.save(App.project);
+        var json = JSON.parse(zip.file('project.json').asText());
+        window.json = json;
+  var file = zip.generate({ type: 'blob' });
+  return file;
+}
+
+App.save = function() {
+  var file = this.makeZip();
+  var a = el('a', {
+    style: 'display: none;',
+    download: 'tosh.sb2',
+    href: URL.createObjectURL(file),
+  }, " ");
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
+
+App.preview = function(start) {
+  App.isCompiling = true;
+
+  var file = this.makeZip();
+  // TODO don't create a zip here
+  if (App.stage) {
+    App.stage.stopAll();
+  }
+  this.phosphorusDirty = false; // we're sending phosphorus a zip
+  var request = P.IO.loadSB2File(file);
+  P.player.showProgress(request, function(stage) {
+    App.isCompiling = false;
+    App.stage = stage;
+
+    [stage].concat(stage.children).forEach(function(s) {
+      if (s.isStage) {
+        s._tosh = App.project;
+      } else if (s.isSprite) {
+        s._tosh = App.project.sprites[s.indexInLibrary];
+      }
+      console.log(s._tosh, s);
+    });
+
+    if (start) {
+      stage.focus();
+      stage.triggerGreenFlag();
+    } else {
+      cm.focus();
+    }
+  });
+};
+
+App.preFlagClick = function() {
+  if (App.phosphorusDirty) {
+    App.preview(true);
+    return true; // tells phosphorus to give up
+  }
+};
+
+App.flushEditor = function() {
   var finalState = cm.getStateAfter(cm.getDoc().size, true);
   function compileLine(b) {
     if (!b) return b;
@@ -592,12 +693,11 @@ function compile() {
       return b;
     }
   }
-  console.log(finalState.lines.map(compileLine).join('\n'));
 
   cm.clearGutter('errors');
   var lines = finalState.lines.slice();
   try {
-    var scriptBlocks = compileFile(lines);
+    var scripts = Compiler.compile(lines);
   } catch (e) {
     console.log(e);
     var line = finalState.lines.length - lines.length + 1;
@@ -605,169 +705,148 @@ function compile() {
     cm.setGutterMarker(line, 'errors', marker);
     return;
   }
-  console.log(JSON.stringify(scriptBlocks).replace(/],/g, "],\n"));
 
-  var y = 10;
-  var scripts = scriptBlocks.map(function(blocks) {
-    var script = [10, y, blocks];
-    y += measureHeight(blocks);
-    return script;
-  });
+  var target = 'project.sprites.' + App.spriteIndex;
+  oops.do(target, 'setProperty', 'scripts', scripts);
+};
 
-  var json = makeJson(scripts);
-  exportPhosphorus(json);
+App.switchSprite = function(index) {
+  this.spriteIndex = index;
+  var sprite = this.project.sprites[this.spriteIndex];
+  console.log('switchSprite', sprite.objName);
+};
 
 
-  var zip = new JSZip();
-  zip.file('project.json', JSON.stringify(json));
-  var file = zip.generate({type:"blob"});
 
-  var a = $('#save')[0];
-  a.href = URL.createObjectURL(file);
-  a.download = 'tosh.sb2';
-}
 
-function Stream(seq) {
-  this.seq = seq;
-}
-Stream.prototype.token = function() {
-  return this.seq[0];
-}
-Stream.prototype.next = function() {
-  this.shift();
-}
+var oops = new Oops(App);
 
-function compileFile(lines) {
-  lines.push({info: {shape: 'eof'}});
-  var scripts = [];
-  while (true) {
-    switch (lines[0].info.shape) {
-      case 'blank':
-        lines.shift();
-        break;
-      case 'eof':
-        return scripts;
-      default:
-        scripts.push(compileScript(lines));
-        switch (lines[0].info.shape) {
-          case 'blank':
-            break;
-          case 'eof':
-            return scripts;
-          default:
-            assert(false);
-        }
+oops.bind('project', function(target) {
+  App.dirty = true;
+});
+
+oops.bind('', function(target) {
+  if (target !== '') return;
+  App.spriteIndex = 0;
+});
+
+oops.bind('project.sprites', function(target, name) {
+  if (target === 'project.sprites') {
+    if (name === 'insert' || App.spriteIndex >= App.project.sprites.length) {
+      App.spriteIndex = App.project.sprites.length - 1;
     }
-  }
-}
-
-function compileBlank(lines, isRequired) {
-  if (isRequired) {
-    assert(lines[0].info.shape === 'blank');
-    lines.shift();
-  }
-  while (true) {
-    if (lines[0].info.shape === 'blank') {
-      lines.shift();
-    } else {
-      return;
-    }
-  }
-}
-
-function compileScript(lines) {
-  // assert(lines[0].info.shape === 'hat');
-  // var hat = compileBlock(lines);
-  var blocks = compileBlocks(lines);
-  // blocks.insert(0, hat);
-  return blocks;
-}
-
-function compileBlocks(lines) {
-  var result = [];
-  if (lines[0].info.shape === 'ellipsis') {
-    lines.shift();
-    return [];
-  }
-  while (true) {
-    switch (lines[0].info.shape) {
-      case 'cap':
-        var block = compileBlock(lines);
-        if (block) result.push(block);
-        return result;
-      default:
-        var block = compileBlock(lines);
-        if (block) {
-          result.push(block);
-        } else {
-          assert(result.length, "Empty c-block mouth");
-          return result;
-        }
-    }
-  }
-}
-
-function compileBlock(lines) {
-  var selector;
-  var args;
-  switch (lines[0].info.shape) {
-    case 'c-block':
-      block = lines.shift();
-      selector = block.info.selector;
-      args = block.args.map(compileReporter);
-
-      args.push(compileBlocks(lines));
-      assert(lines[0].info.shape === 'end',
-          'Expected "end", not ' + lines[0].info.shape);
-      lines.shift();
-      break;
-    case 'if-block':
-      block = lines.shift();
-      args = block.args.map(compileReporter);
-
-      args.push(compileBlocks(lines));
-
-      selector = 'doIf';
-      switch (lines[0].info.shape) {
-        case 'else':
-          selector = 'doIfElse';
-          lines.shift();
-
-          args.push(compileBlocks(lines));
-
-          // FALL-THRU
-        case 'end':
-          assert(lines[0].info.shape === 'end',
-              'Expected "end", not ' + lines[0].info.shape);
-          lines.shift();
-          break;
-        default:
-          assert(false, 'Expected "else" or "end", not ' + lines[0].info.shape);
-      }
-      break;
-    case 'hat':
-    case 'stack':
-    case 'cap':
-      block = lines.shift();
-      selector = block.info.selector;
-      args = block.args.map(compileReporter);
-      break;
-    default:
-      console.log(lines[0]);
-      return;
-  }
-  console.log(selector, args);
-  return [selector].concat(args);
-}
-
-function compileReporter(b) {
-  if (b.info) {
-    return [b.info.selector].concat(b.args.map(compileReporter));
-  } else if (b.value) { // ie. a token
-    return b.value;
   } else {
-    return b;
+    App.spriteIndex = parseInt(target.split('.')[2] || -1);
   }
-}
+});
 
+Oops.add('newSprite', {
+  redo: function(project) {
+    project.sprites.push(Project.newSprite());
+    project.children.push(Project.newSprite());
+    App.switchSprite(project.sprites.length - 1);
+  },
+  undo: function(project) {
+    project.sprites.pop();
+  },
+});
+
+Oops.add('deleteSprite', {
+  init: function(project, index) {
+    var sprite = project.sprites[index];
+    var childIndex = project.children.indexOf(sprite);
+    return [project, sprite, index, childIndex];
+  },
+  redo: function(project, sprite, spriteIndex, childIndex) {
+    project.sprites.splice(spriteIndex, 1);
+    project.children.splice(childIndex, 1);
+    App.switchSprite(project.sprites.length - 1);
+  },
+  undo: function(project, sprite, spriteIndex, childIndex) {
+    project.sprites.splice(spriteIndex, 0, sprite);
+    project.children.splice(childIndex, 0, sprite);
+    App.switchSprite(spriteIndex);
+  },
+});
+
+// script
+
+function updateScript(target, op) {
+}
+oops.bind('spriteIndex', updateScript);
+oops.bind('project.sprites', function(target, op) {
+  if (target.indexOf('project.sprites.' + App.spriteIndex) === 0) {
+    updateScript(target, op);
+  }
+});
+
+
+
+// events
+
+var isMac = /Mac/i.test(navigator.userAgent);
+
+document.addEventListener('keydown', function(e) {
+  if (e.altKey) return;
+  if (e.metaKey && e.ctrlKey) return;
+  if (isMac ? e.metaKey : e.ctrlKey) {
+    // C-bindings
+    switch (e.keyCode) {
+      case 13: // run:  ⌘↩
+        var vim = cm.state.vim;
+        if (!vim || (!vim.visualMode && !vim.insertMode)) {
+          App.preview(true);
+        }
+        e.preventDefault();
+        break;
+      case 83: // save: ⌘S
+        App.save();
+        e.preventDefault();
+        break;
+      case 89:
+        oops.undo();
+        break;
+      case 90: // redo: ⌘⇧Z ⌘Y
+        if (e.shiftKey) { // undo:  ⌘Z C-Z
+          if (isMac) {
+            oops.redo();
+            break;
+          }
+        } else {
+          oops.undo();
+          break;
+        }
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    return;
+  } else {
+    if (e.metaKey || e.ctrlKey) return;
+  }
+});
+
+// project controls...
+$('.player')[0].addEventListener('keydown', function(e) {
+  if (!App.stage) return;
+  switch (e.keyCode) {
+    case 13: // green flag:  ↩
+      $('.flag')[0].click();
+      break;
+    case 27: // stop:  ESC
+      if (App.stage) {
+        cm.focus();
+        break;
+      }
+    default:
+      return;
+  }
+  e.preventDefault();
+}, true);
+
+// happy vim :w
+cm.save = App.preview.bind(App);
+
+App.preview(false);
 
