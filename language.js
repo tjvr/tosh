@@ -18,6 +18,7 @@ var Language = (function(Earley) {
   // TODO should we allow () as an empty number input slot?
 
   var TOKENS = [
+    ['ellipsis', /\.{3}/],
     ['comment', /\/{2}(.*)$/],
     ['false',   /\<\>/],
     ['zero',    /\(\)/],
@@ -440,13 +441,13 @@ var Language = (function(Earley) {
     return -num(b);
   }
 
-  /* Precedence
+  /* precedence
    *
    *  [loosest]
    *              stack blocks              eg. move … steps
-   *              numeric reporter blocks   eg. sin of …
    *              arithmetic                eg. + -
    *                                        eg. * /
+   *              numeric reporter blocks   eg. sin of …
    *              simple reporters          eg. x position
    *  [tightest]
    *
@@ -539,9 +540,14 @@ var Language = (function(Earley) {
 
     /* --------------------------------------------------------------------- */
 
-    Rule("b8", ["b8", ["and"], "b7"], infix("&")),
-    Rule("b8", ["b8", ["or"], "b7"], infix("|")),
-    Rule("b8", ["b7"], identity),
+    Rule("b8", ["b-and"], identity),
+    Rule("b8", ["b-or"], identity),
+
+    // disallow nesting and/or
+    Rule("b-and", ["b-and", ["and"], "b7"], infix("&")),
+    Rule("b-and", ["b7"], identity),
+    Rule("b-or", ["b-or", ["or"], "b7"], infix("|")),
+    Rule("b-or", ["b7"], identity),
 
     Rule("b7", [["not"], "b7"], block("not", 1)),
     Rule("b7", ["b6"], identity),
@@ -740,23 +746,46 @@ var Language = (function(Earley) {
   // g.addRule(Rule("m_spriteOrStage", ["AnyName"], identity));
   // g.addRule(Rule("m_touching", ["AnyName"], identity));
 
+  
+  /* For Compiler.generate() */
+
+  var precedenceLevels = [
+    [], // zero
+    ['*', '/', '%'],
+    ['+', '-'],
+    ['=', '<', '>', 'list:contains:'],
+    ['not'],
+    ['&',],  // actually & and | have the same precedence! 
+    ['|',],  // except they must be parenthesised when inside each other.
+    // [ stack blocks ]
+  ];
+
+  var precedence = {};
+  precedenceLevels.forEach(function(list, index) {
+    list.forEach(function(selector) {
+      precedence[selector] = index;
+    });
+  });
+
+  // speccial-case "join"
+  precedence['concatenate:with:'] = -1;
 
 
   /* Add rules for blocks */
 
   var alreadyDefined = [
-    "letter:of:", "concatenate:with:",
+    'letter:of:', 'concatenate:with:',
 
-    "&", "|", "not",
-    "=", "<", ">", "list:contains:",
+    '&', '|', 'not',
+    '=', '<', '>', 'list:contains:',
 
-    "randomFrom:to:", "stringLength:", "rounded", "computeFunction:of:",
-    "getAttribute:of:", "distanceTo:",
+    'randomFrom:to:', 'stringLength:', 'rounded', 'computeFunction:of:',
+    'getAttribute:of:', 'distanceTo:',
 
-    "*", "/", "%",
-    "+", "-",
+    '*', '/', '%',
+    '+', '-',
 
-    "doIf", // doIf and doIfElse have the same grammar rule!
+    'doIf', // doIf and doIfElse have the same grammar rule!
   ];
 
   var doneSpecs = {};
@@ -941,6 +970,10 @@ var Language = (function(Earley) {
     addDefinition: addDefinition,
     addCustomBlock: addCustomBlock,
     splitStringToken: splitStringToken,
+
+    // for Compiler
+    precedence: precedence,
+    menusThatAcceptReporters: menusThatAcceptReporters,
   };
 
 }(Earley));

@@ -103,25 +103,34 @@ var Format = (function() {
              a.indexInLibrary > b.indexInLibrary ? +1 : 0;
     });
 
-    // ensure properties are present 
-    [p].concat(p.children).forEach(function(s) {
+    [p].concat(p.sprites).forEach(function(s) {
+      // ensure properties are present
       s.scripts = s.scripts || [];
       s.scriptComments = s.scriptComments || [];
       s.sounds = s.sounds || [];
 
       s.variables = s.variables || [];
       s.lists = s.lists || [];
-    });
 
-    [p].concat(p.children).forEach(function(s) {
+      // sort scripts
+      s.scripts.sort(function(a, b) {
+        var ax = a[0], ay = a[1], bx = b[0], by = b[1];
+        return ay > by ? +1 : ay < by ? -1
+             : ax > bx ? +1 : ax < bx ? -1 : 0;
+      });
+
       // load costumes
+      s.costumes = s.costumes || [];
       s.costumes.forEach(function(costume) {
         var ext = costume.baseLayerMD5.split('.').pop(),
-            filename = costume.baseLayerID + '.' + ext;
+            root = costume.baseLayerID + '.';
 
-        // store file
-        var f = zip.file(filename);
-        costume.file = f;
+        // load file
+        var f = zip.file(root + ext);
+        if (!f) { ext = 'png'; f = zip.file(root + ext); }
+        if (!f) { ext = 'jpg'; f = zip.file(root + ext); }
+        if (!f) { ext = 'svg'; f = zip.file(root + ext); }
+        costume.file = f.asArrayBuffer();
         costume.ext = ext;
 
         // make an <image> element
@@ -137,13 +146,14 @@ var Format = (function() {
       });
 
       // load sounds
+      s.sounds = s.sounds || [];
       s.sounds.forEach(function(sound) {
-        var ext = sound.md5.split('.').pop(),
+        var ext = sound.md5.split('.').pop() || 'wav',
             filename = sound.soundID + '.' + ext;
 
-        // store file
+        // load file
         var f = zip.file(filename);
-        sound.file = f;
+        sound.file = f.asArrayBuffer();
         sound.ext = ext;
 
         // fixup `name` property
@@ -160,6 +170,7 @@ var Format = (function() {
 
   Project.copy = function(p) {
     var copy = function(v) {
+      if (!v) return v;
       if (v.constructor === Array) {
         return v.map(copy);
       } else if (v.constructor === Object) {
@@ -216,14 +227,14 @@ var Format = (function() {
       });
 
       // save costumes
-      s.sounds.forEach(function(costume) {
+      s.sounds.forEach(function(sound) {
         // fixup `name` property
         sound.soundName = sound.name;
         delete sound.name;
 
         // store file
         sound.soundID = highestSoundId++;
-        costume.md5 = '';
+        sound.md5 = '';
         var filename = sound.soundID + '.' + sound.ext;
         zip.file(filename, sound.file);
         delete sound.ext;
@@ -235,7 +246,6 @@ var Format = (function() {
     // store json
     zip.file('project.json', JSON.stringify(p));
 
-    console.log(p);
     return zip;
   };
 
@@ -279,7 +289,7 @@ var Format = (function() {
     },
     'move': {
       redo: function(list, indexBefore, indexAfter) {
-        var item = list.splice(indexBefore, 1)[0]; 
+        var item = list.splice(indexBefore, 1)[0];
         list.splice(indexAfter, 0, item);
       },
       undo: function(list, indexBefore, indexAfter) {
@@ -345,8 +355,18 @@ var Format = (function() {
     // make action
     var _this = this;
     var action = {
-      undo: function() { info.undo.apply(info, args); _this.trigger(target, op); },
-      redo: function() { info.redo.apply(info, args); _this.trigger(target, op); },
+      undo: function() {
+        if (info.before) info.before.apply(info, args);
+        info.undo.apply(info, args);
+        if (info.after) info.after.apply(info, args);
+        _this.trigger(target, op);
+      },
+      redo: function() {
+        if (info.before) info.before.apply(info, args);
+        info.redo.apply(info, args);
+        if (info.after) info.after.apply(info, args);
+        _this.trigger(target, op);
+      },
     };
     action.redo();
 

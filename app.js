@@ -1,7 +1,7 @@
 var editor = document.getElementById('editor');
 
 var cm = CodeMirror(editor, {
-  value: localStorage['editor_content'] || "",
+  value: "",
   mode: "tosh",
 
   indentUnit: 3,
@@ -129,6 +129,7 @@ function sb(text) {
 }
 
 function inputSeek(dir) {
+  // TODO fix for ellipsises
   var l = tokenizeAtCursor({ splitSelection: false });
   if (!l) return false;
   if (l.selection.indexOf('\n') > -1) return false;
@@ -453,7 +454,6 @@ replaceChildren($('#sidebar')[0], [
 /* compiling */
 
 cm.on('change', function(cm) {
-  window.localStorage['editor_content'] = cm.getValue();
   showHint();
   App.editorDirty = true;
   App.phosphorusDirty = true;
@@ -575,16 +575,6 @@ var App = new function() {
   this.projectDirty = false;
 };
 
-App.drop = function(f, cb) {
-  var reader = new FileReader;
-  reader.onloadend = function() {
-    var ab = reader.result;
-    var zip = new JSZip(ab);
-    cb(Project.load(ab));
-  };
-  reader.readAsArrayBuffer(f);
-};
-
 App.sync = function() {
   /* grab data out of phosphorus */
   var phosphorus = App.stage;
@@ -663,7 +653,6 @@ App.preview = function(start) {
       } else if (s.isSprite) {
         s._tosh = App.project.sprites[s.indexInLibrary];
       }
-      console.log(s._tosh, s);
     });
 
     if (start) {
@@ -683,6 +672,7 @@ App.preFlagClick = function() {
 };
 
 App.flushEditor = function() {
+  // TODO better way to get thing out of CodeMirror?
   var finalState = cm.getStateAfter(cm.getDoc().size, true);
   function compileLine(b) {
     if (!b) return b;
@@ -720,6 +710,27 @@ App.switchSprite = function(index) {
 
 
 var oops = new Oops(App);
+
+Oops.add('replaceProject', {
+  init: function(app, newProject) {
+    return [app, app.project, newProject];
+  },
+  redo: function(app, before, after) {
+    app.project = after;
+  },
+  undo: function(app, before, after) {
+    app.project = before;
+  },
+  after: function(app) {
+    App.switchSprite(0);
+
+    var code = Compiler.generate(app.project.sprites[0].scripts);
+    cm.setValue(code);
+
+    App.preview(false); // calls App.flushEditor() !
+  },
+});
+
 
 oops.bind('project', function(target) {
   App.dirty = true;
@@ -828,7 +839,8 @@ document.addEventListener('keydown', function(e) {
 });
 
 // project controls...
-$('.player')[0].addEventListener('keydown', function(e) {
+var phosphorusPlayer = $('.player')[0];
+phosphorusPlayer.addEventListener('keydown', function(e) {
   if (!App.stage) return;
   switch (e.keyCode) {
     case 13: // green flag:  ↩
@@ -845,8 +857,50 @@ $('.player')[0].addEventListener('keydown', function(e) {
   e.preventDefault();
 }, true);
 
+// dim play/stop buttons unless running
+setInterval(function() {
+  var isRunning = App.stage && App.stage.isRunning;
+  setClassBool(phosphorusPlayer, 'running', isRunning);
+  setClassBool(phosphorusPlayer, 'not-running', !isRunning);
+}, 200);
+
 // happy vim :w
 cm.save = App.preview.bind(App);
+
+// drop file to open
+
+function cancel(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+}
+document.body.addEventListener('dragover', cancel);
+document.body.addEventListener('dragenter', cancel);
+
+document.body.addEventListener('drop', function(e) {
+  e.preventDefault();
+
+  var f = e.dataTransfer.files[0];
+  if (!f) return;
+
+  var ext = f.name.split('.').pop();
+  if (ext === 'sb2' || ext === 'zip') {
+    var reader = new FileReader;
+    reader.onloadend = function() {
+      var ab = reader.result;
+      var zip = new JSZip(ab);
+      var project = Project.load(zip);
+      oops.do('', 'replaceProject', project);
+    };
+    reader.readAsArrayBuffer(f);
+  }
+});
+
+
+
+
+/*****************************************************************************/
+
+// prepare phosphorus
 
 App.preview(false);
 
