@@ -693,6 +693,7 @@ App.flushEditor = function() {
     var line = finalState.lines.length - lines.length + 1;
     var marker = el('div.error', { style: 'color: #822;'}, "●")
     cm.setGutterMarker(line, 'errors', marker);
+    throw e;
     return;
   }
 

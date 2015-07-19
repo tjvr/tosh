@@ -67,11 +67,18 @@ var Compiler = (function() {
   }
 
   function compileScript(lines) {
-    // assert(lines[0].info.shape === 'hat');
-    var first = compileBlock(lines, true);
-    var blocks = compileBlocks(lines, true);
-    blocks.splice(0, 0, first);
-    return blocks;
+    switch (lines[0].info.shape) {
+      case 'reporter':
+      case 'predicate':
+        var block = compileReporter(lines.shift());
+        console.log(block);
+        return [block];
+      default:
+        var first = compileBlock(lines, true);
+        var blocks = compileBlocks(lines, true);
+        blocks.splice(0, 0, first);
+        return blocks;
+    }
   }
 
   function compileBlocks(lines, maybeEmpty) {
@@ -173,20 +180,22 @@ var Compiler = (function() {
 
   /* measure blocks */
 
+  var measureLog = function(message) {};
+
   function internalHeight(info) {
     var shape = info.shape;
     if (shape === 'if-block') {
       return 36;
-    } else if (/c-block/.test(shape)) {  // any(i.shape === 'stack' for i in bt.inserts):
-      return 21;
-    } else if (shape === 'stack') {
-      return 9;
     } else if (/cap/.test(shape)) {
       if (shape === 'c-block cap') { // "forever"
         return 34;
       } else {
         return 8;
       }
+    } else if (/c-block/.test(shape)) {  // any(i.shape === 'stack' for i in bt.inserts):
+      return 21;
+    } else if (shape === 'stack') {
+      return 9;
     } else if (shape === 'hat') {
       if (info.selector === 'whenGreenFlag') {
         return 25;
@@ -237,7 +246,8 @@ var Compiler = (function() {
     throw "emptySlot can't do " + inputShape;
   }
 
-  function measureList(list) {
+  function measureList(list, debug) {
+    if (debug) measureLog = debug;
     return sum(list.map(measureBlock)) - 3 * (list.length - 1);
   }
 
@@ -249,23 +259,30 @@ var Compiler = (function() {
     if (!info) throw "unknown selector: " + selector;
 
     var internal = internalHeight(info);
-    if (selector === 'stop' && args[0] !== 'all' && args[0] !== 'this script') {
+    measureLog(internal, "internalHeight", info.selector);
+    if (selector === 'stop' &&
+        ['all', 'this script'].indexOf(args[0]) === -1) {
       internal += 1;
     }
 
-    var argHeight = 0
-    var stackHeight = 0
+    var argHeight = 0;
+    var stackHeight = 0;
 
     if (!info.inputs.length) {
       argHeight = noInputs(info);
+      measureLog(argHeight, "noInputs", info.shape);
 
     } else { // has inputs
       for (var i=0; i<args.length; i++) {
         var arg = args[i];
-        var inputShape = info.inputs[i] ? Scratch.getInputShape(info.inputs[i]) : 'list';
+        var inputShape = info.inputs[i] ? Scratch.getInputShape(info.inputs[i])
+                                        : 'list';
         var nonEmpty = (arg instanceof Array); // note this could be a *block*!
         var foo;
-        if (!nonEmpty) foo = emptySlot(inputShape);
+        if (!nonEmpty) {
+          foo = emptySlot(inputShape);
+          measureLog(foo, "emptySlot", inputShape);
+        }
 
         if (inputShape === 'list') {
           // c-mouth
@@ -292,7 +309,9 @@ var Compiler = (function() {
         }
       }
     }
-    return internal + argHeight + stackHeight;
+    var total = internal + argHeight + stackHeight;
+    measureLog(total, block);
+    return total;
   }
 
 
@@ -363,7 +382,7 @@ var Compiler = (function() {
 
     // top-level reporters
     if (info.shape === 'reporter' || info.shape === 'predicate') {
-      return generateReporter(block, null, 0);
+      return generateReporter(block, null, -Infinity);
     }
 
     var result = generateParts(info, args, +Infinity);
@@ -465,7 +484,6 @@ var Compiler = (function() {
         }
         if (Language.menusThatAcceptReporters.indexOf(menu) > -1) {
           // treat as string
-          // TODO fix this
         } else {
           return value;
         }
@@ -501,6 +519,7 @@ var Compiler = (function() {
   return {
     generate: generate, // scripts[] -> lines[]
     compile: compile,   // lines[] -> scripts[]
+    _measure: measureList,
   };
 
 }());
