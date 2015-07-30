@@ -404,3 +404,60 @@ var Format = (function() {
 
 }());
 
+/*****************************************************************************/
+
+var Oops = function(actions) {
+  this.actions = actions;
+  this.undoStack = [];
+  this.redoStack = [];
+};
+
+Oops.prototype.do = function(op /*, args */) {
+  var info = actions[op];
+  var args = [].slice.call(arguments, 2);
+
+  // .init() may modify args
+  args = info.init ? info.init.apply(null, args) : args;
+  if (!args) return false;
+
+  // make action
+  var _this = this;
+  var action = {
+    undo: function() {
+      if (info.before) info.before.apply(info, args);
+      info.undo.apply(info, args);
+      if (info.after) info.after.apply(info, args);
+    },
+    redo: function() {
+      if (info.before) info.before.apply(info, args);
+      info.redo.apply(info, args);
+      if (info.after) info.after.apply(info, args);
+    },
+  };
+  action.redo();
+
+  // save so we can undo it
+  this.undoStack.push(action);
+
+  // clear redo stack
+  this.redoStack = [];
+
+  return true;
+};
+
+Oops.prototype.undo = function() {
+  if (!this.undoStack.length) return false;
+  var action = this.undoStack.pop();
+  action.undo();
+  this.redoStack.push(action);
+  return true;
+};
+
+Oops.prototype.redo = function() {
+  if (!this.redoStack.length) return false;
+  var action = this.redoStack.pop();
+  action.redo();
+  this.undoStack.push(action);
+  return true;
+};
+

@@ -1,0 +1,189 @@
+<!doctype html>
+<meta charset=utf8>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+
+<title>test :: tosh</title>
+
+<link href="http://fonts.googleapis.com/css?family=Noto+Sans:400,700|Source+Code+Pro:400,600" rel="stylesheet" type="text/css">
+<link rel=stylesheet href=/style.css>
+
+<!---------------------------------------------------------------------------->
+
+<h1>
+  <a href="/app/test/">tosh tests <strong>/</strong></a>
+  <strong>fuzz</strong>
+</h1>
+
+<!---------------------------------------------------------------------------->
+
+<script src=/app/commands.js></script>
+<script src=/app/compile.js></script>
+<script src=/util.js></script>
+
+<script>
+
+var scripts = [
+ [10, 10, [['+', '', '']]],
+ [10, 40, [['randomFrom:to:', 1, 10]]],
+ [10, 70, [['&', false, false]]],
+ [10, 101, [['<', '', '']]],
+ [10, 132, [['bounceOffEdge']]],
+ [10, 167, [['bounceOffEdge'], ['bounceOffEdge']]],
+ [10, 224, [['bounceOffEdge'], ['bounceOffEdge'], ['bounceOffEdge']]],
+ [10, 303, [['wait:elapsed:from:', 1]]],
+ [10, 338, [['doWaitUntil', false]]],
+ [10, 373, [['doRepeat', 10, null]]],
+ [10, 432, [['doRepeat', 10, [['wait:elapsed:from:', 1]]]]],
+ [10,
+  504,
+  [['doRepeat', 10, [['wait:elapsed:from:', 1], ['wait:elapsed:from:', 1]]]]],
+ [10,
+  598,
+  [['doRepeat',
+    10,
+    [['wait:elapsed:from:', 1],
+     ['wait:elapsed:from:', 1],
+     ['wait:elapsed:from:', 1]]]]],
+ [10, 714, [['doForever', null]]],
+ [10, 770, [['doForever', [['wait:elapsed:from:', 1]]]]],
+ [10,
+  839,
+  [['doForever', [['wait:elapsed:from:', 1], ['wait:elapsed:from:', 1]]]]],
+ [10,
+  930,
+  [['doForever',
+    [['wait:elapsed:from:', 1],
+     ['wait:elapsed:from:', 1],
+     ['wait:elapsed:from:', 1]]]]],
+ [10, 1043, [['forward:', 10]]],
+ [10, 1078, [['forward:', ['+', '', '']]]],
+ [10, 1117, [['forward:', ['+', ['+', '', 10], '']]]],
+ [10, 1160, [['+', '', '']]],
+ [10, 1190, [['+', ['+', '', ''], '']]],
+ [10, 1224, [['doIf', false, null]]],
+ [10, 1283, [['doIf', ['&', false, false], null]]],
+ [10, 1347, [['doIf', ['&', false, ['&', false, false]], null]]],
+ [10, 1416, [['&', false, false]]],
+ [10, 1447, [['&', false, ['&', false, false]]]],
+ [10, 1483, [['=', ['+', '', ''], '']]],
+ [10, 1518, [['+', ['=', '', ''], '']]],
+ [10, 1553, [['doIfElse', false, null, null]]],
+ [10,
+  1639,
+  [['bounceOffEdge'],
+   ['bounceOffEdge'],
+   ['bounceOffEdge'],
+   ['bounceOffEdge']]],
+ [10, 1740, [['forward:', 10]]],
+ [10, 1775, [['&', false, ['&', false, ['&', false, false]]]]],
+ [10, 1816, [['&', false, ['not', false]]]],
+ [10, 1852, [['doIf', ['&', false, ['&', false, ['&', false, false]]], null]]],
+ [10, 1926, [['deleteClone']]],
+ [10, 1960, [['setRotationStyle', 'left-right']]],
+ [10, 1995, [['stopScripts', 'all']]],
+ [10, 2029, [['stopScripts', 'other scripts in sprite']]],
+ [10, 2064, [['touching:', '_mouse_']]],
+ [10, 2095, [['mousePressed']]],
+ [10, 2126, [['mouseX']]],
+ [10, 2156, [['distanceTo:', '_mouse_']]],
+ [10, 2186, [['+', '', '']]],
+ [10, 2216, [['whenGreenFlag']]],
+ [10, 2267, [['whenKeyPressed', 'space']]],
+ [10, 2311, [['whenClicked']]],
+ [10, 2355, [['whenSceneStarts', 'backdrop1']]],
+ [10, 2399, [['whenSensorGreaterThan', 'loudness', 10]]],
+ [10, 2443, [['whenIReceive', 'message1']]],
+ [10, 2487, [['whenIReceive', 'message1']]],
+ [10, 2531, [['broadcast:', 'message1']]],
+ [10, 2566, [['doBroadcastAndWait', 'message1']]],
+ [10, 2601, [['whenCloned']]],
+ [10, 2645, [['senseVideoMotion', 'motion', 'this sprite']]],
+ [10, 2675, [['getAttribute:of:', 'x position', ['+', '', '']]]],
+ [10, 2709, [['setVar:to:', 'asdf', 0]]],
+ [10, 2744, [['setVar:to:', 'asdf', ['+', '', '']]]],
+ [10, 2783, [['deleteLine:ofList:', 1, 'list']]],
+ [10, 2818, [['deleteLine:ofList:', ['+', '', ''], 'list']]],
+ [10, 2857, [['deleteLine:ofList:', ['+', '', ['+', '', '']], 'list']]],
+ [10,
+  2900,
+  [['doForever',
+    [['doForever',
+      [['doForever',
+        [['doForever',
+          [['doForever',
+            [['doForever',
+              [['doForever',
+                [['doForever',
+                  [['doForever',
+                    [['doForever',
+                      [['doForever',
+                        [['doForever',
+                          [['doForever',
+                            [['doForever',
+                              [['doForever',
+                                [['doForever',
+                                  [['createCloneOf',
+                                    '_myself_']]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]],
+ [10, 3524, [['doForever', [['doForever', null]]]]],
+ [10, 3617, [['doForever', [['bounceOffEdge']]]]],
+ [10, 3686, [['doForever', [['doForever', [['bounceOffEdge']]]]]]],
+ [10, 3792, [['doIf', false, [['bounceOffEdge']]]]],
+ [10, 3864, [['doForever', [['bounceOffEdge'], ['doIf', false, null]]]]],
+ [10, 3979, [['doIf', false, [['bounceOffEdge'], ['doForever', null]]]]],
+ [10, 4097, [['doForever', [['doIf', false, null], ['bounceOffEdge']]]]],
+ [10, 4212, [['doIf', false, [['stopScripts', 'all']]]]],
+ [10, 4286, [['doIf', false, [['bounceOffEdge'], ['stopScripts', 'all']]]]],
+ [10,
+  4382,
+  [['doIf',
+    false,
+    [['bounceOffEdge'], ['bounceOffEdge'], ['stopScripts', 'all']]]]],
+ [10, 4500, [['+', '', '']]]];
+
+/*****************************************************************************/
+
+var ul = el('ul'); 
+document.body.appendChild(ul);
+
+function add(el) {
+  ul.appendChild(el);
+}
+
+function testMeasure(blocks, actualHeight, index) {
+  var debug = [];
+  var height = Compiler._measure(blocks, function(/* args */) {
+    debug.push([].slice.apply(arguments).map(JSON.stringify).join(" "));
+  });
+  if (height === actualHeight) {
+    add(el('li p', [
+                el('b', '#' + index), ' ✔ ' + height
+          ]));
+  } else {
+    add(el('li', [
+          el('b', '#' + index),
+        ].concat(debug.map(function(message) {
+          return el('p code', message);
+        })).concat([
+          el('p', '✘ ' + height + ' ≠ ' + actualHeight),
+          el('pre', JSON.stringify(blocks)),
+        ])
+    ));
+  }
+}
+
+var lastY,
+    lastBlocks;
+scripts.forEach(function(script, index) {
+  var x = script[0],
+      y = script[1],
+      blocks = script[2];
+  if (lastBlocks) {
+    var height = y - lastY - 10;
+    testMeasure(lastBlocks, height, index - 1);
+  }
+  lastY = y;
+  lastBlocks = blocks;
+});
+
+</script>
+
