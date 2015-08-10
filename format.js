@@ -43,12 +43,12 @@ var Format = (function() {
       scripts: [],
       scriptComments: [],
 
-      variables: [],
-      lists: [],
+      variables: ko([]),
+      lists: ko([]),
 
-      costumes: [backdrop],
+      costumes: ko([backdrop]),
       currentCostumeIndex: 0,
-      sounds: [],
+      sounds: ko([]),
 
       penLayerMD5: '5c81a336fab8be57adc039a8a2b33ca9.png',
       penLayerID: 0,
@@ -72,12 +72,12 @@ var Format = (function() {
       scripts: [],
       scriptComments: [],
 
-      variables: [],
-      lists: [],
+      variables: ko([]),
+      lists: ko([]),
 
-      costumes: [turtle],
+      costumes: ko([turtle]),
       currentCostumeIndex: 0,
-      sounds: [],
+      sounds: ko([]),
 
       scratchX: 0,
       scratchY: 0,
@@ -90,6 +90,31 @@ var Format = (function() {
     };
     return sprite;
   };
+
+  Project.newVariable = function(name) {
+    return {
+      _name: ko(name || ""),
+      value: 0,
+      isPersistent: false,
+      _isEditing: ko(false),
+    };
+  };
+
+  Project.newList = function(name) {
+    var name = ko(name || "");
+    return {
+      _name: name,
+      listName: name,
+      contents: [],
+      isPersistent: false,
+      x: 10,
+      y: 10,
+      width: 80,
+      height: 240,
+      _isEditing: ko(false),
+    };
+  };
+
 
   /* load */
 
@@ -107,10 +132,9 @@ var Format = (function() {
       // ensure properties are present
       s.scripts = s.scripts || [];
       s.scriptComments = s.scriptComments || [];
-      s.sounds = s.sounds || [];
 
-      s.variables = s.variables || [];
-      s.lists = s.lists || [];
+      s.variables = ko(s.variables || []);
+      s.lists = ko(s.lists || []);
 
       // sort scripts
       s.scripts.sort(function(a, b) {
@@ -120,8 +144,8 @@ var Format = (function() {
       });
 
       // load costumes
-      s.costumes = s.costumes || [];
-      s.costumes.forEach(function(costume) {
+      s.costumes = ko(s.costumes || []);
+      s.costumes().forEach(function(costume) {
         var ext = costume.baseLayerMD5.split('.').pop(),
             root = costume.baseLayerID + '.';
 
@@ -146,7 +170,7 @@ var Format = (function() {
       });
 
       // load sounds
-      s.sounds = s.sounds || [];
+      s.sounds = ko(s.sounds || []);
       s.sounds.forEach(function(sound) {
         var ext = sound.md5.split('.').pop() || 'wav',
             filename = sound.soundID + '.' + ext;
@@ -161,6 +185,7 @@ var Format = (function() {
         delete sound.soundID;
         delete sound.md5;
       });
+      s.sounds = ko(sounds);
     });
 
     return p;
@@ -168,7 +193,7 @@ var Format = (function() {
 
   /* save */
 
-  Project.copy = function(p) {
+  Project.copyForSave = function(p) {
     var copy = function(v) {
       if (!v) return v;
       if (v.constructor === Array) {
@@ -176,9 +201,12 @@ var Format = (function() {
       } else if (v.constructor === Object) {
         var d = {};
         Object.keys(v).forEach(function(k) {
+          if (/^_/.test(k)) return;
           d[k] = copy(v[k]);
         });
         return d;
+      } else if (ko.isObservable(v)) {
+        return v(); // specific to this
       }
       return v;
     };
@@ -198,7 +226,7 @@ var Format = (function() {
     }));
 
     // copy everything
-    var p = Project.copy(p);
+    var p = Project.copyForSave(p);
     var zip = new JSZip();
 
     // throw away `sprites` array

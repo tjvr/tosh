@@ -415,7 +415,127 @@ function showHint() {
 
 /*****************************************************************************/
 
+var Project = Format.Project;
+var Oops = Format.Oops;
+
+var App = new function() {
+  this.project = Project.new();
+  this.spriteIndex = 0;
+
+  this.editorDirty = false;
+  this.phosphorusDirty = true;
+  this.projectDirty = false;
+
+  this.activeIsStage = ko(false);
+};
+
+
 /* ide */
+
+function NamesEditor(kind, names, factory, addText) {
+
+  var variableList = names.map(function(variable) {
+    return el('li', el('p', ko(function() {
+        var input = el('input', {
+          bind_value: variable._name,
+          placeholder: "my variable",
+
+          on_focus: function() { variable._isEditing.assign(true); },
+          on_blur:  function() { variable._isEditing.assign(false); },
+
+          on_keydown: function(e) {
+            var start = this.selectionStart,
+                end = this.selectionEnd,
+                prefix = this.value.slice(0, start),
+                selection = this.value.slice(start, end),
+                suffix = this.value.slice(end);
+            switch (e.keyCode) {
+              case 13: // Return
+                variable._name.assign(prefix.trim());
+
+                var index = names().indexOf(variable);
+                var newVar;
+                if (selection) {
+                  newVar = factory(suffix.trim());
+                  names.insert(index + 1, newVar);
+
+                  newVar = factory(selection.trim());
+                  names.insert(index + 1, newVar);
+                  newVar._isEditing.assign(true);
+                } else {
+                  newVar = factory(suffix.trim());
+                  names.insert(index + 1, newVar);
+                  newVar._isEditing.assign(true);
+                }
+                break;
+              case 8: // Backspace
+                if (variable._name()) {
+                  return;
+                }
+                var index = names().indexOf(variable);
+                names.remove(index);
+                if (names.length()) {
+                  var focusIndex = index > 0 ? index - 1 : 0;
+                  names()[focusIndex]._isEditing.assign(true);
+                }
+                break;
+              case 46: // Delete
+                if (variable._name()) {
+                  return;
+                }
+                var index = names().indexOf(variable);
+                names.remove(index);
+                if (names.length()) {
+                  names()[index]._isEditing.assign(true);
+                }
+                break;
+              case 38: // Up
+                var index = names().indexOf(variable);
+                if (index - 1 >= 0) {
+                  names()[index - 1]._isEditing.assign(true);
+                }
+                break;
+              case 40: // Down
+                var index = names().indexOf(variable);
+                if (index + 1 < names.length()) {
+                  names()[index + 1]._isEditing.assign(true);
+                }
+                break;
+              case 27: // Escape
+                variable._isEditing.assign(false);
+                break;
+              default:
+                return;
+            }
+            e.preventDefault();
+          },
+        }, variable._name);
+
+        variable._isEditing.subscribe(function(value) {
+          if (value) { input.focus(); } else { input.blur(); }
+        }, false);
+
+        return input;
+      })
+    ));
+  });
+
+  return [
+    el('h2', kind[0].toUpperCase() + kind.slice(1) + " names"),
+    el('ul.reporters', { class: kind }, variableList),
+    el('p.new a', {
+      on_click: function() {
+        var newVar = factory('');
+        names.push(newVar);
+        newVar._isEditing.assign(true);
+      },
+    }, addText),
+  ];
+}
+
+var addNameText = App.activeIsStage.compute(function(isStage) {
+  return isStage ? "＋ for all sprites" : "＋ for this sprite";
+});
 
 replaceChildren($('#sidebar')[0], [
   el('ul#tabs', [
@@ -423,29 +543,15 @@ replaceChildren($('#sidebar')[0], [
     el('li span', "Costumes"),
     el('li span', "Sounds"),
   ]),
-  el('#data.tab.active', [
-    el('h2', "Variable names"),
-    el('ul.variable.reporters', [
-      el('li span', "score"),
-      el('li span', "vx"),
-      el('li span', "vy"),
-      el('li span', "link.from"),
-      el('li span', "link.to"),
-      el('li span', "game over?"),
-      el('li.new a', "＋ for all sprites"),
-    ]),
-    el('h2', "List names"),
-    el('ul.list.reporters', [
-      el('li span', "nodes"),
-      el('li span', "links.from"),
-      el('li span', "links.to"),
-      // el('li span.edit', el('input', { value: 'links.type' })),
-      el('li.new a', "＋ for all sprites"),
-    ]),
-  ]),
+  el('#data.tab.active', (
+    new NamesEditor('variable', App.project.variables, Project.newVariable, addNameText)
+  ).concat(
+    new NamesEditor('list', App.project.lists, Project.newList, addNameText)
+  )),
   el('#costumes.tab'),
   el('#sounds.tab'),
 ]);
+
 
 
 
@@ -459,121 +565,6 @@ cm.on('change', function(cm) {
   App.phosphorusDirty = true;
   App.projectDirty = true;
 });
-
-function makeJson(scripts) {
-  var scriptCount = scripts.length;
-
-  /*var scripts = [
-    [20, 20, [
-      ['whenGreenFlag'],
-      ['doForever', [
-        ['forward:', 10],
-      ]],
-    ]],
-  ];*/
-
-  var turtle = {
-    objName: 'turtle',
-    indexInLibrary: 1,
-
-    direction: 90.0,
-    isDraggable: false,
-    rotationStyle: 'normal',
-    scale: 1.0,
-    scratchX: 0,
-    scratchY: 0,
-    visible: true,
-    spriteInfo: {},
-
-    variables: [],
-    lists: [],
-
-    scriptComments: [],
-    scripts: scripts,
-
-    costumes: [{
-      costumeName: "eyes",
-      baseLayerID: 1,
-      baseLayerMD5: "84f3647091b0f31dbb12d1bdddf72bf7.png",
-      bitmapResolution: 2,
-      rotationCenterX: 143,
-      rotationCenterY: 98
-    }, {
-      costumeName: "blink",
-      baseLayerID: 2,
-      baseLayerMD5: "0a1be9a3d3179ef883fc30787c9990a6.png",
-      bitmapResolution: 2,
-      rotationCenterX: 142,
-      rotationCenterY: 100
-    }],
-    currentCostumeIndex: 0,
-
-    sounds: [{
-      soundName: "meow",
-      soundID: 0,
-      md5: "83c36d806dc92327b9e7049a565c6bff.wav",
-      sampleCount: 18688,
-      rate: 22050,
-      format: "",
-    }],
-  };
-
-  var json = {
-    objName: 'Stage',
-
-    penLayerID: 0,
-    penLayerMD5: 'hi',
-    tempoBPM: 60,
-    videoAlpha: 0.5,
-    info: {
-      scriptCount: scriptCount,
-      spriteCount: 1,
-      videoOn: false,
-    },
-
-    variables: [],
-    lists: [],
-
-    scripts: [],
-    scriptComments: [],
-
-    costumes: [{
-      costumeName: "backdrop1",
-      baseLayerID: 3,
-      baseLayerMD5: "739b5e2a2435f6e1ec2993791b423146.png",
-      bitmapResolution: 1,
-      rotationCenterX: 240,
-      rotationCenterY: 180
-    }],
-    currentCostumeIndex: 0,
-
-    sounds: [{
-      soundName: "pop",
-      soundID: 1,
-      md5: "83a9787d4cb6f3b7632b4ddfebf74367.wav",
-      sampleCount: 258,
-      rate: 11025,
-      format: "",
-    }],
-
-    children: [turtle],
-  };
-
-  return json;
-};
-
-var Project = Format.Project;
-var Oops = Format.Oops;
-
-
-var App = new function() {
-  this.project = Project.new();
-  this.spriteIndex = 0;
-
-  this.editorDirty = false;
-  this.phosphorusDirty = true;
-  this.projectDirty = false;
-};
 
 App.sync = function() {
   /* grab data out of phosphorus */
@@ -802,7 +793,7 @@ document.addEventListener('keydown', function(e) {
   if (e.altKey) return;
   if (e.metaKey && e.ctrlKey) return;
   if (isMac ? e.metaKey : e.ctrlKey) {
-    // C-bindings
+    // global C-bindings
     switch (e.keyCode) {
       case 13: // run:  ⌘↩
         var vim = cm.state.vim;
@@ -832,7 +823,8 @@ document.addEventListener('keydown', function(e) {
       default: return;
     }
   } else {
-    // plain bindings
+    // plain, document-only bindings
+    if (e.target !== document.body) return;
     if (e.metaKey || e.ctrlKey) return;
     switch (e.keyCode) {
       case 8: // backspace
