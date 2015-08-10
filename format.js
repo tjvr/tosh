@@ -109,10 +109,10 @@ var Format = (function() {
       _name: name,
       contents: [],
       isPersistent: false,
-      x: 10,
-      y: 10,
-      width: 80,
-      height: 240,
+      x: 5,
+      y: 5,
+      width: 102,
+      height: 202,
       _isEditing: ko(false),
     };
   };
@@ -173,7 +173,7 @@ var Format = (function() {
 
       // load sounds
       s.sounds = ko(s.sounds || []);
-      s.sounds.forEach(function(sound) {
+      s.sounds().forEach(function(sound) {
         var ext = sound.md5.split('.').pop() || 'wav',
             filename = sound.soundID + '.' + ext;
 
@@ -198,6 +198,9 @@ var Format = (function() {
   Project.copyForSave = function(p) {
     var copy = function(v) {
       if (!v) return v;
+      if (ko.isObservable(v)) {
+        v = v(); // specific to this
+      }
       if (v.constructor === Array) {
         return v.map(copy);
       } else if (v.constructor === Object) {
@@ -207,8 +210,6 @@ var Format = (function() {
           d[k] = copy(v[k]);
         });
         return d;
-      } else if (ko.isObservable(v)) {
-        return v(); // specific to this
       }
       return v;
     };
@@ -284,99 +285,21 @@ var Format = (function() {
 
   /* undo + observables */
 
-  // sprites: create, rename, delete
-  // replace scripts
-  // replace variables
-  // replace lists
-  // costumes: create, move, rename, delete
-  // sounds: create, move, rename, delete
-
-  var actions = {
-    /* [init, undo, redo] */
-    'setProperty': {
-      init: function(obj, property, after) {
-        var before = obj[property];
-        if (before == after) return;
-        return [obj, property, before, after];
-      },
-      redo: function(obj, property, before, after) { obj[property] = after; },
-      undo: function(obj, property, before, after) { obj[property] = before; },
-    },
-    'insert': {
-      init: function(list, index, item) {
-        if (!item) {
-          item = index;
-          index = list.length;
-        }
-        return [list, index, item];
-      },
-      redo: function(list, index, item) { list.splice(index, 0, item); },
-      undo: function(list, index, item) { list.splice(index, 1); },
-    },
-    'remove': {
-      redo: function(list, index, item) { list.splice(index, 1); },
-      undo: function(list, index, item) { list.splice(index, 0, item); },
-    },
-    'move': {
-      redo: function(list, indexBefore, indexAfter) {
-        var item = list.splice(indexBefore, 1)[0];
-        list.splice(indexAfter, 0, item);
-      },
-      undo: function(list, indexBefore, indexAfter) {
-        this.redo(list, indexAfter, indexBefore);
-      },
-    },
+  var Action = function(op, d) {
+    this.op = op;
+    this.undo = d.undo;
+    this.redo = d.redo;
   };
 
-
-
-  var Oops = function(root) {
-    this.root = root;
-    this.watchers = {};
-
+  var Oops = function() {
     this.undoStack = [];
     this.redoStack = [];
+
+    this.actions = {};
   };
 
-  Oops.add = function(name, info) {
-    actions[name] = info;
-  };
-
-  Oops.prototype.bind = function(target, func) {
-    if (!this.watchers.hasOwnProperty(target)) {
-      this.watchers[target] = [];
-    }
-    this.watchers[target].push(func);
-  };
-
-  Oops.prototype.trigger = function(target, op) {
-    var parts = target ? target.split(/\./g) : [];
-    while (parts.length) {
-      var watchers = this.watchers[parts.join('.')] || [];
-      watchers.forEach(function(func) {
-        func(target, op);
-      });
-      parts.pop();
-    }
-  };
-
-  Oops.prototype.get = function(target) {
-    var obj = this.root;
-    var parts = target.split(/\./g);
-    while (key = parts.shift()) {
-      var number = parseInt(key);
-      obj = obj[isNaN(number) ? key : number];
-    }
-    return obj;
-  };
-
-  Oops.prototype.do = function(target, op /*, args */) {
-    var info = actions[op];
-    var args = [].slice.call(arguments, 2);
-
-    // get target
-    var obj = this.get(target);
-    args = [obj].concat(args);
+  Oops.prototype._doMaybeCombine = function(op, args, combine) {
+    var info = this.actions[op];
 
     // .init() may modify args
     args = info.init ? info.init.apply(null, args) : args;
@@ -384,21 +307,29 @@ var Format = (function() {
 
     // make action
     var _this = this;
-    var action = {
+    var action = new Action(op, {
       undo: function() {
-        if (info.before) info.before.apply(info, args);
+        if (info.begin) info.begin.apply(info, args);
         info.undo.apply(info, args);
-        if (info.after) info.after.apply(info, args);
-        _this.trigger(target, op);
+        if (info.end) info.end.apply(info, args);
+        _this.trigger(null, op);
       },
       redo: function() {
-        if (info.before) info.before.apply(info, args);
+        if (info.begin) info.begin.apply(info, args);
         info.redo.apply(info, args);
-        if (info.after) info.after.apply(info, args);
-        _this.trigger(target, op);
+        if (info.end) info.end.apply(info, args);
+        _this.trigger(null, op);
       },
-    };
+    });
     action.redo();
+
+    // combine with previous action of same kind
+    if (combine) {
+      var last = undoStack.pop();
+      if (last.op !== op) {
+        undoStack.push(last); // put it back
+      }
+    }
 
     // save so we can undo it
     this.undoStack.push(action);
@@ -407,6 +338,16 @@ var Format = (function() {
     this.redoStack = [];
 
     return true;
+  };
+
+  Oops.prototype.do = function(op /*, args */) {
+    var args = [].slice.call(arguments, 1);
+    return this._doMaybeCombine(op, args, false);
+  };
+
+  Oops.prototype.doCombine = function(op /*, args */) {
+    var args = [].slice.call(arguments, 1);
+    return this._doMaybeCombine(op, args, true);
   };
 
   Oops.prototype.undo = function() {
@@ -433,61 +374,4 @@ var Format = (function() {
   };
 
 }());
-
-/*****************************************************************************/
-
-var Oops = function(actions) {
-  this.actions = actions;
-  this.undoStack = [];
-  this.redoStack = [];
-};
-
-Oops.prototype.do = function(op /*, args */) {
-  var info = actions[op];
-  var args = [].slice.call(arguments, 2);
-
-  // .init() may modify args
-  args = info.init ? info.init.apply(null, args) : args;
-  if (!args) return false;
-
-  // make action
-  var _this = this;
-  var action = {
-    undo: function() {
-      if (info.before) info.before.apply(info, args);
-      info.undo.apply(info, args);
-      if (info.after) info.after.apply(info, args);
-    },
-    redo: function() {
-      if (info.before) info.before.apply(info, args);
-      info.redo.apply(info, args);
-      if (info.after) info.after.apply(info, args);
-    },
-  };
-  action.redo();
-
-  // save so we can undo it
-  this.undoStack.push(action);
-
-  // clear redo stack
-  this.redoStack = [];
-
-  return true;
-};
-
-Oops.prototype.undo = function() {
-  if (!this.undoStack.length) return false;
-  var action = this.undoStack.pop();
-  action.undo();
-  this.redoStack.push(action);
-  return true;
-};
-
-Oops.prototype.redo = function() {
-  if (!this.redoStack.length) return false;
-  var action = this.redoStack.pop();
-  action.redo();
-  this.undoStack.push(action);
-  return true;
-};
 

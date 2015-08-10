@@ -416,7 +416,7 @@ function showHint() {
 /*****************************************************************************/
 
 var Project = Format.Project;
-var Oops = Format.Oops;
+var Oops = new Format.Oops;
 
 var App = new function() {
   var _this = this;
@@ -697,8 +697,7 @@ App.flushEditor = function() {
     return;
   }
 
-  var target = 'project.sprites.' + App.spriteIndex;
-  oops.do(target, 'setProperty', 'scripts', scripts);
+  App.active().scripts = scripts;
 };
 
 App.switchSprite = function(index) {
@@ -709,30 +708,107 @@ App.switchSprite = function(index) {
 
 
 
+/* undo 'n' stuff */
 
-var oops = new Oops(App);
+// sprites: create, rename, delete
+// replace scripts
+// replace variables
+// replace lists
+// costumes: create, move, rename, delete
+// sounds: create, move, rename, delete
 
-Oops.add('replaceProject', {
-  init: function(app, newProject) {
-    return [app, app.project, newProject];
+Oops.actions = {
+  /* [init, undo, redo] */
+  'setProperty': {
+    init: function(obj, property, after) {
+      var before = obj[property];
+      if (before == after) return;
+      return [obj, property, before, after];
+    },
+    redo: function(obj, property, before, after) { obj[property] = after; },
+    undo: function(obj, property, before, after) { obj[property] = before; },
   },
-  redo: function(app, before, after) {
-    app.project = after;
+  'insert': {
+    init: function(list, index, item) {
+      if (!item) {
+        item = index;
+        index = list.length;
+      }
+      return [list, index, item];
+    },
+    redo: function(list, index, item) { list.splice(index, 0, item); },
+    undo: function(list, index, item) { list.splice(index, 1); },
   },
-  undo: function(app, before, after) {
-    app.project = before;
+  'remove': {
+    redo: function(list, index, item) { list.splice(index, 1); },
+    undo: function(list, index, item) { list.splice(index, 0, item); },
   },
-  after: function(app) {
-    App.switchSprite(0);
-
-    var code = Compiler.generate(app.project.sprites[0].scripts);
-    cm.setValue(code);
-
-    App.preview(false); // calls App.flushEditor() !
+  'move': {
+    redo: function(list, indexBefore, indexAfter) {
+      var item = list.splice(indexBefore, 1)[0];
+      list.splice(indexAfter, 0, item);
+    },
+    undo: function(list, indexBefore, indexAfter) {
+      this.redo(list, indexAfter, indexBefore);
+    },
   },
-});
+
+  /* * */
+
+  'replaceProject': {
+    init: function(newProject) {
+      return [App.project, newProject];
+    },
+    redo: function(before, after) {
+      App.project = after;
+    },
+    undo: function(app, before, after) {
+      App.project = before;
+    },
+    end: function() {
+      console.log(App.project.sounds);
+      App.active.assign(App.project.sprites[0]);
+
+      var code = Compiler.generate(App.project.sprites[0].scripts);
+      cm.setValue(code);
+
+      App.preview(false); // calls App.flushEditor() !
+    },
+  },
+
+  'newSprite': {
+    redo: function(project) {
+      project.sprites.push(Project.newSprite());
+      project.children.push(Project.newSprite());
+      App.switchSprite(project.sprites.length - 1);
+    },
+    undo: function(project) {
+      project.sprites.pop();
+    },
+  },
+
+  'deleteSprite': {
+    init: function(project, index) {
+      var sprite = project.sprites[index];
+      var childIndex = project.children.indexOf(sprite);
+      return [project, sprite, index, childIndex];
+    },
+    redo: function(project, sprite, spriteIndex, childIndex) {
+      project.sprites.splice(spriteIndex, 1);
+      project.children.splice(childIndex, 1);
+      App.switchSprite(project.sprites.length - 1);
+    },
+    undo: function(project, sprite, spriteIndex, childIndex) {
+      project.sprites.splice(spriteIndex, 0, sprite);
+      project.children.splice(childIndex, 0, sprite);
+      App.switchSprite(spriteIndex);
+    },
+  },
+
+};
 
 
+/*
 oops.bind('project', function(target) {
   App.dirty = true;
 });
@@ -752,35 +828,6 @@ oops.bind('project.sprites', function(target, name) {
   }
 });
 
-Oops.add('newSprite', {
-  redo: function(project) {
-    project.sprites.push(Project.newSprite());
-    project.children.push(Project.newSprite());
-    App.switchSprite(project.sprites.length - 1);
-  },
-  undo: function(project) {
-    project.sprites.pop();
-  },
-});
-
-Oops.add('deleteSprite', {
-  init: function(project, index) {
-    var sprite = project.sprites[index];
-    var childIndex = project.children.indexOf(sprite);
-    return [project, sprite, index, childIndex];
-  },
-  redo: function(project, sprite, spriteIndex, childIndex) {
-    project.sprites.splice(spriteIndex, 1);
-    project.children.splice(childIndex, 1);
-    App.switchSprite(project.sprites.length - 1);
-  },
-  undo: function(project, sprite, spriteIndex, childIndex) {
-    project.sprites.splice(spriteIndex, 0, sprite);
-    project.children.splice(childIndex, 0, sprite);
-    App.switchSprite(spriteIndex);
-  },
-});
-
 // script
 
 function updateScript(target, op) {
@@ -791,6 +838,7 @@ oops.bind('project.sprites', function(target, op) {
     updateScript(target, op);
   }
 });
+*/
 
 
 
@@ -816,16 +864,16 @@ document.addEventListener('keydown', function(e) {
         e.preventDefault();
         break;
       case 89: // undo: ⌘Z
-        oops.undo();
+        Oops.undo();
         break;
       case 90: // redo: ⌘⇧Z ⌘Y
         if (e.shiftKey) {
           if (isMac) {
-            oops.redo();
+            Oops.redo();
             break;
           }
         } else {
-          oops.undo();
+          Oops.undo();
           break;
         }
         break;
@@ -895,7 +943,7 @@ document.body.addEventListener('drop', function(e) {
       var ab = reader.result;
       var zip = new JSZip(ab);
       var project = Project.load(zip);
-      oops.do('', 'replaceProject', project);
+      Oops.do('replaceProject', project);
     };
     reader.readAsArrayBuffer(f);
   }
