@@ -815,11 +815,11 @@ document.addEventListener('keydown', function(e) {
         App.save();
         e.preventDefault();
         break;
-      case 89:
+      case 89: // undo: ⌘Z
         oops.undo();
         break;
       case 90: // redo: ⌘⇧Z ⌘Y
-        if (e.shiftKey) { // undo:  ⌘Z C-Z
+        if (e.shiftKey) {
           if (isMac) {
             oops.redo();
             break;
@@ -829,14 +829,18 @@ document.addEventListener('keydown', function(e) {
           break;
         }
         break;
-      default:
-        return;
+      default: return;
     }
-    e.preventDefault();
-    return;
   } else {
+    // plain bindings
     if (e.metaKey || e.ctrlKey) return;
+    switch (e.keyCode) {
+      case 8: // backspace
+        break;
+      default: return;
+    }
   }
+  e.preventDefault();
 });
 
 // project controls...
