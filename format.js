@@ -92,8 +92,10 @@ var Format = (function() {
   };
 
   Project.newVariable = function(name) {
+    var name = ko(name || "");
     return {
-      _name: ko(name || ""),
+      name: name,
+      _name: name,
       value: 0,
       isPersistent: false,
       _isEditing: ko(false),
@@ -103,8 +105,8 @@ var Format = (function() {
   Project.newList = function(name) {
     var name = ko(name || "");
     return {
-      _name: name,
       listName: name,
+      _name: name,
       contents: [],
       isPersistent: false,
       x: 10,

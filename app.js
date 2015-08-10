@@ -419,14 +419,25 @@ var Project = Format.Project;
 var Oops = Format.Oops;
 
 var App = new function() {
+  var _this = this;
   this.project = Project.new();
-  this.spriteIndex = 0;
 
   this.editorDirty = false;
   this.phosphorusDirty = true;
   this.projectDirty = false;
 
-  this.activeIsStage = ko(false);
+  this.active = ko(this.project.sprites[0]);
+  this.activeIsStage = this.active.compute(function(active) {
+    return active === _this.project;
+  });
+  this.activeVariables = ko();
+  this.activeLists = ko();
+  this.active.subscribe(function(active) {
+    _this.activeVariables = active.variables;
+  });
+  this.active.subscribe(function(active) {
+    _this.activeLists = active.lists;
+  });
 };
 
 
@@ -544,15 +555,13 @@ replaceChildren($('#sidebar')[0], [
     el('li span', "Sounds"),
   ]),
   el('#data.tab.active', (
-    new NamesEditor('variable', App.project.variables, Project.newVariable, addNameText)
+    new NamesEditor('variable', App.activeVariables, Project.newVariable, addNameText)
   ).concat(
-    new NamesEditor('list', App.project.lists, Project.newList, addNameText)
+    new NamesEditor('list', App.activeLists, Project.newList, addNameText)
   )),
   el('#costumes.tab'),
   el('#sounds.tab'),
 ]);
-
-
 
 
 /*****************************************************************************/
