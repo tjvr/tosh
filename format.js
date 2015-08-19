@@ -196,7 +196,7 @@ var Format = (function() {
   /* save */
 
   Project.copyForSave = function(p) {
-    var copy = function(v) {
+    function copy(v) {
       if (!v) return v;
       if (ko.isObservable(v)) {
         v = v(); // specific to this
@@ -212,7 +212,8 @@ var Format = (function() {
         return d;
       }
       return v;
-    };
+    }
+
     return copy(p);
   };
 

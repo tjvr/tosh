@@ -13,6 +13,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     this.lists = {};
 
     Language.addDefinition(this.grammar, { name: 'foo', });
+    Language.addDefinition(this.grammar, { name: 'score', });
     Language.addDefinition(this.grammar, { name: '# clones', });
     Language.addDefinition(this.grammar, { name: 'clone id', });
     Language.addDefinition(this.grammar, { name: 'vx', });

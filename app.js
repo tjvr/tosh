@@ -585,11 +585,13 @@ App.sync = function() {
       var t = s._tosh;
       assert(t.objName === s.objName);
 
-      t.variables.forEach(function(variable) {
-        variable.value = s.vars[variable.name];
+      t.variables().forEach(function(variable) {
+        var name = variable._name();
+        variable.value = s.vars[name] || '';
       });
-      t.lists.forEach(function(list) {
-        list.contents = s.lists[list.listName];
+      t.lists().forEach(function(list) {
+        var name = list._name();
+        list.contents = s.lists[name] || [];
       });
       t.currentCostumeIndex = s.currentCostumeIndex;
 
