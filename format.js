@@ -113,6 +113,7 @@ var Format = (function() {
       y: 5,
       width: 102,
       height: 202,
+      visible: false,
       _isEditing: ko(false),
     };
   };
