@@ -660,6 +660,10 @@ App.save = function() {
 App.preview = function(start) {
   App.isCompiling = true;
 
+  // remove "internal error" message -- phosphorus doesn't do this by itself
+  var errEl = $('#phosphorus .internal-error')[0];
+  if (errEl) errEl.parentNode.removeChild(errEl);
+
   var file = this.makeZip();
   // TODO don't create a zip here
   if (App.stage) {
