@@ -582,6 +582,8 @@ App.sync = function() {
 
   [phosphorus].concat(phosphorus.children).forEach(function(s) {
     if (s.isStage || s.isSprite) {
+      if (s.isClone) return;
+
       var t = s._tosh;
       assert(t.objName === s.objName);
 
