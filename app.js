@@ -14,6 +14,9 @@ var cm = CodeMirror(editor, {
   autofocus: true,
 
   cursorHeight: 1,
+
+  scratchVariables: [],
+  scratchLists: [],
 });
 
 var onResize = function() {
@@ -562,6 +565,23 @@ replaceChildren($('#sidebar')[0], [
   el('#costumes.tab'),
   el('#sounds.tab'),
 ]);
+
+function bindModeNames(appList, cfgOption) {
+  function updated() {
+    cm.setOption('mode', 'tosh');
+    cm.setOption(cfgOption, appList());
+  }
+
+  appList.subscribe(function(list) {
+    updated();
+    list.forEach(function(variable) {
+      variable._name.subscribe(updated);
+    });
+  });
+}
+
+bindModeNames(App.activeVariables, 'scratchVariables');
+bindModeNames(App.activeLists, 'scratchLists');
 
 
 /*****************************************************************************/

@@ -9,23 +9,18 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     this.lineTokens = [];
     this.grammar = Language.grammar.copy();
     this.customBlocks = {};
-    this.variables = {};
-    this.lists = {};
 
-    Language.addDefinition(this.grammar, { name: 'foo', });
-    Language.addDefinition(this.grammar, { name: 'score', });
-    Language.addDefinition(this.grammar, { name: '# clones', });
-    Language.addDefinition(this.grammar, { name: 'clone id', });
-    Language.addDefinition(this.grammar, { name: 'vx', });
-    Language.addDefinition(this.grammar, { name: 'vy', });
-    Language.addDefinition(this.grammar, { name: 'index', });
-    Language.addDefinition(this.grammar, { name: 'R', });
-    Language.addDefinition(this.grammar, { name: 'G', });
-    Language.addDefinition(this.grammar, { name: 'B', });
-    Language.addDefinition(this.grammar, { name: 'A', });
-    Language.addDefinition(this.grammar, { name: 'acc', });
-
-    Language.addDefinition(this.grammar, { name: 'list', value: [] });
+    var _this = this;
+    cfg.scratchVariables.forEach(function(variable) {
+      var name = variable._name();
+      if (!name) return;
+      Language.addDefinition(_this.grammar, { name: name, });
+    });
+    cfg.scratchLists.forEach(function(list) {
+      var name = list._name();
+      if (!name) return;
+      Language.addDefinition(_this.grammar, { name: name, value: [] });
+    });
   };
 
   State.prototype.copy = function() {
@@ -34,8 +29,6 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     s.lineTokens = this.lineTokens.slice();
     s.grammar = this.grammar.copy();
     s.customBlocks = deepCopy(this.customBlocks);
-    s.variables = deepCopy(this.variables);
-    s.lists = deepCopy(this.lists);
     return s;
   };
 
