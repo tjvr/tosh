@@ -596,7 +596,7 @@ cm.on('change', function(cm) {
 });
 
 App.sync = function() {
-  /* grab data out of phosphorus */
+  /* copy data back from phosphorus */
   var phosphorus = App.stage;
   if (!phosphorus) return;
 
@@ -607,9 +607,11 @@ App.sync = function() {
       var t = s._tosh;
       assert(t.objName === s.objName);
 
+      // variables could be created after we last sent the project to
+      // phosphorus, so we have fallback values
       t.variables().forEach(function(variable) {
         var name = variable._name();
-        variable.value = s.vars[name] || '';
+        variable.value = s.vars[name] || 0;
       });
       t.lists().forEach(function(list) {
         var name = list._name();

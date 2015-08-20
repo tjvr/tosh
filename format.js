@@ -188,7 +188,6 @@ var Format = (function() {
         delete sound.soundID;
         delete sound.md5;
       });
-      s.sounds = ko(sounds);
     });
 
     return p;
