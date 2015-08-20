@@ -184,64 +184,43 @@ var Compiler = (function() {
 
   function internalHeight(info) {
     var shape = info.shape;
-    if (shape === 'if-block') {
-      return 36;
-    } else if (/cap/.test(shape)) {
-      if (shape === 'c-block cap') { // "forever"
-        return 34;
-      } else {
-        return 8;
-      }
-    } else if (/c-block/.test(shape)) {  // any(i.shape === 'stack' for i in bt.inserts):
-      return 21;
-    } else if (shape === 'stack') {
-      return 9;
-    } else if (shape === 'hat') {
-      if (info.selector === 'whenGreenFlag') {
-        return 25;
-      } else {
-        return 18;
-      }
-    } else if (shape === 'predicate') {
-      return 5; // ###
-    } else if (shape === 'reporter') {
-      return 4; // ###
+    switch (shape) {
+      case 'if-block':    return 36;
+      case 'c-block cap': return 34; // "forever"
+      case 'cap':         return 8;
+      case 'c-block':     return 21;
+      case 'stack':       return 9;
+      case 'hat':         return (info.selector === 'whenGreenFlag') ? 25
+                               : 18;
+      case 'predicate':   return 5; // ###
+      case 'reporter':    return 4; // ###
     }
     throw "internalHeight can't do " + info.selector;
   }
 
   function noInputs(info) {
     var shape = info.shape;
-    if (shape === 'stack') {
-      return 16;
-    } else if (/cap/.test(shape)) {
-      return 16;
-    } else if (shape === 'predicate') {
-      return 16;
-    } else if (shape === 'reporter') {
-      return 16; // # TODO
-    } else if (shape === 'hat') {
-      return emptySlot('readonly-menu');
+    switch (shape) {
+      case 'stack':       return 16;
+      case 'cap':
+      case 'c-block cap': return 16;
+      case 'predicate':   return 16;
+      case 'reporter':    return 16; // # TODO
+      case 'hat':         return emptySlot('readonly-menu');
     }
     throw "noInputs can't do " + info.selector;
   }
 
   function emptySlot(inputShape) {
     /* For arguments which are literals, menu options, or just empty */
-    if (inputShape === 'list') {
-      return 12;
-    } else if (inputShape === 'number') {
-      return 16;
-    } else if (inputShape === 'string') {
-      return 16; // ###
-    } else if (inputShape === 'boolean') {
-      return 16; // ###
-    } else if (inputShape === 'readonly-menu') {
-      return 16; // ###
-    } else if (inputShape === 'number-menu') {
-      return 16; // ###
-    } else if (inputShape === 'color') {
-      return 16; // ###
+    switch (inputShape) {
+      case 'list':          return 12;
+      case 'number':        return 16;
+      case 'string':        return 16; // ###
+      case 'boolean':       return 16; // ###
+      case 'readonly-menu': return 16; // ###
+      case 'number-menu':   return 16; // ###
+      case 'color':         return 16; // ###
     }
     throw "emptySlot can't do " + inputShape;
   }
@@ -260,7 +239,7 @@ var Compiler = (function() {
 
     var internal = internalHeight(info);
     measureLog(internal, "internalHeight", info.selector);
-    if (selector === 'stop' &&
+    if (selector === 'stopScripts' &&
         ['all', 'this script'].indexOf(args[0]) === -1) {
       internal += 1;
     }
@@ -268,7 +247,10 @@ var Compiler = (function() {
     var argHeight = 0;
     var stackHeight = 0;
 
-    if (!info.inputs.length) {
+    var hasInputs = (info.inputs.length
+                  || /c-block|if-block/.test(info.shape));
+
+    if (!hasInputs) {
       argHeight = noInputs(info);
       measureLog(argHeight, "noInputs", info.shape);
 
@@ -290,10 +272,10 @@ var Compiler = (function() {
             foo = measureList(arg);
 
             // does it end with a cap block?
-            var last = arg[arg.length - 1];
+            var last = arg.slice().pop();
             if (last) {
               var lastInfo = Scratch.blocksBySelector[last[0]];
-              if (lastInfo.shape === 'cap') {
+              if (/cap/.test(lastInfo.shape)) {
                 foo += 3;
               }
             }
