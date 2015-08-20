@@ -5,9 +5,10 @@ var Compiler = (function() {
     console.log(JSON.stringify(scriptBlocks).replace(/],/g, "],\n"));
 
     var y = 10;
-    var scripts = scriptBlocks.map(function(blocks) {
+    var scripts = scriptBlocks.map(function(blocks, index) {
       var script = [10, y, blocks];
-      y += measureList(blocks) + 10;
+      var height = measureList(blocks);
+      y += height + 10;
       return script;
     });
 
@@ -259,7 +260,8 @@ var Compiler = (function() {
         var arg = args[i];
         var inputShape = info.inputs[i] ? Scratch.getInputShape(info.inputs[i])
                                         : 'list';
-        var nonEmpty = (arg instanceof Array); // note this could be a *block*!
+        var nonEmpty = (arg instanceof Array && arg.length);
+                        // note this could be a *block*!
         var foo;
         if (!nonEmpty) {
           foo = emptySlot(inputShape);
