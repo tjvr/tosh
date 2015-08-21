@@ -36,6 +36,7 @@ var Format = (function() {
 
     var project = {
       objName: 'Stage',
+      _isStage: true,
 
       children: [sprite],
       sprites: [sprite], // !
@@ -131,6 +132,8 @@ var Format = (function() {
              a.indexInLibrary > b.indexInLibrary ? +1 : 0;
     });
 
+    p._isStage = true;
+
     [p].concat(p.sprites).forEach(function(s) {
       // ensure properties are present
       s.scripts = s.scripts || [];
@@ -138,6 +141,16 @@ var Format = (function() {
 
       s.variables = ko(s.variables || []);
       s.lists = ko(s.lists || []);
+
+      // koel-ify variables & lists
+      s.variables().forEach(function(variable) {
+        variable._name = variable.name = ko(variable.name);
+        variable._isEditing = ko(false);
+      });
+      s.lists().forEach(function(list) {
+        list._name = list.listName = ko(list.listName);
+        list._isEditing = ko(false);
+      });
 
       // sort scripts
       s.scripts.sort(function(a, b) {

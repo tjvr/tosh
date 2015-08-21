@@ -431,15 +431,21 @@ var App = new function() {
 
   this.active = ko(this.project.sprites[0]);
   this.activeIsStage = this.active.compute(function(active) {
-    return active === _this.project;
+    return !!active._isStage;
   });
-  this.activeVariables = ko();
-  this.activeLists = ko();
+  this.activeVariables = ko([]);
+  this.activeLists = ko([]);
   this.active.subscribe(function(active) {
-    _this.activeVariables = active.variables;
+    active.variables.subscribe(function(array) {
+      if (_this.active() !== active) return;
+    _this.activeVariables.assign(array);
+    });
   });
   this.active.subscribe(function(active) {
-    _this.activeLists = active.lists;
+    active.lists.subscribe(function(array) {
+      if (_this.active() !== active) return;
+    _this.activeLists.assign(array);
+    });
   });
 };
 
@@ -572,14 +578,15 @@ function bindModeNames(appList, cfgOption) {
     cm.setOption(cfgOption, appList());
   }
 
-  appList.subscribe(function(list) {
+  appList.subscribe(function(array) {
     updated();
-    list.forEach(function(variable) {
+    array.forEach(function(variable) {
       variable._name.subscribe(updated);
     });
   });
 }
 
+// when names edited, refresh CM syntax highlighting
 bindModeNames(App.activeVariables, 'scratchVariables');
 bindModeNames(App.activeLists, 'scratchLists');
 
