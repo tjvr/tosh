@@ -1,5 +1,7 @@
 var Compiler = (function() {
 
+  /* compile: tosh -> AST */
+
   function compile(lines) {
     var scriptBlocks = compileFile(lines);
     console.log(JSON.stringify(scriptBlocks).replace(/],/g, "],\n"));
@@ -17,7 +19,7 @@ var Compiler = (function() {
 
 
 
-  /* line-level parser */
+  // line-level parser
 
   function Stream(seq) {
     this.seq = seq;
@@ -178,8 +180,9 @@ var Compiler = (function() {
   }
 
 
+  /***************************************************************************/
 
-  /* measure blocks */
+  /* measure: AST -> height in pixels */
 
   var measureLog = function(message) {};
 
@@ -300,6 +303,8 @@ var Compiler = (function() {
 
 
   /***************************************************************************/
+
+  /* generate: AST -> tosh */
 
   var images = {
     '@greenFlag': 'flag',
@@ -445,6 +450,7 @@ var Compiler = (function() {
           argIndex += 1;
       } else {
         part = part.split(/( +)/g).map(function(word) {
+          if (/[:]$/.test(word)) word += ' ';
           return images[word] || word || '';
         }).join('');
       }
@@ -501,9 +507,9 @@ var Compiler = (function() {
 
 
   return {
-    generate: generate, // scripts[] -> lines[]
-    compile: compile,   // lines[] -> scripts[]
-    _measure: measureList,
+    generate: generate, // AST -> tosh
+    compile: compile,   // tosh -> AST
+    _measure: measureList, // internal to compile()
   };
 
 }());
