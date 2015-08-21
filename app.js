@@ -663,7 +663,7 @@ App.save = function() {
   var file = this.makeZip();
   var a = el('a', {
     style: 'display: none;',
-    download: 'tosh.sb2',
+    download: App.project._fileName + '.sb2',
     href: URL.createObjectURL(file),
   }, " ");
   document.body.appendChild(a);
@@ -978,13 +978,16 @@ document.body.addEventListener('drop', function(e) {
   var f = e.dataTransfer.files[0];
   if (!f) return;
 
-  var ext = f.name.split('.').pop();
+  var parts = f.name.split('.');
+  var ext = parts.pop();
+  var fileName = parts.join('.');
   if (ext === 'sb2' || ext === 'zip') {
     var reader = new FileReader;
     reader.onloadend = function() {
       var ab = reader.result;
       var zip = new JSZip(ab);
       var project = Project.load(zip);
+      project._fileName = fileName;
       Oops.do('replaceProject', project);
     };
     reader.readAsArrayBuffer(f);

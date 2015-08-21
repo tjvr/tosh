@@ -38,6 +38,8 @@ var Format = (function() {
       objName: 'Stage',
       _isStage: true,
 
+      _fileName: 'tosh',
+
       children: [sprite],
       sprites: [sprite], // !
 
@@ -326,13 +328,11 @@ var Format = (function() {
         if (info.begin) info.begin.apply(info, args);
         info.undo.apply(info, args);
         if (info.end) info.end.apply(info, args);
-        _this.trigger(null, op);
       },
       redo: function() {
         if (info.begin) info.begin.apply(info, args);
         info.redo.apply(info, args);
         if (info.end) info.end.apply(info, args);
-        _this.trigger(null, op);
       },
     });
     action.redo();
