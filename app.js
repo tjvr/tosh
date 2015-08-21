@@ -572,10 +572,15 @@ replaceChildren($('#sidebar')[0], [
   el('#sounds.tab'),
 ]);
 
-function bindModeNames(appList, cfgOption) {
+function bindModeNames(appList, cfgOption, property) {
   function updated() {
+    var names = appList();
+    if (!App.activeIsStage()) {
+      // include global var/list names
+      names = names.concat(App.project[property]());
+    }
     cm.setOption('mode', 'tosh');
-    cm.setOption(cfgOption, appList());
+    cm.setOption(cfgOption, names);
   }
 
   appList.subscribe(function(array) {
@@ -587,8 +592,8 @@ function bindModeNames(appList, cfgOption) {
 }
 
 // when names edited, refresh CM syntax highlighting
-bindModeNames(App.activeVariables, 'scratchVariables');
-bindModeNames(App.activeLists, 'scratchLists');
+bindModeNames(App.activeVariables, 'scratchVariables', 'variables');
+bindModeNames(App.activeLists, 'scratchLists', 'lists');
 
 
 /*****************************************************************************/
