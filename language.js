@@ -489,7 +489,9 @@ var Language = (function(Earley) {
     Rule("n", ["n4"], identity),
     Rule("n", ["b2"], identity),
 
-    Rule("sb", ["s"], identity),
+    Rule("sb", ["join"], identity),
+    Rule("sb", ["n4"], identity),
+    Rule("sb", ["s0"], identity),
     Rule("sb", ["b-parens"], identity),
     Rule("sb", ["b0"], identity),
 
@@ -500,15 +502,9 @@ var Language = (function(Earley) {
 
     /* --------------------------------------------------------------------- */
 
-    Rule("s", ["value"], identity),
-    Rule("s", ["s0"], identity),
-
-    Rule("value", ["reporter"], identity),
-    Rule("value", ["n4"], identity),
-
     Rule("r-parens", [{kind: 'lparen'}, "r-value", {kind: 'rparen'}], brackets),
 
-    Rule("r-value", ["reporter"], identity),
+    Rule("r-value", ["join"], identity),
     Rule("r-value", ["n4"], identity),
     // TODO: disallow literals from inside parens?
 
@@ -523,8 +519,6 @@ var Language = (function(Earley) {
     Rule("predicate", ["simple-predicate"], identity),
 
     // The rest get defined here, because I like my sanity.
-
-    Rule("reporter", ["join"], identity),
 
     Rule("join", [["join"], "jpart", "jpart"],
                                             block("concatenate:with:", 1, 2)),
