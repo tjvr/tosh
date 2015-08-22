@@ -487,13 +487,12 @@ var Language = (function(Earley) {
     /* --------------------------------------------------------------------- */
 
     Rule("n", ["n4"], identity),
-    Rule("n", ["b2"], identity),
+    Rule("n", ["b-parens"], identity),
 
     Rule("sb", ["join"], identity),
     Rule("sb", ["n4"], identity),
     Rule("sb", ["s0"], identity),
     Rule("sb", ["b-parens"], identity),
-    Rule("sb", ["b0"], identity),
 
     Rule("b", ["b8"], identity),
 
@@ -506,7 +505,6 @@ var Language = (function(Earley) {
 
     Rule("r-value", ["join"], identity),
     Rule("r-value", ["n4"], identity),
-    // TODO: disallow literals from inside parens?
 
     Rule("b-parens", [{kind: 'langle'}, "b8", {kind: 'rangle'}], brackets),
 
