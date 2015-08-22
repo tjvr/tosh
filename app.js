@@ -144,7 +144,8 @@ function inputSeek(dir) {
        i += dir
   ) {
     var token = l.tokens[i];
-    if (token.kind !== 'symbol') {
+    if (['symbol', 'lparen', 'rparen', 'langle', 'rangle',
+         'lsquare', 'rsquare'].indexOf(token.kind) === -1) {
       var start = l.start.ch + measureTokens(l.tokens.slice(0, i));
       end = start + token.text.replace(/ *$/, "").length;
       var line = l.from.line;
