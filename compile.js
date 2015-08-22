@@ -485,12 +485,12 @@ var Compiler = (function() {
         value = value || "";
         // Does it look like a number?
         if (/-?[0-9]+\.?[0-9]*/.test(value)) {
-          return ' ' + value;
+          return '' + value;
         }
         return '"' + value.replace(/"/g, '\\"')
                            .replace(/\\/g, '\\\\') + '"';
       case 'number':
-        if (!value) return '_';
+        if (!value && value !== 0) return '_';
         return (value || 0);
       default:
         // TODO
