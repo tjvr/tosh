@@ -939,6 +939,7 @@ document.addEventListener('keydown', function(e) {
 var phosphorusPlayer = $('.player')[0];
 phosphorusPlayer.addEventListener('keydown', function(e) {
   if (!App.stage) return;
+  if (/INPUT/i.test(e.target.tagName)) return;
   switch (e.keyCode) {
     case 13: // green flag:  ↩
       $('.flag')[0].click();
