@@ -487,12 +487,10 @@ var Language = (function(Earley) {
     /* --------------------------------------------------------------------- */
 
     Rule("n", ["n4"], identity),
-    Rule("n", ["b-parens"], identity),
 
     Rule("sb", ["join"], identity),
     Rule("sb", ["n4"], identity),
     Rule("sb", ["s0"], identity),
-    Rule("sb", ["b-parens"], identity),
 
     Rule("b", ["b8"], identity),
 
@@ -586,6 +584,7 @@ var Language = (function(Earley) {
 
     Rule("n1", ["simple-reporter"], identity),
     Rule("n1", ["r-parens"], identity),
+    Rule("n1", ["b-parens"], identity),
     Rule("n1", ["n0"], identity),
 
     // ---
