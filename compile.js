@@ -152,6 +152,9 @@ var Compiler = (function() {
       case 'cap':
       case 'stack':
           block = lines.shift();
+          if (block.info.isCustom) {
+            return ['call', block.info.spec].concat(block.args);
+          }
           selector = block.info.selector;
           args = block.args.map(compileReporter);
           break;
@@ -159,7 +162,8 @@ var Compiler = (function() {
         if (maybeHat) {
           block = lines.shift();
           selector = block.info.selector;
-          args = block.args.map(compileReporter);
+          args = (selector === 'procDef') ? block.args.slice()
+                                          : block.args.map(compileReporter);
           break;
         }
         // FALL-THRU
@@ -237,9 +241,37 @@ var Compiler = (function() {
   function measureBlock(block) {
     // be careful not to pass a list here (or a block to measureList!)
     var selector = block[0],
-        info = Scratch.blocksBySelector[selector],
-        args = block.slice(1);
-    if (!info) throw "unknown selector: " + selector;
+        args = block.slice(1),
+        info;
+    switch (selector) {
+      case 'procDef':
+        var hasInputs = false,
+            hasBooleans = false;
+        var spec = args[0];
+        spec.split(Scratch.inputPat).forEach(function(part) {
+          if (Scratch.inputPat.test(part)) {
+            hasInputs = true;
+            if (part === '%b') hasBooleans = true;
+          }
+        });
+        return hasBooleans ? 65 : hasInputs ? 64 : 60;
+      case 'call':
+        spec = args.shift();
+        info = {
+          spec: spec,
+          parts: spec.split(Scratch.inputPat),
+          shape: 'stack',
+          category: 'custom',
+          selector: null,
+          defaults: [], // not needed
+        }
+        info.inputs = info.parts.filter(function(p) { return Scratch.inputPat.test(p); });
+        break;
+      default:
+        console.log(block);
+        info = Scratch.blocksBySelector[selector];
+        if (!info) throw "unknown selector: " + selector;
+    }
 
     var internal = internalHeight(info);
     measureLog(internal, "internalHeight", info.selector);
@@ -335,13 +367,14 @@ var Compiler = (function() {
     if (selector === 'call') {
       var spec = selector = args.shift();
       info = {
-        selector: spec,
         spec: spec,
         parts: spec.split(Scratch.inputPat),
         shape: 'stack',
         category: 'custom',
+        selector: null,
         defaults: [], // don't need these
       };
+      info.inputs = info.parts.filter(function(p) { return Scratch.inputPat.test(p); });
     } else if (selector === 'procDef') {
       // TODO fix
       var spec = block[1],

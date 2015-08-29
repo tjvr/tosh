@@ -21,14 +21,21 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
       if (!name) return;
       Language.addDefinition(_this.grammar, { name: name, value: [] });
     });
+
+    cfg.scratchDefinitions.forEach(function(result) {
+      var info = Language.addCustomBlock(_this.grammar, result);
+      _this.customBlocks[info.spec] = info;
+    });
   };
 
   State.prototype.copy = function() {
     var s = new State();
     s.lines = this.lines.slice();
     s.lineTokens = this.lineTokens.slice();
-    s.grammar = this.grammar.copy();
-    s.customBlocks = deepCopy(this.customBlocks);
+
+    // don't copy these: if they change, app will refresh the entire mode.
+    s.grammar = this.grammar;
+    s.customBlocks = this.customBlocks;
     return s;
   };
 
@@ -44,44 +51,54 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
       return t.kind === "symbol" && t.value === "define";
     }
 
-    var result = null;
+    var define = null;
     try {
       var results = defineParser.parse(tokens);
-      result = tokens.definitionValue = results[0];
+      define = results[0];
     } catch (err) {}
-    if (result) {
-      if (result.name) {
-        var info = Language.addDefinition(this.grammar, result);
-        switch (info.kind) {
-          case 'variable': this.variables[info.name] = info.value; break;
-          case 'list':     this.lists[info.name] = info.value; break;
-        }
-      } else {
-        var info = Language.addCustomBlock(this.grammar, result);
-        this.customBlocks[info.spec] = info;
-        for (var i=0; i<tokens.length; i++) { // TODO fix grammar
-          var token = tokens[i];
-          if (token.kind == 'lparen') break;
-          token.category = 'custom';
-        }
+    if (define) {
+      // paint the first few words properly, to workaround broken grammar
+      // TODO fix grammar
+      for (var i=0; i<tokens.length; i++) {
+        var token = tokens[i];
+        if (token.kind == 'lparen') break;
+        token.category = 'custom';
       }
+
+      // make the definition block
+
+      var isAtomic = (define[0] === 'atomic');
+      if (isAtomic) define.shift();
+
+      var inputNames = [];
+      var defaults = [];
+      var specParts = define.map(function(part) {
+        if (typeof part === 'string') {
+          return part;
+        } else {
+          inputNames.push(part.name);
+          switch (part.arg) {
+            case 'n': defaults.push(0);     return '%n';
+            case 'b': defaults.push(false); return '%b';
+            case 's': defaults.push("");    return '%s';
+          }
+        }
+      });
+
+      var spec = specParts.join(' ');
+      var args = [spec, inputNames, defaults, isAtomic];
+      this.lines.push({info: {shape: 'hat', selector: 'procDef'}, args: args});
       return;
     }
 
-    // if you define a variable twice,
-    // the grammar becomes ambiguous
-    // so there are 2^n parses for a line with n doubled-up variables...
-
     var p = new Earley.Parser(this.grammar);
 
-    var define = tokens.definitionValue;
-    //if (define) return; // TODO process define hats...
     var result;
     try {
       results = p.parse(tokens);
-      if (results.length > 1) throw "ambiguous. count: " + results.length;
+      //if (results.length > 1) throw "ambiguous. count: " + results.length;
     } catch (err) {
-      console.log(err);
+      console.log(err); // DEBUG
       this.lines.push({info: {shape: 'error'}});
       results = err.partialResult;
     }

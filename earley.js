@@ -97,7 +97,7 @@ var Earley = (function() {
 
     var myself = this;
     Object.keys(this.rulesByName).forEach(function(name) {
-      copy.rulesByName[name] = myself.rulesByName[name];
+      copy.rulesByName[name] = myself.rulesByName[name].slice();
     });
     return copy;
   };

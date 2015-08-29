@@ -139,15 +139,150 @@ var scripts = [
   [['doIf',
     false,
     [['bounceOffEdge'], ['bounceOffEdge'], ['stopScripts', 'all']]]]],
- [10, 4500, [['+', '', '']]]];
+ [10, 4500, [['procDef', 'block', [], [], false]]],
+ [10,
+  4561,
+  [['procDef',
+    'block with a very very long name hahahahaha',
+    [],
+    [],
+    false]]],
+ [10,
+  4631,
+  [['procDef',
+    'block with number %n string %s and boolean %b inputs',
+    ['number', 'string', 'boolean'],
+    [1, null, null],
+    false]]],
+ [10,
+  4706,
+  [['procDef',
+    'aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa',
+    [],
+    [],
+    false]]],
+ [10, 4776, [['procDef', 'block with', [], [], false]]],
+ [10,
+  4840,
+  [['procDef', 'aaaaaaaaaaa', [], [], false]]],
+ [10, 4910, [['procDef', 'block input: %n', ['input'], [1], false]]],
+ [10, 4983, [['procDef', 'block input: %s', ['string1'], [null], false]]],
+ [10,
+  5057,
+  [['procDef',
+    'very long block with input: %n yes lol',
+    ['input'],
+    [1],
+    false]]],
+ [10,
+  5131,
+  [['procDef',
+    'very long block with input %s yes haha',
+    ['string'],
+    [null],
+    false]]],
+ [10,
+  5205,
+  [['procDef',
+    'very long block with number input %n',
+    ['number'],
+    [1],
+    false]]],
+ [10,
+  5279,
+  [['procDef',
+    'long block with number input %n woo woo',
+    ['number'],
+    [1],
+    false]]],
+ [10,
+  5353,
+  [['procDef',
+    'aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa %n',
+    ['asdfasdf'],
+    [1],
+    false]]],
+ [10,
+  5427,
+  [['procDef',
+    'block with both %n number and also a boolean %b input haha',
+    ['number1', 'boolean1'],
+    [1, null],
+    false]]],
+ [10,
+  5502,
+  [['procDef',
+    'aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa %n %b',
+    ['number1', 'boolean1'],
+    [1, null],
+    false]]],
+ [10,
+  5577,
+  [['procDef',
+    'aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa %s %b',
+    ['string1', 'boolean1'],
+    [null, null],
+    false]]],
+ [10,
+  5652,
+  [['procDef',
+    'aaaaaaaaaaa aaaaaaaaaaa  aaaaaaaaaaa  aaaaaaaaaaa  aaaaaaaaaaa %n %s',
+    ['number1', 'string1'],
+    [1, null],
+    false]]],
+ [10,
+  5726,
+  [['procDef',
+    'aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa %n %n',
+    ['number1', 'number2'],
+    [1, 1],
+    false]]],
+ [10,
+  5800,
+  [['procDef',
+    'aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa %s %s',
+    ['string1', 'string2'],
+    [null, null],
+    false]]],
+ [10,
+  5874,
+  [['procDef',
+    'aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa %b %b',
+    ['boolean1', 'boolean2'],
+    [null, null],
+    false]]],
+ [10,
+  5949,
+  [['procDef',
+    'aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa aaaaaaaaaaa %b',
+    ['boolean1'],
+    [null],
+    false]]],
+ [10, 6024, [['+', '', '']]]];
 
 /*****************************************************************************/
 
 var ul = el('ul'); 
 document.body.appendChild(ul);
+document.body.appendChild(el('p', "There are " + scripts.length + " tests."));
 
 function add(el) {
   ul.appendChild(el);
+}
+
+function isValid(blocks, actualHeight, height) {
+  if (blocks && blocks[0][0] === 'procDef') {
+    var valid = (actualHeight <= height);
+    var operator = valid ? '≤' : '>';
+  } else {
+    var valid = (height === actualHeight);
+    var operator = valid ? '=' : '≠';
+  }
+  return {
+    valid: valid,
+    output: operator === '=' ? actualHeight
+                             : actualHeight + ' ' + operator + ' ' + height,
+  }
 }
 
 function testMeasure(blocks, actualHeight, index) {
@@ -155,9 +290,10 @@ function testMeasure(blocks, actualHeight, index) {
   var height = Compiler._measure(blocks, function(/* args */) {
     debug.push([].slice.apply(arguments).map(JSON.stringify).join(" "));
   });
-  if (height === actualHeight) {
+  var compare = isValid(blocks, actualHeight, height);
+  if (compare.valid) {
     add(el('li p', [
-                el('b', '#' + index), ' ✔ ' + height
+                el('b', '#' + index), ' ✔ ' + compare.output
           ]));
   } else {
     add(el('li', [
@@ -165,7 +301,7 @@ function testMeasure(blocks, actualHeight, index) {
         ].concat(debug.map(function(message) {
           return el('p code', message);
         })).concat([
-          el('p', '✘ ' + height + ' ≠ ' + actualHeight),
+          el('p', '✘ ' + compare.output),
           el('pre', JSON.stringify(blocks)),
         ])
     ));

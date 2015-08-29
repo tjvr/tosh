@@ -741,7 +741,7 @@ var Language = (function(Earley) {
   // g.addRule(Rule("m_spriteOrStage", ["AnyName"], identity));
   // g.addRule(Rule("m_touching", ["AnyName"], identity));
 
-  
+
   /* For Compiler.generate() */
 
   var precedenceLevels = [
@@ -750,7 +750,7 @@ var Language = (function(Earley) {
     ['+', '-'],
     ['=', '<', '>', 'list:contains:'],
     ['not'],
-    ['&',],  // actually & and | have the same precedence! 
+    ['&',],  // actually & and | have the same precedence!
     ['|',],  // except they must be parenthesised when inside each other.
     // [ stack blocks ]
   ];
@@ -892,6 +892,7 @@ var Language = (function(Earley) {
       spec: spec,
       parts: spec.split(Scratch.inputPat),
       category: "custom",
+      shape: 'stack',
     };
 
     grammar.addRule(new Rule("block", symbols,

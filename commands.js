@@ -287,18 +287,18 @@ var Scratch = (function() {
   scratchCommands.push(["...", "ellipsis", 42, "ellipsis"]);
 
   var typeShapes = {
-    " ": "stack",
-    "b": "predicate",
-    "c": "c-block",
-    "e": "if-block",
-    "f": "cap",
-    "h": "hat",
-    "r": "reporter",
-    "cf": "c-block cap",
+    ' ': 'stack',
+    'b': 'predicate',
+    'c': 'c-block',
+    'e': 'if-block',
+    'f': 'cap',
+    'h': 'hat',
+    'r': 'reporter',
+    'cf': 'c-block cap',
 
-    "else": "else",
-    "end": "end",
-    "ellipsis": "ellipsis",
+    'else': 'else',
+    'end': 'end',
+    'ellipsis': 'ellipsis',
   };
 
   scratchCommands.forEach(function(command) {

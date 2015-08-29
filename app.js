@@ -17,6 +17,7 @@ var cm = CodeMirror(editor, {
 
   scratchVariables: [],
   scratchLists: [],
+  scratchDefinitions: [],
 });
 
 var onResize = function() {
@@ -270,7 +271,9 @@ function showHint() {
     l.tokens[l.cursor - 1].isPartial = false;
     try {
       parser.parse(l.tokens); return false;
-    } catch (e) { console.log(e); }
+    } catch (e) {
+      // console.log(e); // DEBUG
+    }
     l.tokens[l.cursor - 1].isPartial = true;
   }
 
@@ -416,6 +419,58 @@ function showHint() {
 
   return true;
 };
+
+
+/* custom block definitions */
+
+cm.on('change', function(cm, change) {
+  var lines = [];
+  for (var i=change.from.line; i<=change.to.line; i++) {
+    lines.push(cm.getLine(i));
+  }
+  lines = lines.concat(change.removed);
+  lines = lines.concat(change.text);
+  onChange(lines);
+});
+
+function onChange(affectedLines) {
+  console.log(affectedLines);
+
+  for (var i=0; i<affectedLines.length; i++) {
+    var line = affectedLines[i];
+    if (/^define /.test(line)) {
+      refreshDefinitions();
+      break;
+    }
+  }
+}
+
+function refreshDefinitions() {
+  var contents = cm.getValue();
+  var lines = contents.split('\n');
+
+  var defineParser = new Earley.Parser(Language.defineGrammar);
+
+  var definitions = [];
+  lines.forEach(function(line) {
+    if (!/^define /.test(line)) return;
+    var tokens = Language.tokenize(line);
+    var results;
+    try {
+      results = defineParser.parse(tokens);
+    } catch (e) { return; }
+    if (results.length > 1) throw "ambiguous define. count: " + results.length;
+    var define = results[0];
+    definitions.push(define);
+  });
+
+  var oldDefinitions = cm.getOption('scratchDefinitions');
+  if (JSON.stringify(oldDefinitions) !== JSON.stringify(definitions)) {
+    // refresh syntax highlighting
+    cm.setOption('scratchDefinitions', definitions);
+    cm.setOption('mode', 'tosh');
+  }
+}
 
 /*****************************************************************************/
 
@@ -580,8 +635,8 @@ function bindModeNames(appList, cfgOption, property) {
       // include global var/list names
       names = names.concat(App.project[property]());
     }
-    cm.setOption('mode', 'tosh');
     cm.setOption(cfgOption, names);
+    cm.setOption('mode', 'tosh');
   }
 
   appList.subscribe(function(array) {
