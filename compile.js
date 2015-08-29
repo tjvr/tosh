@@ -238,23 +238,11 @@ var Compiler = (function() {
     return sum(list.map(measureBlock)) - 3 * (list.length - 1);
   }
 
-  function measureBlock(block) {
-    // be careful not to pass a list here (or a block to measureList!)
+  function blockInfo(block) {
     var selector = block[0],
         args = block.slice(1),
         info;
     switch (selector) {
-      case 'procDef':
-        var hasInputs = false,
-            hasBooleans = false;
-        var spec = args[0];
-        spec.split(Scratch.inputPat).forEach(function(part) {
-          if (Scratch.inputPat.test(part)) {
-            hasInputs = true;
-            if (part === '%b') hasBooleans = true;
-          }
-        });
-        return hasBooleans ? 65 : hasInputs ? 64 : 60;
       case 'call':
         spec = args.shift();
         info = {
@@ -272,6 +260,26 @@ var Compiler = (function() {
         info = Scratch.blocksBySelector[selector];
         if (!info) throw "unknown selector: " + selector;
     }
+    return info;
+  }
+
+  function measureBlock(block) {
+    // be careful not to pass a list here (or a block to measureList!)
+    var selector = block[0],
+        args = block.slice(1);
+    if (selector === 'procDef') {
+      var hasInputs = false,
+          hasBooleans = false;
+      var spec = args[0];
+      spec.split(Scratch.inputPat).forEach(function(part) {
+        if (Scratch.inputPat.test(part)) {
+          hasInputs = true;
+          if (part === '%b') hasBooleans = true;
+        }
+      });
+      return hasBooleans ? 65 : hasInputs ? 64 : 60;
+    }
+    var info = blockInfo(block);
 
     var internal = internalHeight(info);
     measureLog(internal, "internalHeight", info.selector);
@@ -311,7 +319,7 @@ var Compiler = (function() {
             // does it end with a cap block?
             var last = arg.slice().pop();
             if (last) {
-              var lastInfo = Scratch.blocksBySelector[last[0]];
+              var lastInfo = blockInfo(last);
               if (/cap/.test(lastInfo.shape)) {
                 foo += 3;
               }
