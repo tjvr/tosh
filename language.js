@@ -873,13 +873,15 @@ var Language = (function(Earley) {
     var symbols = [];
     var parts = [];
     var argIndexes = [];
-    result.forEach(function(x) {
+    result.forEach(function(x, index) {
       if (x.arg) {
         argIndexes.push(symbols.length);
         symbols.push(x.arg);
         parts.push("%" + x.arg);
         grammar.addRule(new Rule("BlockParam", textSymbols(x.name),
                             paintLiteral("parameter")));
+      } else if (index === 0 && x === 'atomic') {
+        // ignore
       } else {
         symbols.push([x]);
         parts.push(x);
