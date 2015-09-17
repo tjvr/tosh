@@ -503,6 +503,7 @@ var Compiler = (function() {
   function generateLiteral(value, inputShape, menu, level) {
     switch (inputShape) {
       case 'color':
+        // TODO generate color literals
         return value;
       case 'boolean':
         if (!value) return '<>';
@@ -523,11 +524,11 @@ var Compiler = (function() {
         if (!value && level < +Infinity && level !== -1) {
           return '_';
         }
-        value = value || "";
         // Does it look like a number?
         if (/-?[0-9]+\.?[0-9]*/.test(value)) {
           return '' + value;
         }
+        value = value || "";
         return '"' + value.replace(/"/g, '\\"')
                            .replace(/\\/g, '\\\\') + '"';
       case 'number':
