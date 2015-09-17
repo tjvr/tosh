@@ -178,7 +178,7 @@ var Format = (function() {
         // make an <image> element
         var image = new Image;
         image.src = 'data:image/' + (ext === 'jpg' ? 'jpeg' : ext) + ';base64,' + btoa(f.asBinary());
-        costume.$image = image;
+        costume._$image = image;
 
         // fixup `name` property
         costume.name = costume.costumeName;

@@ -590,7 +590,7 @@ var Language = (function(Earley) {
     // ---
 
     Rule("s2", ["s0"], identity),
-    Rule("s2", ["n2"], identity),
+    Rule("s2", ["n1"], identity),
 
     /* --------------------------------------------------------------------- */
 
