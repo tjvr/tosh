@@ -152,11 +152,11 @@ var Compiler = (function() {
       case 'cap':
       case 'stack':
           block = lines.shift();
-          if (block.info.isCustom) {
-            return ['call', block.info.spec].concat(block.args);
-          }
           selector = block.info.selector;
           args = block.args.map(compileReporter);
+          if (block.info.isCustom) {
+            return ['call', block.info.spec].concat(args);
+          }
           break;
       case 'hat':
         if (maybeHat) {
@@ -254,13 +254,13 @@ var Compiler = (function() {
           defaults: [], // not needed
         }
         info.inputs = info.parts.filter(function(p) { return Scratch.inputPat.test(p); });
-        break;
+        return info;
       default:
         console.log(block);
         info = Scratch.blocksBySelector[selector];
         if (!info) throw "unknown selector: " + selector;
+        return info;
     }
-    return info;
   }
 
   function measureBlock(block) {
@@ -280,6 +280,9 @@ var Compiler = (function() {
       return hasBooleans ? 65 : hasInputs ? 64 : 60;
     }
     var info = blockInfo(block);
+    if (selector === 'call') {
+      args.shift(); // spec
+    }
 
     var internal = internalHeight(info);
     measureLog(internal, "internalHeight", info.selector);
