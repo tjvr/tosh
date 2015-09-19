@@ -223,8 +223,6 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
           case 'if-block':
           case 'else':
             indent++; break;
-          case 'end':
-            indent--; break;
         }
       }
 
