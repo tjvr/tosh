@@ -32,7 +32,7 @@ var P = (function() {
       var listeners = this['$' + event];
       if (listeners) {
         var i = listeners.indexOf(listener);
-        if (i > -1) {
+        if (i !== -1) {
           listeners.splice(i, 1);
         }
       }
@@ -225,7 +225,7 @@ var P = (function() {
     xhr.onerror = function() {
       request.error(new Error('XHR Error'));
     };
-    xhr.responseType = type;
+    xhr.responseType = type || '';
     setTimeout(xhr.send.bind(xhr));
 
     if (callback) request.onLoad(callback.bind(self));
@@ -293,7 +293,7 @@ var P = (function() {
     var request = new CompositeRequest;
 
     request.defer = true;
-    request.add(P.IO.load('http://www.corsproxy.com/scratch.mit.edu/projects/' + id + '/').onLoad(function(data) {
+    request.add(P.IO.load('http://crossorigin.me/http://scratch.mit.edu/projects/' + id + '/').onLoad(function(data) {
       var m = /<title>\s*(.+?)(\s+on\s+Scratch)?\s*<\/title>/.exec(data);
       if (callback) request.onLoad(callback.bind(self));
       if (m) {
@@ -1338,6 +1338,8 @@ var P = (function() {
     c.scratchX = this.scratchX;
     c.scratchY = this.scratchY;
     c.visible = this.visible;
+    c.penColor = this.penColor;
+    c.penCSS = this.penCSS;
     c.penHue = this.penHue;
     c.penSaturation = this.penSaturation;
     c.penLightness = this.penLightness;
@@ -1397,16 +1399,10 @@ var P = (function() {
     var context = this.stage.penContext;
     var x = this.scratchX;
     var y = this.scratchY;
-    if (this.penSize % 2 > .5 && this.penSize % 2 < 1.5) {
-      x -= .5;
-      y -= .5;
-    }
-    context.strokeStyle = this.penCSS || 'hsl(' + this.penHue + ',' + this.penSaturation + '%,' + (this.penLightness > 100 ? 200 - this.penLightness : this.penLightness) + '%)';
-    context.lineWidth = this.penSize;
+    context.fillStyle = this.penCSS || 'hsl(' + this.penHue + ',' + this.penSaturation + '%,' + (this.penLightness > 100 ? 200 - this.penLightness : this.penLightness) + '%)';
     context.beginPath();
-    context.moveTo(240 + x, 180 - y);
-    context.lineTo(240.01 + x, 180 - y);
-    context.stroke();
+    context.arc(240 + x, 180 - y, this.penSize / 2, 0, 2 * Math.PI, false);
+    context.fill();
   };
 
   Sprite.prototype.draw = function(context, noEffects) {
@@ -2296,19 +2292,19 @@ P.compile = (function() {
 
       } else if (e[0] === '+') { /* Operators */
 
-        return '(' + num(e[1]) + ' + ' + num(e[2]) + ')';
+        return '(' + num(e[1]) + ' + ' + num(e[2]) + ' || 0)';
 
       } else if (e[0] === '-') {
 
-        return '(' + num(e[1]) + ' - ' + num(e[2]) + ')';
+        return '(' + num(e[1]) + ' - ' + num(e[2]) + ' || 0)';
 
       } else if (e[0] === '*') {
 
-        return '(' + num(e[1]) + ' * ' + num(e[2]) + ')';
+        return '(' + num(e[1]) + ' * ' + num(e[2]) + ' || 0)';
 
       } else if (e[0] === '/') {
 
-        return '(' + num(e[1]) + ' / ' + num(e[2]) + ')';
+        return '(' + num(e[1]) + ' / ' + num(e[2]) + ' || 0)';
 
       } else if (e[0] === 'randomFrom:to:') {
 
@@ -2458,7 +2454,7 @@ P.compile = (function() {
 
     var num = function(e) {
       if (typeof e === 'number') {
-        return e;
+        return e || 0;
       }
       if (typeof e === 'boolean' || typeof e === 'string') {
         return +e || 0;
@@ -2501,7 +2497,7 @@ P.compile = (function() {
 
     var noRGB = '';
     noRGB += 'if (S.penCSS) {\n';
-    noRGB += '  var hsl = rgb2hsl(S.penColor);\n';
+    noRGB += '  var hsl = rgb2hsl(S.penColor & 0xffffff);\n';
     noRGB += '  S.penHue = hsl[0];\n';
     noRGB += '  S.penSaturation = hsl[1];\n';
     noRGB += '  S.penLightness = hsl[2];\n';
@@ -2513,9 +2509,9 @@ P.compile = (function() {
         source += 'console.log(' + val(block[0]) + ');\n';
       }
 
-      if (['forward:', 'turnRight:', 'turnLeft:', 'heading:', 'pointTowards:', 'gotoX:y:', 'gotoSpriteOrMouse:', 'changeXposBy:', 'xpos:', 'changeYposBy:', 'ypos:', 'bounceOffEdge', 'setRotationStyle', 'lookLike:', 'nextCostume', 'say:duration:elapsed:from:', 'say:', 'think:duration:elapsed:from:', 'think:', 'changeGraphicEffect:by:', 'setGraphicEffect:to:', 'filterReset', 'changeSizeBy:', 'setSizeTo:', 'comeToFront', 'goBackByLayers:', 'glideSecs:toX:y:elapsed:from:'].indexOf(block[0]) > -1) {
+      if (['forward:', 'turnRight:', 'turnLeft:', 'heading:', 'pointTowards:', 'gotoX:y:', 'gotoSpriteOrMouse:', 'changeXposBy:', 'xpos:', 'changeYposBy:', 'ypos:', 'bounceOffEdge', 'setRotationStyle', 'lookLike:', 'nextCostume', 'say:duration:elapsed:from:', 'say:', 'think:duration:elapsed:from:', 'think:', 'changeGraphicEffect:by:', 'setGraphicEffect:to:', 'filterReset', 'changeSizeBy:', 'setSizeTo:', 'comeToFront', 'goBackByLayers:', 'glideSecs:toX:y:elapsed:from:'].indexOf(block[0]) !== -1) {
         source += 'if (S.visible) VISUAL = true;\n';
-      } else if (['showBackground:', 'startScene', 'nextBackground', 'nextScene', 'startSceneAndWait', 'show', 'hide', 'putPenDown', 'stampCostume', 'showVariable:', 'hideVariable:', 'doAsk', 'setVolumeTo:', 'changeVolumeBy:', 'setTempoTo:', 'changeTempoBy:'].indexOf(block[0]) > -1) {
+      } else if (['showBackground:', 'startScene', 'nextBackground', 'nextScene', 'startSceneAndWait', 'show', 'hide', 'putPenDown', 'stampCostume', 'showVariable:', 'hideVariable:', 'doAsk', 'setVolumeTo:', 'changeVolumeBy:', 'setTempoTo:', 'changeTempoBy:'].indexOf(block[0]) !== -1) {
         source += 'VISUAL = true;\n';
       }
 
@@ -2681,13 +2677,13 @@ P.compile = (function() {
       } else if (block[0] === 'comeToFront') {
 
         source += 'var i = self.children.indexOf(S);\n';
-        source += 'if (i > -1) self.children.splice(i, 1);\n';
+        source += 'if (i !== -1) self.children.splice(i, 1);\n';
         source += 'self.children.push(S);\n';
 
       } else if (block[0] === 'goBackByLayers:') {
 
         source += 'var i = self.children.indexOf(S);\n';
-        source += 'if (i > -1) {\n';
+        source += 'if (i !== -1) {\n';
         source += '  self.children.splice(i, 1);\n';
         source += '  self.children.splice(Math.max(0, i - ' + num(block[1]) + '), 0, S);\n';
         source += '}\n';
@@ -2785,8 +2781,10 @@ P.compile = (function() {
 
       } else if (block[0] === 'penColor:') {
 
-        source += 'var c = S.penColor = ' + num(block[1]) + ' & 0xffffff;\n'
-        source += 'S.penCSS = "rgb(" + (c >> 16) + "," + (c >> 8 & 0xff) + "," + (c & 0xff) + ")";\n'
+        source += 'var c = ' + num(block[1]) + ';\n';
+        source += 'S.penColor = c;\n';
+        source += 'var a = (c >> 24 & 0xff) / 0xff;\n';
+        source += 'S.penCSS = "rgba(" + (c >> 16 & 0xff) + "," + (c >> 8 & 0xff) + "," + (c & 0xff) + ", " + (a || 1) + ")";\n';
 
       } else if (block[0] === 'setPenHueTo:') {
 
@@ -3034,7 +3032,7 @@ P.compile = (function() {
         source += 'if (S.isClone) {\n';
         source += '  S.remove();\n';
         source += '  var i = self.children.indexOf(S);\n';
-        source += '  if (i > -1) self.children.splice(i, 1);\n';
+        source += '  if (i !== -1) self.children.splice(i, 1);\n';
         source += '  for (var i = 0; i < self.queue.length; i++) {\n';
         source += '    if (self.queue[i] && self.queue[i].sprite === S) {\n';
         source += '      self.queue[i] = undefined;\n';
@@ -3359,14 +3357,15 @@ P.runtime = (function() {
   };
 
   var listIndex = function(list, index, length) {
+    var i = index | 0;
+    if (i === index) return i > 0 && i <= length ? i - 1 : -1;
     if (index === 'random' || index === 'any') {
       return Math.random() * length | 0;
     }
     if (index === 'last') {
       return length - 1;
     }
-    var i = (index | 0) - 1;
-    return i === i && i >= 0 && i < length ? i : -1;
+    return i > 0 && i <= length ? i - 1 : -1;
   };
 
   var contentsOfList = function(list) {
@@ -3382,7 +3381,7 @@ P.runtime = (function() {
 
   var getLineOfList = function(list, index) {
     var i = listIndex(list, index, list.length);
-    return i > -1 ? list[i] : '';
+    return i !== -1 ? list[i] : '';
   };
 
   var listContains = function(list, value) {
@@ -3403,7 +3402,7 @@ P.runtime = (function() {
       var i = listIndex(list, index, list.length);
       if (i === list.length - 1) {
         list.pop();
-      } else if (i > -1) {
+      } else if (i !== -1) {
         list.splice(i, 1);
       }
     }
@@ -3413,14 +3412,14 @@ P.runtime = (function() {
     var i = listIndex(list, index, list.length + 1);
     if (i === list.length) {
       list.push(value);
-    } else if (i > -1) {
+    } else if (i !== -1) {
       list.splice(i, 0, value);
     }
   };
 
   var setLineOfList = function(list, index, value) {
     var i = listIndex(list, index, list.length);
-    if (i > -1) {
+    if (i !== -1) {
       list[i] = value;
     }
   };
@@ -3630,7 +3629,7 @@ P.runtime = (function() {
 
   var endCall = function() {
     if (CALLS.length) {
-      if (C.warp) WARP--;
+      if (WARP) WARP--;
       IMMEDIATE = C.fn;
       C = CALLS.pop();
       STACK = C.stack;
