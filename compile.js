@@ -74,7 +74,6 @@ var Compiler = (function() {
       case 'reporter':
       case 'predicate':
         var block = compileReporter(lines.shift());
-        console.log(block);
         return [block];
       default:
         var first = compileBlock(lines, true);
@@ -253,7 +252,6 @@ var Compiler = (function() {
         info.inputs = info.parts.filter(function(p) { return Scratch.inputPat.test(p); });
         return info;
       default:
-        console.log(block);
         info = Scratch.blocksBySelector[selector];
         if (!info) throw "unknown selector: " + selector;
         return info;
@@ -463,6 +461,7 @@ var Compiler = (function() {
                     || (level === outerLevel &&
                         ['-', '/', '%'].indexOf(selector) > -1 &&
                         argIndex === 1)
+                    || /menu/.test(inputShape)
                       );
     if (needsParens) {
       switch (info.shape) {
