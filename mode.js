@@ -9,6 +9,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     this.lineTokens = [];
     this.grammar = Language.grammar.copy();
     this.customBlocks = {};
+    this.indent = 0;
 
     var _this = this;
     cfg.scratchVariables.forEach(function(variable) {
@@ -32,8 +33,9 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     var s = new State();
     s.lines = this.lines.slice();
     s.lineTokens = this.lineTokens.slice();
+    s.indent = this.indent;
 
-    // don't copy these: if they change, app will refresh the entire mode.
+    // don't copy these. when they change, app will refresh the entire mode.
     s.grammar = this.grammar;
     s.customBlocks = this.customBlocks;
     return s;
@@ -133,6 +135,8 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     }
 
     window.lines = this.lines;
+
+    return result;
   }
 
   function paintBlocks(b) {
@@ -167,6 +171,11 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     startState: function() { return new State(); },
     copyState:  function(state) { return state.copy(); },
     token: function(stream, state) {
+      state.indent = stream.indentation();
+      // TODO: context.
+      // - are we in the first part of an `if` block?
+      // - what about parameter scope?
+
       if (state.lineTokens.length === 0) {
         stream.match(Language.whitespacePat);
 
@@ -204,13 +213,31 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
       state.parseAndPaint([]);
     },
 
-    /*indent: function(state, textAfter) {
+    indent: function(state, textAfter) {
+      var indent = parseInt(state.indent / cfg.indentUnit);
+      var block = state.lines[state.lines.length - 1];
+      if (block) {
+        switch (block.info.shape) {
+          case 'c-block':
+          case 'c-block cap':
+          case 'if-block':
+          case 'else':
+            indent++; break;
+          case 'end':
+            indent--; break;
+        }
+      }
+
+      // if this line is an `end`, dedent it.
+      if (/^end$/.test(textAfter.trim())) indent--;
+      if (/^else$/.test(textAfter.trim())) indent--;
+
       // return number of spaces to indent, taking indentUnit into account
-      return 1;
-    },*/
+      return cfg.indentUnit * indent;
+    },
 
     lineComment: '//',
-    // electricInput: /(?: |end)$/,
+    electricInput: /( |else|end)$/,
 
   };
 });

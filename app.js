@@ -5,8 +5,13 @@ var cm = CodeMirror(editor, {
   mode: "tosh",
 
   indentUnit: 3,
+  smartIndent: true,
   tabSize: 3,
   indentWithTabs: true,
+
+  lineWrapping: true,
+  dragDrop: false,
+  cursorScrollMargin: 80,
 
   lineNumbers: true,
   gutters: ["CodeMirror-linenumbers", "errors"],
@@ -35,11 +40,11 @@ cm.setOption("extraKeys", {
     toggleVim();
   },
   'Ctrl-Space': function(cm) {
-    showHint();
+    requestHint();
   },
   'Tab': function(cm) {
     if (!cm.somethingSelected()) {
-      if (showHint()) return;
+      if (requestHint()) return;
     }
     if (inputSeek(+1)) return;
 
@@ -248,7 +253,24 @@ function tokenizeAtCursor(options) {
   }
 }
 
-function showHint() {
+function showHintMenu(results) {
+  cm.showHint({
+    hint: function() { return results; },
+    completeSingle: false,
+    alignWithWord: true,
+    customKeys: {
+      Up:       function(_, menu) { menu.moveFocus(-1); },
+      Down:     function(_, menu) { menu.moveFocus(1); },
+      Home:     function(_, menu) { menu.setFocus(0);},
+      End:      function(_, menu) { menu.setFocus(menu.length - 1); },
+      // Enter:    function(_, menu) { menu.pick() },
+      Tab:      function(_, menu) { menu.pick(); },
+      Esc:      function(_, menu) { menu.close() },
+    },
+  });
+}
+
+function requestHint() {
   function r(dom) {
     return function(container) {
       if (typeof dom === 'string') dom = document.createTextNode(dom);
@@ -258,7 +280,23 @@ function showHint() {
 
   var l = tokenizeAtCursor({ splitSelection: true });
   if (!l) return false;
-  if (l.cursor === 0) return false;
+  if (l.cursor === 0) {
+    if (l.state.indent > 0) {
+      var result = {
+        list: [{
+          text: 'end',
+          hint: applyHint,
+        }, {
+          text: 'else',
+          hint: applyHint,
+        }],
+        from: l.from,
+        to:   l.to,
+      };
+      showHintMenu(result);
+    }
+    return false;
+  }
   if (!(l.selection === "" || l.selection === "_" ||
         l.selection === "<>")) {
     return false;
@@ -383,22 +421,7 @@ function showHint() {
     to:   l.to,
   };
 
-  cm.showHint({
-    hint: function(cm, options) {
-      return result;
-    },
-    completeSingle: false,
-    alignWithWord: true,
-    customKeys: {
-      Up:       function(_, menu) { menu.moveFocus(-1); },
-      Down:     function(_, menu) { menu.moveFocus(1); },
-      Home:     function(_, menu) { menu.setFocus(0);},
-      End:      function(_, menu) { menu.setFocus(menu.length - 1); },
-      // Enter:    function(_, menu) { menu.pick() },
-      Tab:      function(_, menu) { menu.pick(); },
-      Esc:      function(_, menu) { menu.close() },
-    },
-  });
+  showHintMenu(result);
 
   if (list.length === 0) return false;
 
@@ -415,6 +438,7 @@ function showHint() {
     if (completion.seekInput) {
       inputSeek(+1);
     }
+    cm.indentLine(l.start.line);
   }
 
   return true;
@@ -434,8 +458,6 @@ cm.on('change', function(cm, change) {
 });
 
 function onChange(affectedLines) {
-  console.log(affectedLines);
-
   for (var i=0; i<affectedLines.length; i++) {
     var line = affectedLines[i];
     if (/^define /.test(line)) {
@@ -657,7 +679,7 @@ bindModeNames(App.activeLists, 'scratchLists', 'lists');
 /* compiling */
 
 cm.on('change', function(cm) {
-  showHint();
+  requestHint();
   App.editorDirty = true;
   App.phosphorusDirty = true;
   App.projectDirty = true;

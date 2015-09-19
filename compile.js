@@ -78,13 +78,13 @@ var Compiler = (function() {
         return [block];
       default:
         var first = compileBlock(lines, true);
-        var blocks = compileBlocks(lines, true);
+        var blocks = compileBlocks(lines); //, true);
         blocks.splice(0, 0, first);
         return blocks;
     }
   }
 
-  function compileBlocks(lines, maybeEmpty) {
+  function compileBlocks(lines) {
     var result = [];
     if (lines[0].info.shape === 'ellipsis') {
       lines.shift();
@@ -101,9 +101,6 @@ var Compiler = (function() {
           if (block) {
             result.push(block);
           } else {
-            if (!maybeEmpty) {
-              assert(result.length, "Empty c-block mouth");
-            }
             return result;
           }
       }
