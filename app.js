@@ -50,6 +50,10 @@ var extraKeys = {
     requestHint();
   },
   'Tab': function(cm) {
+    // TODO if there's no error with the input, just do an inputSeek.
+    // TODO tab at beginning of line
+    // TODO I think indentation breaks completion
+
     if (!cm.somethingSelected()) {
       var results = computeHint();
       // TODO: cache hints, so this doesn't suck
@@ -343,7 +347,7 @@ function expandCompletions(completions, g) {
     return [[symbol]];
   }
 
-  var choices = []; 
+  var choices = [];
   completions.forEach(function(c) {
     var symbols = c.completion;
     if (!symbols.length) return;
@@ -416,33 +420,36 @@ function computeHint() {
     if (c.pre.length === 1 && typeof c.pre[0] === "string") return;
     if (c.pre[0] === "block") return;
     if (c.rule.process.name === 'unaryMinus') return;
+    if (c.rule.process._info === undefined) return;
     return true;
   });
 
   var expansions = expandCompletions(completions, g);
+  expansions.forEach(function(x) {
+    x.length = x.via.end - x.via.start;
+  });
 
+  expansions.sort(function(a, b) {
+    return a.length < b.length ? +1 : a.length > b.length ? -1 : 0;
+  });
+  /*
   if (expansions.length) {
-    var longest = Math.max.apply(null, expansions.map(function(x) {
-      return x.via.end - x.via.start;
+    var shortest = Math.min.apply(null, expansions.map(function(x) {
+      return x.completion.filter(function(symbol) { return symbol.kind !== 'symbol' }).length;
     }));
-    longExpansions = expansions.filter(function(x) {
-      var length = x.via.end - x.via.start;
-      return length === longest; 
+    expansions = expansions.filter(function(x) {
+      var length = x.completion.filter(function(symbol) { return symbol.kind !== 'symbol' }).length;
+      return length === shortest;
     });
-
-    longExpansions = longExpansions.filter(function(x) {
-      return !x.via.post.length; // && x.completion.length === 1;
-    });
-
-    if (longExpansions.length) expansions = longExpansions;
   }
+  */
 
   if (l.isPartial) {
     expansions = expansions.filter(function(x) {
       var first = x.completion[0];
       return (first.kind === 'symbol' && partial.kind === 'symbol' &&
               first.value.indexOf(partial.value) === 0
-        ) || (typeof first === 'string' && x.via.pre.length);
+        ); // || (typeof first === 'string' && x.via.pre.length);
     });
   } else {
     // don't complete keys!
@@ -450,6 +457,12 @@ function computeHint() {
       var first = x.completion[0];
       return !(first.kind === 'symbol' && /^[a-z0-9]$/.test(first.value));
     })
+
+    if (cursor === tokens.length) {
+      expansions = expansions.filter(function(x) {
+        return x.via.pre.length || x.via.post.length;
+      })
+    }
   }
 
   var list = [];
@@ -463,12 +476,14 @@ function computeHint() {
     var text = "";
     var displayText = "";
     for (var i=0; i<symbols.length; i++) {
-      if (i > 0) {
+      var part = symbols[i];
+      var displayPart = undefined;
+
+      if (i > 0 && part.value !== "?") {
         displayText += " ";
         text += " ";
       }
-      var part = symbols[i];
-      var displayPart = undefined;
+
       if (typeof part === "string") {
         var name = symbols[i];
         if (name[0] === "@") {
@@ -513,7 +528,7 @@ function computeHint() {
 
     assert(text);
 
-    if (c.rule.name === 'block') text += " ";
+    text += " ";
 
     var completion = {
       displayText: displayText,
