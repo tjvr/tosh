@@ -148,11 +148,7 @@ var Language = (function(Earley) {
       if (this.value === undefined) {
         return true;
       } else {
-        if (token.isPartial) {
-          return this.value.indexOf(token.value) === 0;
-        } else {
-          return this.value === token.value;
-        }
+        return this.value === token.value;
       }
     } else {
       return false;

@@ -44,6 +44,9 @@ var extraKeys = {
     toggleVim();
   },
   'Ctrl-Space': function(cm) {
+    if (cm.somethingSelected()) {
+      cm.replaceSelection(''); // TODO complete on a selection
+    }
     requestHint();
   },
   'Tab': function(cm) {
@@ -273,13 +276,6 @@ function tokenizeAtCursor(options) {
     var afterTokens = Language.tokenize(suffix);
     tokens = beforeTokens.concat(afterTokens);
     cursorIndex = beforeTokens.length;
-
-    if (isPartial && prefix) {
-      token = tokens[cursorIndex - 1];
-      if (token.kind === "symbol") {
-        token.isPartial = true;
-      }
-    }
   } else {
     var tokens = Language.tokenize(prefix + suffix);
     var size = indent;
@@ -332,14 +328,39 @@ function requestHint() {
   });
 }
 
-function computeHint() {
-  function r(dom) {
-    return function(container) {
-      if (typeof dom === 'string') dom = document.createTextNode(dom);
-      container.appendChild(dom);
-    };
+function expandCompletions(completions, g) {
+  function expand(symbol) {
+    if (typeof symbol !== 'string') {
+      return [[symbol]];
+    }
+    if (/^@/.test(symbol)) {
+      return [g.rulesByName[symbol][0].symbols];
+    } if (/^[md]_/.test(symbol) || /^[A-Z]/.test(symbol)) {
+      return (g.rulesByName[symbol] || []).map(function(rule) {
+        return rule.symbols;
+      });
+    }
+    return [[symbol]];
   }
 
+  var choices = []; 
+  completions.forEach(function(c) {
+    var symbols = c.completion;
+    if (!symbols.length) return;
+    var first = symbols[0],
+    rest = symbols.slice(1);
+    var more = expand(first).map(function(symbols) {
+      return {
+        completion: symbols.concat(rest),
+        via: c,
+      };
+    });
+    choices = choices.concat(more);
+  });
+  return choices;
+}
+
+function computeHint() {
   var l = tokenizeAtCursor({ splitSelection: true });
   if (!l) return false;
   if (l.cursor === 0) {
@@ -359,42 +380,84 @@ function computeHint() {
     }
     return false;
   }
+  /*
   if (!(l.selection === "" || l.selection === "_" ||
         l.selection === "<>")) {
     return false;
-  }
+  }*/
 
   var g = l.state.grammar;
   var parser = new Earley.Parser(g);
 
-  if (l.isPartial && l.cursor === l.tokens.length) {
-    l.tokens[l.cursor - 1].isPartial = false;
+  var tokens = l.tokens.slice();
+  var cursor = l.cursor;
+  var partial;
+  var isValid;
+  if (l.isPartial) {
+    partial = tokens[cursor - 1];
+    tokens.splice(cursor - 1, 1);
+    cursor--;
+
     try {
-      parser.parse(l.tokens); return false;
+      parser.parse(tokens); isValid = true;
     } catch (e) {
+      isValid = false;
       // console.log(e); // DEBUG
     }
-    l.tokens[l.cursor - 1].isPartial = true;
   }
 
   var completer = new Earley.Completer(g);
-  var completions = completer.complete(l.tokens, l.cursor);
+  var completions = completer.complete(tokens, cursor);
   if (!completions) {
     return false; // There was an error!
   }
 
-  var list = [];
-  completions.forEach(function(c) {
-    var symbols = c.completion;
+  completions.filter(function(c) {
     if (c.pre.length === 1 && typeof c.pre[0] === "string") return;
     if (c.pre[0] === "block") return;
+    if (c.rule.process.name === 'unaryMinus') return;
+    return true;
+  });
 
-    if (l.isPartial) {
-      var spec = c.pre[c.pre.length - 1];
-      symbols.splice(0, 0, spec);
-    }
+  var expansions = expandCompletions(completions, g);
 
-    if (!symbols.length) return;
+  if (expansions.length) {
+    var longest = Math.max.apply(null, expansions.map(function(x) {
+      return x.via.end - x.via.start;
+    }));
+    longExpansions = expansions.filter(function(x) {
+      var length = x.via.end - x.via.start;
+      return length === longest; 
+    });
+
+    longExpansions = longExpansions.filter(function(x) {
+      return !x.via.post.length; // && x.completion.length === 1;
+    });
+
+    if (longExpansions.length) expansions = longExpansions;
+  }
+
+  if (l.isPartial) {
+    expansions = expansions.filter(function(x) {
+      var first = x.completion[0];
+      return (first.kind === 'symbol' && partial.kind === 'symbol' &&
+              first.value.indexOf(partial.value) === 0
+        ) || (typeof first === 'string' && x.via.pre.length);
+    });
+  } else {
+    // don't complete keys!
+    expansions = expansions.filter(function(x) {
+      var first = x.completion[0];
+      return !(first.kind === 'symbol' && /^[a-z0-9]$/.test(first.value));
+    })
+  }
+
+  var list = [];
+  expansions.forEach(function(x) {
+    var symbols = x.completion.slice();
+    var c = x.via;
+
+    assert(symbols.length);
 
     var selection;
     var text = "";
@@ -412,13 +475,20 @@ function computeHint() {
           part = g.rulesByName[name][0].symbols[0].value;
         } else {
           if (/^b[0-9]?$/.test(name)) {
-            if (!selection) selection = { ch: text.length, size: 2 };
             part = "<>";
           } else {
-            if (!selection) selection = { ch: text.length, size: 1 };
             part = "_";
           }
 
+          if (partial && i === 0) {
+            displayPart = part;
+            part = partial.value;
+            if (!selection) selection = { ch: text.length + part.length, size: 0 };
+          } else {
+            if (!selection) selection = { ch: text.length, size: part.length };
+          }
+
+          /*
           if (l.isPartial && i === 0) {
             // Sometimes we need more than one token!
             // Not sure what to do about this…
@@ -428,17 +498,12 @@ function computeHint() {
             part = token.text;
             selection = { ch: part.length };
           }
+          */
         }
       } else if (part && part.kind === "symbol") {
         part = part.value;
       } else {
-        // if (l.isPartial && symbols.length === 1) {
-        //   part = l.tokens[l.cursor - 1].text;
-        // } else {
-          // The completion contains a non-symbol token.
-          // We don't care about these
           return;
-        // }
       }
       text += part;
       displayText += (displayPart === undefined ? part : displayPart);
@@ -448,6 +513,8 @@ function computeHint() {
 
     assert(text);
 
+    if (c.rule.name === 'block') text += " ";
+
     var completion = {
       displayText: displayText,
       text: text,
@@ -455,8 +522,7 @@ function computeHint() {
       selection: selection,
     };
 
-    if (c.rule.process.name === 'unaryMinus') return;
-
+    /*
     if (l.isPartial) {
       completion.text += " ";
 
@@ -473,6 +539,7 @@ function computeHint() {
         completion.to = { line: l.to.line, ch: l.to.ch + 1 };
       }
     }
+    */
 
     list.push(completion);
   });

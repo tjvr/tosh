@@ -261,10 +261,9 @@ var Earley = (function() {
     this.afterParser = new Parser(grammar.reverse());
   };
 
-  Completer.prototype.complete = function(tokens, cursorIndex, ruleNames) {
+  Completer.prototype.complete = function(tokens, cursorIndex) {
     function tok(token) {
-      var r = token.isPartial ? "*" : "";
-      return JSON.stringify(token.value + r) || (token.kind + r);
+      return JSON.stringify(token.value) || (token.kind + r);
     }
     function pretty(symbol) {
       return (typeof symbol === "string" ? symbol : stringify(symbol));
@@ -325,7 +324,7 @@ var Earley = (function() {
         var l = leftColumn[i];
         var r = rightColumn[j];
         if (l.rule === r.rule._original 
-            && (l.position > 0 || r.position > 0)
+            //&& (l.position > 0 || r.position > 0 || tokens.length === 0)
           ){
 
           // TODO: compare ancestors list
@@ -350,17 +349,18 @@ var Earley = (function() {
       }
     }
 
-    // console.table(completions.map(function(s) {
-    //   var info = s.rule.process._info;
-    //   return {
-    //     start: s.start,
-    //     pre: s.pre.map(pretty).join(" "),
-    //     completion: s.completion.map(pretty).join(" "),
-    //     post: s.post.map(pretty).join(" "),
-    //     end: s.end,
-    //     rule: info ? info.selector : null,
-    //   };
-    // }));
+    console.table(completions.map(function(s) {
+      var info = s.rule.process._info;
+      return {
+        start: s.start,
+        pre: s.pre.map(pretty).join(" "),
+        completion: s.completion.map(pretty).join(" "),
+        post: s.post.map(pretty).join(" "),
+        end: s.end,
+        selector: info ? info.selector : null,
+        name: s.rule.name,
+      };
+    }));
 
     // cases it fails:
     //
