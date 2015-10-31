@@ -724,7 +724,7 @@ function NamesEditor(kind, names, factory, addText) {
                 }
                 var index = names().indexOf(variable);
                 names.remove(index);
-                if (names.length()) {
+                if (names().length) {
                   var focusIndex = index > 0 ? index - 1 : 0;
                   names()[focusIndex]._isEditing.assign(true);
                 }
@@ -735,7 +735,7 @@ function NamesEditor(kind, names, factory, addText) {
                 }
                 var index = names().indexOf(variable);
                 names.remove(index);
-                if (names.length()) {
+                if (names().length) {
                   names()[index]._isEditing.assign(true);
                 }
                 break;
@@ -747,7 +747,7 @@ function NamesEditor(kind, names, factory, addText) {
                 break;
               case 40: // Down
                 var index = names().indexOf(variable);
-                if (index + 1 < names.length()) {
+                if (index + 1 < names().length) {
                   names()[index + 1]._isEditing.assign(true);
                 }
                 break;
