@@ -29,11 +29,21 @@ var cm = CodeMirror(editor, {
   scratchDefinitions: [],
 });
 
+var windowSize = ko();
 var onResize = function() {
-  cm.setSize(editor.clientWidth, editor.clientHeight)
+  windowSize.assign({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
 };
 window.addEventListener('resize', onResize);
+window.addEventListener('orientationchange', onResize);
 onResize();
+
+function fixEditorLayout() {
+  cm.setSize(editor.clientWidth, editor.clientHeight)
+}
+windowSize.subscribe(fixEditorLayout);
 
 /*****************************************************************************/
 
@@ -643,6 +653,8 @@ var App = new function() {
   var _this = this;
   this.project = Project.new();
 
+  this.tab = ko('data');
+
   this.editorDirty = false;
   this.phosphorusDirty = true;
   this.projectDirty = false;
@@ -775,12 +787,65 @@ var addNameText = App.activeIsStage.compute(function(isStage) {
   return isStage ? "＋ for all sprites" : "＋ for this sprite";
 });
 
+var deviceKind = windowSize.compute(function(size) {
+  return size.width > 960 ? 'desktop'
+       : size.width > 800 ? 'tablet'
+                          : 'phone';
+});
+
+ko(function() {
+  var classes = ['wrap', 'app', 'not-desktop', 'not-tablet', 'not-phone'];
+  classes.push(deviceKind());
+  classes.splice(classes.indexOf('not-' + deviceKind()), 1);
+  classes.push('tab-' + App.tab());
+  document.body.className = classes.join(' ');
+});
+
+var tabs = deviceKind.compute(function(kind) {
+  var tabs = [
+    'data',
+    'costumes',
+    'sounds',
+  ];
+  if (kind === 'phone') {
+    tabs.splice(0, 0, 'code');
+  }
+  if (kind !== 'desktop') {
+    tabs.push('player');
+    tabs.splice(0, 0, 'sprites');
+  }
+  if (kind === 'phone') {
+    tabs.splice(0, 0, 'options');
+  }
+  return tabs;
+});
+
+tabs.subscribe(function(tabs) {
+  var preference = [App.tab(), 'code', 'player', 'data'];
+  for (var i=0; i<preference.length; i++) {
+    var name = preference[i];
+    if (tabs.indexOf(name) > -1) {
+      App.tab.assign(name);
+      return;
+    }
+  }
+});
+
+deviceKind.subscribe(fixEditorLayout);
+App.tab.subscribe(function() { setTimeout(fixEditorLayout, 0) });
+
+replaceChildren($('#tab-bar')[0], [
+  el('.tabs', tabs.map(function(name) {
+    return el('li', {
+      class: App.tab() === name ? 'active' : '',
+      on_click: function() {
+        App.tab.assign(name);
+      },
+    }, el('span', name));
+  }))
+]);
+
 replaceChildren($('#sidebar')[0], [
-  el('ul#tabs', [
-    el('li.active span', "Data"),
-    el('li span', "Costumes"),
-    el('li span', "Sounds"),
-  ]),
   el('#data.tab.active', (
     new NamesEditor('variable', App.activeVariables, Project.newVariable, addNameText)
   ).concat(
@@ -891,6 +956,9 @@ App.save = function() {
 
 App.preview = function(start) {
   App.isCompiling = true;
+
+  // Switch to Player tab
+  if (tabs().indexOf('player') > -1) App.tab.assign('player');
 
   // remove "internal error" message -- phosphorus doesn't do this by itself
   var errEl = $('#phosphorus .internal-error')[0];
@@ -1105,11 +1173,24 @@ oops.bind('project.sprites', function(target, op) {
 // events
 
 document.addEventListener('keydown', function(e) {
-  if (e.altKey) return;
   if (e.metaKey && e.ctrlKey) return;
+  var keyCode = e.keyCode;
+  if (e.altKey) {
+    if (e.metaKey || e.ctrlKey) return;
+
+    // Alt + keys 1-9
+    if (keyCode > 48 && keyCode < 58) {
+      var index = keyCode - 49;
+      if (index < tabs().length) {
+        App.tab.assign(tabs()[index]);
+      }
+      e.preventDefault();
+    }
+    return;
+  }
   if (isMac ? e.metaKey : e.ctrlKey) {
     // global C-bindings
-    switch (e.keyCode) {
+    switch (keyCode) {
       case 13: // run:  ⌘↩
         var vim = cm.state.vim;
         if (!vim || (!vim.visualMode && !vim.insertMode)) {
@@ -1141,7 +1222,7 @@ document.addEventListener('keydown', function(e) {
     // plain, document-only bindings
     if (e.target !== document.body) return;
     if (e.metaKey || e.ctrlKey) return;
-    switch (e.keyCode) {
+    switch (keyCode) {
       case 8: // backspace
         break;
       default: return;
@@ -1161,6 +1242,7 @@ phosphorusPlayer.addEventListener('keydown', function(e) {
       break;
     case 27: // stop:  ESC
       if (App.stage) {
+        if (tabs().indexOf('code') > -1) App.tab.assign('code');
         cm.focus();
         break;
       }
