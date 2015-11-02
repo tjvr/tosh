@@ -351,10 +351,13 @@ var Compiler = (function() {
   };
 
   function generate(scripts) {
-    return scripts.map(function(x) {
+    var result = scripts.map(function(x) {
       var blocks = x[2]; // x, y, blocks
       return generateList(blocks).join('\n');
-    }).join('\n\n') + '\n';
+    }).join('\n\n');
+    // enforce trailing blank line
+    if (result && result[result.length - 1] !== '\n') result += '\n';
+    return result;
   }
 
   function generateList(list) {
