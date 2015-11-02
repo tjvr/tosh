@@ -148,6 +148,9 @@ var Format = (function() {
       s.variables = ko(s.variables || []);
       s.lists = ko(s.lists || []);
 
+      // koel-ify name
+      s.objName = ko(s.objName);
+
       // koel-ify variables & lists
       s.variables().forEach(function(variable) {
         variable._name = variable.name = ko(variable.name);
