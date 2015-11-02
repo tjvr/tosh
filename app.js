@@ -855,6 +855,7 @@ var tabs = deviceKind.compute(function(kind) {
 
 tabs.subscribe(function(tabs) {
   var preference = [App.tab(), 'code', 'player', 'data'];
+  if (App.tab() === 'data') preference.shift();
   for (var i=0; i<preference.length; i++) {
     var name = preference[i];
     if (tabs.indexOf(name) > -1) {
