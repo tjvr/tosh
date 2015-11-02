@@ -506,8 +506,10 @@ var Compiler = (function() {
   function generateLiteral(value, inputShape, menu, level) {
     switch (inputShape) {
       case 'color':
-        // TODO generate color literals
-        return value;
+        var number = parseInt(value);
+        if (number < 0) number = 0xFFFFFFFF + number + 1;
+        var hex = number.toString(16);
+        return '#' + hex.slice(hex.length - 6); // last 6 characters
       case 'boolean':
         if (!value) return '<>';
         assert(false, 'literal non-false booleans not allowed: ' + value);
@@ -518,11 +520,10 @@ var Compiler = (function() {
           case '_Stage_':  return 'Stage';
         }
         if (Language.menusThatAcceptReporters.indexOf(menu) > -1) {
-          // treat as string: fall-thru
+          return generateStringLiteral(value);
         } else {
           return value;
         }
-        // FALL-THRU
       case 'string':
         if (!value && level < +Infinity && level !== -1) {
           return '_';
