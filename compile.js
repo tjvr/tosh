@@ -517,7 +517,7 @@ var Compiler = (function() {
           case '_Stage_':  return 'Stage';
         }
         if (Language.menusThatAcceptReporters.indexOf(menu) > -1) {
-          // treat as string
+          // treat as string: fall-thru
         } else {
           return value;
         }
@@ -527,12 +527,10 @@ var Compiler = (function() {
           return '_';
         }
         // Does it look like a number?
-        if (/-?[0-9]+\.?[0-9]*/.test(value)) {
+        if (/^-?[0-9]+\.?[0-9]*$/.test(value)) {
           return '' + value;
         }
-        value = value || "";
-        return '"' + value.replace(/"/g, '\\"')
-                           .replace(/\\/g, '\\\\') + '"';
+        return generateStringLiteral(value);
       case 'number':
         if (!value && value !== 0) return '_';
         return (value || 0);
@@ -540,6 +538,12 @@ var Compiler = (function() {
         // TODO
         return value;
     }
+  }
+
+  function generateStringLiteral(value) {
+    value = value || "";
+    return '"' + value.replace(/"/g, '\\"')
+                       .replace(/\\/g, '\\\\') + '"';
   }
 
   function indent(lines) {

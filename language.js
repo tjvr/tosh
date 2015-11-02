@@ -732,10 +732,6 @@ var Language = (function(Earley) {
   g.addRule(Rule("m_var", ["SpriteVariable"], identity));
   g.addRule(Rule("m_varName", ["SpriteVariable"], identity));
   g.addRule(Rule("m_list", ["SpriteList"], identity));
-  // g.addRule(Rule("m_spriteOnly", ["AnyName"], identity));
-  // g.addRule(Rule("m_spriteOrMouse", ["AnyName"], identity));
-  // g.addRule(Rule("m_spriteOrStage", ["AnyName"], identity));
-  // g.addRule(Rule("m_touching", ["AnyName"], identity));
 
 
   /* For Compiler.generate() */
