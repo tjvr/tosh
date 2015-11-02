@@ -35,13 +35,13 @@ var Format = (function() {
     var sprite = Project.newSprite();
 
     var project = {
-      objName: 'Stage',
+      objName: ko('Stage'),
       _isStage: true,
 
       _fileName: 'tosh',
 
       children: [sprite],
-      sprites: [sprite], // !
+      sprites: ko([sprite]), // !
 
       scripts: [],
       scriptComments: [],
@@ -69,7 +69,7 @@ var Format = (function() {
 
   Project.newSprite = function() {
     var sprite = {
-      objName: 'turtle',
+      objName: ko('turtle'),
       indexInLibrary: 1, // goes stale
 
       scripts: [],
@@ -133,6 +133,10 @@ var Format = (function() {
       return a.indexInLibrary < b.indexInLibrary ? -1 :
              a.indexInLibrary > b.indexInLibrary ? +1 : 0;
     });
+    p.sprites.forEach(function(s) {
+      s.objName = ko(s.objName);
+    });
+    p.sprites = ko(p.sprites);
 
     p._isStage = true;
 
@@ -234,13 +238,13 @@ var Format = (function() {
 
   Project.save = function(p) {
     // refresh stale things
-    p.sprites.forEach(function(s, index) {
+    p.sprites().forEach(function(s, index) {
       s.indexInLibrary = index;
     });
 
     // count sprites & scripts
-    p.info.spriteCount = p.sprites.length;
-    p.info.scriptCount = sum([p].concat(p.sprites).map(function(obj) {
+    p.info.spriteCount = p.sprites().length;
+    p.info.scriptCount = sum([p].concat(p.sprites()).map(function(obj) {
       return obj.scripts.length;
     }));
 

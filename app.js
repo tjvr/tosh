@@ -651,7 +651,7 @@ var Oops = new Format.Oops;
 
 var App = new function() {
   var _this = this;
-  this.project = Project.new();
+  this.project = ko(Project.new());
 
   this.tab = ko('data');
 
@@ -659,25 +659,58 @@ var App = new function() {
   this.phosphorusDirty = true;
   this.projectDirty = false;
 
-  this.active = ko(this.project.sprites[0]);
+  // active
+  this.active = ko(this.project().sprites()[0]);
   this.activeIsStage = this.active.compute(function(active) {
     return !!active._isStage;
   });
+
+  // variables & lists
   this.activeVariables = ko([]);
   this.activeLists = ko([]);
-  this.active.subscribe(function(active) {
-    active.variables.subscribe(function(array) {
-      if (_this.active() !== active) return;
+  this.active.subscribe(function(s) {
+    s.variables.subscribe(function(array) {
+      if (_this.active() !== s) return;
     _this.activeVariables.assign(array);
     });
   });
-  this.active.subscribe(function(active) {
-    active.lists.subscribe(function(array) {
-      if (_this.active() !== active) return;
+  this.active.subscribe(function(s) {
+    s.lists.subscribe(function(array) {
+      if (_this.active() !== s) return;
     _this.activeLists.assign(array);
     });
   });
+
+  // textarea
+  var lastActive;
+  this.active.subscribe(function(s) {
+    if (lastActive) App.flushEditor(lastActive);
+
+    var code = Compiler.generate(s.scripts);
+    cm.setValue(code);
+    lastActive = s;
+  });
 };
+
+
+/* sprite switcher */
+
+App.project.subscribe(function(p) {
+  function switcher(s) {
+    return el('.sprite', {
+      class: ko(function() { return App.active() === s ? 'active' : '' }),
+      on_click: function(e) { App.active.assign(s) },
+    }, [
+      //sprite.costumes[0].image,
+      el('span.name', s.objName),
+    ]);
+  }
+
+  replaceChildren($('#switcher')[0], [
+    switcher(p),
+    el('', p.sprites.map(switcher)),
+  ]);
+});
 
 
 /* ide */
@@ -856,18 +889,22 @@ replaceChildren($('#sidebar')[0], [
 ]);
 
 function bindModeNames(appList, cfgOption, property) {
+  var timeout;
+
   function updated() {
     var names = appList();
     if (!App.activeIsStage()) {
       // include global var/list names
-      names = names.concat(App.project[property]());
+      names = names.concat(App.project()[property]());
     }
     cm.setOption(cfgOption, names);
     cm.setOption('mode', 'tosh');
+    clearTimeout(timeout);
   }
 
   appList.subscribe(function(array) {
-    updated();
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(updated, 1000);
     array.forEach(function(variable) {
       variable._name.subscribe(updated);
     });
@@ -900,7 +937,7 @@ App.sync = function() {
       if (s.isClone) return;
 
       var t = s._tosh;
-      assert(t.objName === s.objName);
+      assert(t.objName() === s.objName);
 
       // variables could be created after we last sent the project to
       // phosphorus, so we have fallback values
@@ -933,9 +970,9 @@ App.sync = function() {
 
 App.makeZip = function() {
   App.sync();
-  App.flushEditor();
+  App.flushEditor(App.active());
 
-  var zip = Project.save(App.project);
+  var zip = Project.save(App.project());
         var json = JSON.parse(zip.file('project.json').asText());
         window.json = json;
   var file = zip.generate({ type: 'blob' });
@@ -946,7 +983,7 @@ App.save = function() {
   var file = this.makeZip();
   var a = el('a', {
     style: 'display: none;',
-    download: App.project._fileName + '.sb2',
+    download: App.project()._fileName + '.sb2',
     href: URL.createObjectURL(file),
   }, " ");
   document.body.appendChild(a);
@@ -977,9 +1014,10 @@ App.preview = function(start) {
 
     [stage].concat(stage.children).forEach(function(s) {
       if (s.isStage) {
-        s._tosh = App.project;
+        s._tosh = App.project();
       } else if (s.isSprite) {
-        s._tosh = App.project.sprites[s.indexInLibrary];
+        // TODO: is there a bug here re: indexInLibrary?
+        s._tosh = App.project().sprites()[s.indexInLibrary];
       }
     });
 
@@ -999,7 +1037,7 @@ App.preFlagClick = function() {
   }
 };
 
-App.flushEditor = function() {
+App.flushEditor = function(target) {
   // TODO better way to get thing out of CodeMirror?
   var finalState = cm.getStateAfter(cm.getDoc().size, true);
   function compileLine(b) {
@@ -1025,13 +1063,7 @@ App.flushEditor = function() {
     return;
   }
 
-  App.active().scripts = scripts;
-};
-
-App.switchSprite = function(index) {
-  this.spriteIndex = index;
-  var sprite = this.project.sprites[this.spriteIndex];
-  console.log('switchSprite', sprite.objName);
+  target.scripts = scripts;
 };
 
 
@@ -1085,20 +1117,16 @@ Oops.actions = {
 
   'replaceProject': {
     init: function(newProject) {
-      return [App.project, newProject];
+      return [App.project(), newProject];
     },
     redo: function(before, after) {
-      App.project = after;
+      App.project.assign(after);
     },
     undo: function(app, before, after) {
-      App.project = before;
+      App.project.assign(before);
     },
     end: function() {
-      console.log(App.project.sounds);
-      App.active.assign(App.project.sprites[0]);
-
-      var code = Compiler.generate(App.project.sprites[0].scripts);
-      cm.setValue(code);
+      App.active.assign(App.project().sprites()[0]);
 
       App.preview(false); // calls App.flushEditor() !
     },
@@ -1108,7 +1136,7 @@ Oops.actions = {
     redo: function(project) {
       project.sprites.push(Project.newSprite());
       project.children.push(Project.newSprite());
-      App.switchSprite(project.sprites.length - 1);
+      App.switchSprite(project.sprites().length - 1);
     },
     undo: function(project) {
       project.sprites.pop();
@@ -1117,7 +1145,7 @@ Oops.actions = {
 
   'deleteSprite': {
     init: function(project, index) {
-      var sprite = project.sprites[index];
+      var sprite = project.sprites()[index];
       var childIndex = project.children.indexOf(sprite);
       return [project, sprite, index, childIndex];
     },
