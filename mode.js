@@ -99,7 +99,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     try {
       results = p.parse(tokens);
       //if (results.length > 1) throw "ambiguous. count: " + results.length;
-      console.log(results);
+      // console.log(results); // DEBUG
     } catch (err) {
       console.log(err); // DEBUG
       this.lines.push({info: {shape: 'error'}});

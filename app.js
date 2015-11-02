@@ -684,12 +684,18 @@ var App = new function() {
   // textarea
   var lastActive;
   this.active.subscribe(function(s) {
-    if (lastActive) App.flushEditor(lastActive);
+    if (lastActive) this.flushEditor(lastActive);
+
+    var variables = s.variables().concat(this.project().variables());
+    var lists = s.lists().concat(this.project().lists());
+    cm.setOption('scratchVariables', variables);
+    cm.setOption('scratchLists', lists);
 
     var code = Compiler.generate(s.scripts);
     cm.setValue(code);
+
     lastActive = s;
-  });
+  }.bind(this));
 };
 
 
@@ -899,7 +905,7 @@ function bindModeNames(appList, cfgOption, property) {
       names = names.concat(App.project()[property]());
     }
     cm.setOption(cfgOption, names);
-    cm.setOption('mode', 'tosh');
+    cm.setOption('mode', 'tosh'); // force re-highlight
     timeout = null;
   }
 
