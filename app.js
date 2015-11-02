@@ -891,7 +891,7 @@ replaceChildren($('#sidebar')[0], [
 function bindModeNames(appList, cfgOption, property) {
   var timeout;
 
-  function updated() {
+  function updateNow() {
     var names = appList();
     if (!App.activeIsStage()) {
       // include global var/list names
@@ -899,14 +899,20 @@ function bindModeNames(appList, cfgOption, property) {
     }
     cm.setOption(cfgOption, names);
     cm.setOption('mode', 'tosh');
-    clearTimeout(timeout);
+    timeout = null;
+  }
+
+  function wasChanged() {
+    // timeout acts as to debounce changes. the actual update is expensive,
+    // since the editor has to re-paint!
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(updateNow, 1000);
   }
 
   appList.subscribe(function(array) {
-    if (timeout) clearTimeout(timeout);
-    timeout = setTimeout(updated, 1000);
+    wasChanged();
     array.forEach(function(variable) {
-      variable._name.subscribe(updated);
+      variable._name.subscribe(wasChanged);
     });
   });
 }
