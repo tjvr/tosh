@@ -650,7 +650,6 @@ var Project = Format.Project;
 var Oops = new Format.Oops;
 
 var App = new function() {
-  var _this = this;
   this.project = ko(Project.new());
 
   this.tab = ko('data');
@@ -662,29 +661,29 @@ var App = new function() {
   // active
   this.active = ko(this.project().sprites()[0]);
   this.activeIsStage = this.active.compute(function(active) {
-    return !!active._isStage;
+    return active && !!active._isStage;
   });
 
   // variables & lists
   this.activeVariables = ko([]);
   this.activeLists = ko([]);
-  this.active.subscribe(function(s) {
-    s.variables.subscribe(function(array) {
-      if (_this.active() !== s) return;
-    _this.activeVariables.assign(array);
-    });
-  });
-  this.active.subscribe(function(s) {
-    s.lists.subscribe(function(array) {
-      if (_this.active() !== s) return;
-    _this.activeLists.assign(array);
-    });
-  });
 
   // textarea
   var lastActive;
   this.active.subscribe(function(s) {
     if (lastActive) this.flushEditor(lastActive);
+
+    if (!s) {
+      this.activeVariables.assign([]);
+      this.activeLists.assign([]);
+      cm.setValue('');
+      lastActive = s;
+      return;
+    }
+
+    // we rely on array references for this binding
+    this.activeVariables.assign(s.variables());
+    this.activeLists.assign(s.lists());
 
     var variables = s.variables().concat(this.project().variables());
     var lists = s.lists().concat(this.project().lists());
@@ -705,7 +704,14 @@ App.project.subscribe(function(p) {
   function switcher(s) {
     return el('.sprite', {
       class: ko(function() { return App.active() === s ? 'active' : '' }),
-      on_click: function(e) { App.active.assign(s) },
+      on_click: function(e) {
+        App.active.assign(s);
+        if (App.tab() === 'sprites' && tabs().indexOf('code') > -1) {
+          App.tab.assign('code');
+          return;
+        }
+        $('#switcher')[0].focus();
+      },
     }, [
       //sprite.costumes[0].image,
       el('span.name', s.objName),
@@ -716,6 +722,26 @@ App.project.subscribe(function(p) {
     switcher(p),
     el('', p.sprites.map(switcher)),
   ]);
+
+  $('#switcher')[0].addEventListener('keydown', function(e) {
+    var sprites = [App.project()].concat(App.project().sprites());
+    var index = sprites.indexOf(App.active());
+    switch (e.keyCode) {
+      case 38: // Up
+        if (index - 1 >= 0) {
+          App.active.assign(sprites[index - 1]);
+        }
+        break;
+      case 40: // Down
+        if (index + 1 < sprites.length) {
+          App.active.assign(sprites[index + 1]);
+        }
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+  });
 });
 
 
@@ -733,6 +759,7 @@ function NamesEditor(kind, names, factory, addText) {
           on_blur:  function() { variable._isEditing.assign(false); },
 
           on_keydown: function(e) {
+            if (e.metaKey || e.ctrlKey || e.altKey) return;
             var start = this.selectionStart,
                 end = this.selectionEnd,
                 prefix = this.value.slice(0, start),
@@ -895,9 +922,9 @@ replaceChildren($('#sidebar')[0], [
   el('#sounds.tab'),
 ]);
 
-function bindModeNames(appList, cfgOption, property) {
-  var timeout;
+var modeNameTimeout;
 
+function bindModeNames(appList, cfgOption, property) {
   function updateNow() {
     var names = appList();
     if (!App.activeIsStage()) {
@@ -906,14 +933,14 @@ function bindModeNames(appList, cfgOption, property) {
     }
     cm.setOption(cfgOption, names);
     cm.setOption('mode', 'tosh'); // force re-highlight
-    timeout = null;
+    modeNameTimeout = null;
   }
 
   function wasChanged() {
     // timeout acts as to debounce changes. the actual update is expensive,
     // since the editor has to re-paint!
-    if (timeout) clearTimeout(timeout);
-    timeout = setTimeout(updateNow, 1000);
+    if (modeNameTimeout) clearTimeout(modeNameTimeout);
+    modeNameTimeout = setTimeout(updateNow, 1000);
   }
 
   appList.subscribe(function(array) {
@@ -1051,6 +1078,16 @@ App.preFlagClick = function() {
 };
 
 App.flushEditor = function(target) {
+  if (modeNameTimeout) {
+    // make sure names are up-to-date: we might be waiting to debounce changes
+    var variables = target.variables().concat(this.project().variables());
+    var lists = target.lists().concat(this.project().lists());
+    cm.setOption('scratchVariables', variables);
+    cm.setOption('scratchLists', lists);
+    cm.setOption('mode', 'tosh'); // force re-highlight
+    modeNameTimeout = null;
+  }
+
   // TODO better way to get thing out of CodeMirror?
   var finalState = cm.getStateAfter(cm.getDoc().size, true);
   function compileLine(b) {
@@ -1133,9 +1170,11 @@ Oops.actions = {
       return [App.project(), newProject];
     },
     redo: function(before, after) {
+      App.active.assign(null);
       App.project.assign(after);
     },
     undo: function(app, before, after) {
+      App.active.assign(null);
       App.project.assign(before);
     },
     end: function() {

@@ -4,7 +4,8 @@ var Compiler = (function() {
 
   function compile(lines) {
     var scriptBlocks = compileFile(lines);
-    console.log(JSON.stringify(scriptBlocks).replace(/],/g, "],\n"));
+    // console.log(JSON.stringify(scriptBlocks).replace(/],/g, "],\n")); //
+    // DEBUG
 
     var y = 10;
     var scripts = scriptBlocks.map(function(blocks, index) {
