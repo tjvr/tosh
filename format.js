@@ -140,7 +140,7 @@ var Format = (function() {
 
     p._isStage = true;
 
-    [p].concat(p.sprites).forEach(function(s) {
+    [p].concat(p.sprites()).forEach(function(s) {
       // ensure properties are present
       s.scripts = s.scripts || [];
       s.scriptComments = s.scriptComments || [];
