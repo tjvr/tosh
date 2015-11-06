@@ -68,7 +68,7 @@ var Language = (function(Earley) {
         var m = pat.exec(remain);
         if (m && m.index == 0) {
           var text = m[0];
-          var value = m[1] || m[0];
+          var value = m[1] === undefined ? m[0] : m[1];
           break;
         }
       }
