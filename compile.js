@@ -515,6 +515,7 @@ var Compiler = (function() {
           case '_mouse_':  return 'mouse-pointer';
           case '_myself_': return 'myself';
           case '_Stage_':  return 'Stage';
+          case '_edge_':  return 'edge';
         }
         if (Language.menusThatAcceptReporters.indexOf(menu) > -1) {
           return generateStringLiteral(value);

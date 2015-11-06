@@ -724,6 +724,8 @@ var Language = (function(Earley) {
     'mouse-pointer': '_mouse_',
     'myself': '_myself_',
     'Stage': '_Stage_',
+    'edge': '_edge_',
+    // 'stageOrThis' does not use this
   }
 
   menus.forEach(function(name) {
@@ -740,7 +742,8 @@ var Language = (function(Earley) {
           symbols = textSymbols(option);
         }
         process = embed;
-        var value = menuValues[option];
+        var value;
+        if (name !== 'stageOrThis') value = menuValues[option];
         if (value) {
           process = embedConstant(value);
         }
