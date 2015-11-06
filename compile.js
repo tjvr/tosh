@@ -522,17 +522,15 @@ var Compiler = (function() {
           return value;
         }
       case 'string':
-        if (!value && level < +Infinity && level !== -1) {
-          return '_';
-        }
         // Does it look like a number?
         if (/^-?[0-9]+\.?[0-9]*$/.test(value)) {
           return '' + value;
         }
         return generateStringLiteral(value);
       case 'number':
-        if (!value && value !== 0) return '_';
-        return (value || 0);
+        // nb. Scratch saves empty number slots as 0
+        // so it is always allowable to convert a number slot to zero
+        return Number(value) || 0;
       default:
         // TODO
         return value;

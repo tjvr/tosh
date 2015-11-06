@@ -402,17 +402,29 @@ var Language = (function(Earley) {
         }
       });
 
-      // Make sure string inputs contain strings
+      // Coerce all the arguments to match their slots!
       for (var i=0; i<args.length; i++) {
-        var input = info.inputs[i];
-        var arg = args[i];
-        if (input === '%s' && typeof arg !== 'object') args[i] = '' + arg;
+        args[i] = convertArg(args[i], info.inputs[i]);
       }
 
       return new Block(info, args, tokens);
     };
     func._info = info;
     return func;
+  }
+
+  function convertArg(arg, input) {
+    if (typeof arg === 'object') return arg;
+
+    if (input === '%n') {
+      // nb. Empty number slots are zero
+      return Number(arg) || 0;
+    }
+    // Make sure string inputs contain strings
+    if (input === '%s') {
+      return arg + '';
+    }
+    return arg;
   }
 
   function infix(info) {
