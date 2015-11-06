@@ -34,7 +34,7 @@ var Language = (function(Earley) {
     ['langle',  /\</],   ['rangle',  /\>/],
     ['lsquare', /\[/],   ['rsquare', /\]/],
     ['symbol',  /\.{3}/],                        // ellipsis
-    ['symbol',  /[-%#+*/=^,↻↺⚑?]/],              // single character
+    ['symbol',  /[-%#+*/=^,↻↺⚑☁?]/],             // single character
 //  ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',]*/],   // words
     ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',.]*/],  // TODO ew
   ];
