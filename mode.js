@@ -202,7 +202,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
       }
 
       var token = state.lineTokens.shift();
-      assert(stream.match(token.text), token);
+      assert(stream.match(token.text), "Does not match stream: " + token);
       stream.match(Language.whitespacePat);
       var className = "s-" + token.kind;
       if (token.category) className += " " + "s-" + token.category;

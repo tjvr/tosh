@@ -39,7 +39,8 @@ var Language = (function(Earley) {
     ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',.]*/],  // TODO ew
   ];
 
-  var backslashEscape = /(\\["'\\])/g;
+  var backslashEscapeSingle = /(\\['\\])/g;
+  var backslashEscapeDouble = /(\\["\\])/g;
 
   var whitespacePat = /^(?:[ \t]+|$)/;
   var eolPat = /(.*)[ \t]*/;
@@ -110,28 +111,34 @@ var Language = (function(Earley) {
   };
 
   function splitStringToken(token) {
+    var quote = token.text.trim()[0];
+    var backslashEscape = quote === '"' ? backslashEscapeDouble
+                                        : backslashEscapeSingle;
     var parts = token.text.split(backslashEscape);
-    var isEscape = false;
+    assert(token.kind === 'string', "Want string token, not " + token);
     var tokens = [];
-    var leftover = '';
     for (var i=0; i<parts.length; i++) {
       var text = parts[i];
       if (!text) continue;
 
-      if (isEscape) {
+      if (text === "\\\\") {
         tokens.push(new Token('escape', '\\', '\\'));
-        leftover = text.slice(1)
+        tokens.push(new Token('string', '\\', '\\'));
+      } else if (text === "\\" + quote) {
+        tokens.push(new Token('escape', '\\', '\\'));
+        tokens.push(new Token('string', quote, quote));
       } else {
-        text = leftover + text;
-
-        // We have to trimLeft here because mode.js will run whitespacePat after
-        // matching the token
-        text = text.replace(/^ +/, "");
+        // We have to trimLeft leading whitespace,
+        // because mode.js will run whitespacePat after matching the token
+        var m = whitespacePat.exec(text);
+        if (m && m[0]) {
+          assert(tokens.length);
+          tokens[tokens.length - 1].text += m[0];
+          text = text.slice(m[0].length);
+        }
 
         tokens.push(new Token('string', text, text));
-        leftover = '';
       }
-      isEscape = !isEscape;
     }
     return tokens;
   }
@@ -395,6 +402,13 @@ var Language = (function(Earley) {
         }
       });
 
+      // Make sure string inputs contain strings
+      for (var i=0; i<args.length; i++) {
+        var input = info.inputs[i];
+        var arg = args[i];
+        if (input === '%s' && typeof arg !== 'object') args[i] = '' + arg;
+      }
+
       return new Block(info, args, tokens);
     };
     func._info = info;
@@ -403,6 +417,19 @@ var Language = (function(Earley) {
 
   function infix(info) {
     return blockArgs(Scratch.blocksBySelector[info], 0, 2);
+  }
+
+  function stringLiteral(a) {
+    assert(arguments.length === 1);
+    var quote = a.text.trim()[0];
+    var backslashEscape = quote === '"' ? backslashEscapeDouble
+                                        : backslashEscapeSingle;
+    var parts = a.value.split(backslashEscape);
+    return parts.map(function(p) {
+      if (p === "\\\\") return "\\";
+      if (p === "\\"+quote) return quote;
+      return p;
+    }).join("");
   }
 
   var colors = {
@@ -594,7 +621,7 @@ var Language = (function(Earley) {
     Rule("n0", [{kind: 'number'}], num),
     Rule("n0", [{kind: 'empty'}], constant("")),
 
-    Rule("s0", [{kind: 'string'}], literal),
+    Rule("s0", [{kind: 'string'}], stringLiteral),
 
     Rule("b0", [{kind: 'false'}], constant(false)), // "<>"
 
