@@ -541,8 +541,8 @@ var Compiler = (function() {
 
   function generateStringLiteral(value) {
     value = value || "";
-    return '"' + value.replace(/"/g, '\\"')
-                       .replace(/\\/g, '\\\\') + '"';
+    return '"' + value.replace(/\\/g, '\\\\')
+                      .replace(/"/g, '\\"') + '"';
   }
 
   function generateColorLiteral(number) {
