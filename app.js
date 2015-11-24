@@ -859,8 +859,9 @@ var deviceKind = windowSize.compute(function(size) {
                           : 'phone';
 });
 
+var initialClasses = [].slice.apply(document.body.classList);
 ko(function() {
-  var classes = [].slice.apply(document.body.classList);
+  var classes = initialClasses.slice();
   classes = classes.concat(['not-desktop', 'not-tablet', 'not-phone']);
   classes.push(deviceKind());
   classes.splice(classes.indexOf('not-' + deviceKind()), 1);
