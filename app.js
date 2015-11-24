@@ -860,7 +860,8 @@ var deviceKind = windowSize.compute(function(size) {
 });
 
 ko(function() {
-  var classes = ['wrap', 'app', 'not-desktop', 'not-tablet', 'not-phone'];
+  var classes = [].slice.apply(document.body.classList);
+  classes = classes.concat(['not-desktop', 'not-tablet', 'not-phone']);
   classes.push(deviceKind());
   classes.splice(classes.indexOf('not-' + deviceKind()), 1);
   classes.push('tab-' + App.tab());
