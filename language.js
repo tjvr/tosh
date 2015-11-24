@@ -62,7 +62,7 @@ var Language = (function(Earley) {
     while (remain) {
       var kind = null;
       for (var i=0; i<TOKENS.length; i++) {
-        var kind_and_pat = TOKENS[i];
+        var kind_and_pat = TOKENS[i],
             kind = kind_and_pat[0],
             pat  = kind_and_pat[1];
         var m = pat.exec(remain);
