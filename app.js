@@ -1255,23 +1255,34 @@ oops.bind('project.sprites', function(target, op) {
 // events
 
 document.addEventListener('keydown', function(e) {
+  // ctrl + cmd not allowed
   if (e.metaKey && e.ctrlKey) return;
-  var keyCode = e.keyCode;
-  if (e.altKey) {
-    if (e.metaKey || e.ctrlKey) return;
 
-    // Alt + keys 1-9
-    if (keyCode > 48 && keyCode < 58) {
-      var index = keyCode - 49;
-      if (index < tabs().length) {
-        App.tab.assign(tabs()[index]);
+  // ctrl + alt for tabs
+  var keyCode = e.keyCode;
+  if (e.altKey && e.ctrlKey) {
+    if (e.metaKey) return;
+    var tabKeys = {
+      P: 'player',
+      C: 'code',
+      D: 'data',
+      I: 'costumes',
+      S: 'sounds',
+      // options? sprites? we should get rid of those tabs anyway!
+    }
+    var name = tabKeys[String.fromCharCode(keyCode)];
+    if (name) {
+      if (tabs().indexOf(name) !== -1) {
+        App.tab.assign(name);
       }
       e.preventDefault();
     }
     return;
   }
+  if (e.altKey) return;
+
+  // global C-bindings -> cmd on mac, ctrl otherwise
   if (isMac ? e.metaKey : e.ctrlKey) {
-    // global C-bindings
     switch (keyCode) {
       case 13: // run:  ⌘↩
         var vim = cm.state.vim;
@@ -1284,18 +1295,16 @@ document.addEventListener('keydown', function(e) {
         App.save();
         e.preventDefault();
         break;
-      case 89: // undo: ⌘Z
-        Oops.undo();
+      case 89: // redo: ⌘Y
+        if (isMac) return;
+        Oops.redo();
         break;
-      case 90: // redo: ⌘⇧Z ⌘Y
-        if (e.shiftKey) {
-          if (isMac) {
-            Oops.redo();
-            break;
-          }
+      case 90: // undo: ⌘Z
+        if (e.shiftKey) { // redo: ⇧⌘Z
+          if (!isMac) return;
+          Oops.redo();
         } else {
           Oops.undo();
-          break;
         }
         break;
       default: return;
@@ -1306,7 +1315,7 @@ document.addEventListener('keydown', function(e) {
     if (e.metaKey || e.ctrlKey) return;
     switch (keyCode) {
       case 8: // backspace
-        break;
+        break; // disable backspace to go back
       default: return;
     }
   }
