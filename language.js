@@ -73,7 +73,7 @@ var Language = (function(Earley) {
         }
       }
       if (i === TOKENS.length) {
-        tokens.push(new Token('error', remain, "Unkown token"));
+        tokens.push(new Token('error', remain, "Unknown token"));
         return tokens;
       }
 
