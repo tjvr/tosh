@@ -15,6 +15,11 @@ var Language = (function(Earley) {
     return "Token(" + args.map(JSON.stringify).join(", ") + ")";
   };
 
+  Token.prototype.isEqual = function(other) {
+    return this.kind === other.kind && this.value === other.value;
+  };
+
+
   // TODO should we allow () as an empty number input slot?
 
   var TOKENS = [
