@@ -632,7 +632,7 @@ function refreshDefinitions() {
       results = defineParser.parse(tokens);
     } catch (e) { return; }
     if (results.length > 1) throw "ambiguous define. count: " + results.length;
-    var define = results[0];
+    var define = results[0].process();
     definitions.push(define);
   });
 
