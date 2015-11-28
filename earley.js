@@ -41,14 +41,14 @@ var Earley = (function() {
 
 
 
-  var Item = function(rule, origin, position, node) {
+  var Item = function(rule, origin, position, node, predictedBy) {
     this.rule = rule;
     this.origin = origin;
     this.position = position || 0;
     this.isFinished = (this.position === this.rule.symbols.length);
-    var node = node || [];
-
-    this.node = node;
+    if (!this.isFinished) this.expect = this.rule.symbols[this.position];
+    this.node = node || [];
+    this.predictedBy = predictedBy || [];
   };
 
   Item.prototype.toString = function() {
@@ -57,9 +57,7 @@ var Earley = (function() {
 
   Item.prototype.next = function(value) {
     // consume one token or nonterminal
-    var node = this.node.slice();
-    node.push(value);
-    return new Item(this.rule, this.origin, this.position + 1, node);
+    return new Item(this.rule, this.origin, this.position + 1, this.node.concat([value]), this.predictedBy);
   };
 
 
@@ -130,7 +128,7 @@ var Earley = (function() {
     this.table = [];
   };
 
-  Parser.prototype._predict = function(name, origin, item) {
+  Parser.prototype._predict = function(name, origin, item, column) {
     var rules = this.grammar.rulesByName[name];
     if (!rules) {
       if (!this.grammar.undefinedRulesSet[name]) {
@@ -144,24 +142,21 @@ var Earley = (function() {
       return [];
     }
 
-    return rules.map(function(rule) {
-      return new Item(rule, origin);
-    });
+    var predictedItems = [];
+    for (var i=0; i<rules.length; i++) {
+      predictedItems.push(new Item(rules[i], origin));
+    }
+    return predictedItems;
   };
 
   Parser.prototype._complete = function(item) {
-    var oldColumn = this.table[item.origin];
     var results = [];
-    for (var i=0; i<oldColumn.length; i++) {
-      var other = oldColumn[i];
-      var expect = other.rule.symbols[other.position];
-      if (expect === item.rule.name) {
-        results.push(other.next(item));
-      }
+    for (var i=0; i<item.predictedBy.length; i++) {
+      results.push(item.predictedBy[i].next(item));
     }
     return results;
   };
-
+  
   Parser.prototype.parse = function(tokens) {
     var table = this.table;
     var resume = null;
@@ -194,10 +189,9 @@ var Earley = (function() {
       for (var j=0; j<column.length; j++) {
         var item = column[j];
         if (!item.isFinished) {
-          var expect = item.rule.symbols[item.position];
-          if (typeof expect !== "string") {
+          if (typeof item.expect !== "string") {
             // advance: consume token
-            if (expect.match(token)) {
+            if (item.expect.match(token)) {
               newColumn.push(item.next(resume));
             }
           }
@@ -229,16 +223,23 @@ var Earley = (function() {
       for (var j=0; j<column.length; j++) {
         var item = column[j];
         if (!item.isFinished) {
-          var expect = item.rule.symbols[item.position];
-          // predict: add component items
-          if (typeof expect === "string") {
-            if (!predictedRules[expect]) {
-              [].push.apply(column, this._predict(expect, index, item));
-              predictedRules[expect] = true;
+          // non-terminal
+          if (typeof item.expect === "string") {
+            // predict: add component items
+            if (!predictedRules[item.expect]) {
+              var predictedItems = this._predict(item.expect, index, item);
+              [].push.apply(column, predictedItems);
+              predictedRules[item.expect] = predictedItems;
+            } else {
+              predictedItems = predictedRules[item.expect];
             }
-          // advance: consume token
+            for (var k=0; k<predictedItems.length; k++) {
+              predictedItems[k].predictedBy.push(item);
+            }
+          // terminal
           } else if (index < tokens.length) {
-            if (expect.match(token)) {
+            // advance: consume token
+            if (item.expect.match(token)) {
               newColumn.push(item.next(index));
             }
           }
@@ -279,11 +280,10 @@ var Earley = (function() {
     var ruleNames = [];
     column.forEach(function(item) {
       if (item.isFinished) return;
-      var expect = item.rule.symbols[item.position];
-      if (!(typeof expect === "string")) {
-        expected.push(stringify(expect));
+      if (!(typeof item.expect === "string")) {
+        expected.push(stringify(item.expect));
       } else {
-        if (ruleNames.indexOf(expect) === -1) ruleNames.push(expect);
+        if (ruleNames.indexOf(item.expect) === -1) ruleNames.push(item.expect);
       }
     }, this);
 
