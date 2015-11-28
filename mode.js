@@ -98,45 +98,24 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     var result;
     try {
       results = p.parse(tokens);
-      //if (results.length > 1) throw "ambiguous. count: " + results.length;
-      // console.log(results); // DEBUG
     } catch (err) {
       console.log(err); // DEBUG
       this.lines.push({info: {shape: 'error'}});
       results = err.partialResult;
     }
 
-    window.results = results;
-
-    // TODO:
-    // - error tokens
-    // - incomplete input
-    // - invalid input
-
     if (!results) {
-      // TODO mark error'd lines as red
+      // can't parse; mark line red
       tokens.forEach(function(t) { t.category = "error"; });
       return;
     }
 
-    // assert(results.length === 1);
-    // var result = results[0];
-    results.forEach(function(result) {
-      // console.log(result);
-      // console.log(JSON.stringify(repr(result)));
-      // console.log(JSON.stringify(compile(result)));
-    });
-
     var result = results[0];
     result = result.process();
     paintBlocks(result);
-
     if (result) {
       this.lines.push(result);
     }
-
-    window.lines = this.lines;
-
     return result;
   }
 
@@ -163,8 +142,6 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
         return [b.info.selector || b.info.spec].concat(b.args.map(repr));
     }
   }
-
-  // TODO: parser remembers custom blocks between parses
 
   /* CodeMirror mode */
 
