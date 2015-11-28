@@ -47,9 +47,7 @@ var Earley = (function() {
     this.position = position || 0;
     this.isFinished = (this.position === this.rule.symbols.length);
     var node = node || [];
-    if (this.isFinished) {
-      node = this.rule.process.apply(this.rule, node);
-    }
+
     this.node = node;
   };
 
@@ -158,7 +156,7 @@ var Earley = (function() {
       var other = oldColumn[i];
       var expect = other.rule.symbols[other.position];
       if (expect === item.rule.name) {
-        results.push(other.next(item.node));
+        results.push(other.next(item));
       }
     }
     return results;
@@ -263,18 +261,15 @@ var Earley = (function() {
       }
     }
 
-    var results = [];
-    column.forEach(function(s) {
-      if (s.origin === 0 && s.isFinished && s.rule.name == this.grammar.toplevel) {
-        results.push(s.node);
-      }
+    var results = column.filter(function(item) {
+      return (item.origin === 0 && item.isFinished && item.rule.name == this.grammar.toplevel);
     }, this);
-
-    if (results.length) {
-      return results;
-    } else {
+    if (!results.length) {
       throw this._makeError("Incomplete input.");
     }
+    return results.map(function(item) {
+      return new Result(item);
+    });
   };
 
   Parser.prototype._makeError = function(message) {
@@ -319,6 +314,30 @@ var Earley = (function() {
     err.expected = expected;
     err._table = this.table;
     return err;
+  };
+
+
+
+  var Result = function(item) {
+    this.item = item;
+  };
+
+  Result.prototype.process = function() {
+    if (!this._ast) {
+      function process(item) {
+        var children = [];
+        for (var i=0; i<item.node.length; i++) {
+          var child = item.node[i];
+          if (child.node) { // Item
+            child = process(child);
+          }
+          children.push(child);
+        }
+        return item.rule.process.apply(item.rule, children);
+      }
+      this._ast = process(this.item);
+    }
+    return this._ast;
   };
 
 
@@ -414,30 +433,7 @@ var Earley = (function() {
       };
     }));
 
-    // cases it fails:
-    //
-    //    pick random | to 10 to 10       [sort of!]
-    //
-    //    repeat | < 3
-    //
-
-    // TODO, in language.js:
-    //
-    // Inspect completion.
-    //
-    // If the completion is a rule `s` or `m_effect`, treat it as completing an
-    // input.
-    //
-    // If the completion contains symbols, like: `x to _`
-    //                                           `_ and wait` or
-    // then treat it as completing a block.
-    //
-    // That way, we can get a sensible experience.
-    //
-    // Yay! :D
-
     return completions;
-
   };
 
 
