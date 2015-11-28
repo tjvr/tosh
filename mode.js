@@ -128,6 +128,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     });
 
     var result = results[0];
+    result = result.process();
     paintBlocks(result);
 
     if (result) {
