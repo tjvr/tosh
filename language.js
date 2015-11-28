@@ -326,8 +326,6 @@ var Language = (function(Earley) {
 
   var defineGrammar = new Grammar([
       Rule("line", ["define", "spec-seq"], second),
-      // Rule("line", ["var-name", "var=", "value"], variableDefinition),
-      // Rule("line", ["list-name", "list=", "items"], variableDefinition),
 
       Rule("define", [["define"]], paintLiteral("custom")),
 
@@ -359,8 +357,6 @@ var Language = (function(Earley) {
       Rule("value", [{kind: 'number'}], literal),
       Rule("value", [{kind: 'string'}], literal),
   ]);
-
-  // TODO don't match lines containing `=`!
 
 
   /* Core grammar */
@@ -664,10 +660,9 @@ var Language = (function(Earley) {
 
   // TODO: parse +'s as variable arity, so we can "balance" the trees later on
 
-  // TODO: ellipsis? ellipsis?
+
 
   /* Color literals */
-
 
   Object.keys(colors).forEach(function(name) {
     g.addRule(Rule("c0", [{kind: 'symbol', value: name}], colorLiteral));
