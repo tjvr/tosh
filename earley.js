@@ -324,21 +324,23 @@ var Earley = (function() {
   };
 
   Result.prototype.process = function() {
-    if (!this._ast) {
-      var tokens = this.tokens;
-      function process(item) {
-        var children = [];
-        for (var i=0; i<item.node.length; i++) {
-          var child = item.node[i];
-          if (child.node) { // Item
-            child = process(child);
-          } else { // Token index
-            child = tokens[child];
-          }
-          children.push(child);
+    var tokens = this.tokens;
+
+    function process(item) {
+      var children = [];
+      for (var i=0; i<item.node.length; i++) {
+        var child = item.node[i];
+        if (child.node) { // Item
+          child = process(child);
+        } else { // Token index
+          child = tokens[child];
         }
-        return item.rule.process.apply(item.rule, children);
+        children.push(child);
       }
+      return item.rule.process.apply(item.rule, children);
+    }
+
+    if (!this._ast) {
       this._ast = process(this.item);
     }
     return this._ast;
