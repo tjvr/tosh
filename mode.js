@@ -56,7 +56,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     var define = null;
     try {
       var results = defineParser.parse(tokens);
-      define = results[0];
+      define = results[0].process();
     } catch (err) {}
     if (define) {
       // paint the first few words properly, to workaround broken grammar
