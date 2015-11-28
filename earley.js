@@ -198,7 +198,7 @@ var Earley = (function() {
           if (typeof expect !== "string") {
             // advance: consume token
             if (expect.match(token)) {
-              newColumn.push(item.next(token));
+              newColumn.push(item.next(resume));
             }
           }
         }
@@ -239,7 +239,7 @@ var Earley = (function() {
           // advance: consume token
           } else if (index < tokens.length) {
             if (expect.match(token)) {
-              newColumn.push(item.next(token));
+              newColumn.push(item.next(index));
             }
           }
         // complete: progress earlier items
@@ -268,7 +268,7 @@ var Earley = (function() {
       throw this._makeError("Incomplete input.");
     }
     return results.map(function(item) {
-      return new Result(item);
+      return new Result(item, tokens);
     });
   };
 
@@ -318,18 +318,22 @@ var Earley = (function() {
 
 
 
-  var Result = function(item) {
+  var Result = function(item, tokens) {
     this.item = item;
+    this.tokens = tokens;
   };
 
   Result.prototype.process = function() {
     if (!this._ast) {
+      var tokens = this.tokens;
       function process(item) {
         var children = [];
         for (var i=0; i<item.node.length; i++) {
           var child = item.node[i];
           if (child.node) { // Item
             child = process(child);
+          } else { // Token index
+            child = tokens[child];
           }
           children.push(child);
         }
