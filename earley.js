@@ -24,7 +24,6 @@ var Earley = (function() {
     this.symbols = symbols; // Array of nonterminals and/or
                             // objects with match() method
     this.process = process;
-    this.definedAt = new Error().stack.split("\n")[3].trim();
   };
 
   Rule.prototype.toString = function(position) {
@@ -133,8 +132,7 @@ var Earley = (function() {
     if (!rules) {
       if (!this.grammar.undefinedRulesSet[name]) {
         var m = ("No rule named " + JSON.stringify(name)
-               + " required by " + JSON.stringify(item.rule.name)
-               + " defined " + item.rule.definedAt);
+               + " required by " + JSON.stringify(item.rule.name));
         var err = new Error(m);
         err.rule = item.rule;
         throw err;
