@@ -1,5 +1,4 @@
 
-var isMac = /Mac/i.test(navigator.userAgent);
 var Pos = CodeMirror.Pos;
 
 var editor = document.getElementById('editor');
@@ -91,7 +90,7 @@ var extraKeys = {
 
 /* Sublime-style bindings */
 
-var swapLineCombo = isMac ? 'Cmd-Ctrl-' : 'Shift-Ctrl-';
+var swapLineCombo = Host.isMac ? 'Cmd-Ctrl-' : 'Shift-Ctrl-';
 
 extraKeys[swapLineCombo + 'Up'] = function(cm) {
   var ranges = cm.listSelections(), linesToMove = [], at = cm.firstLine() - 1, newSels = [];
@@ -654,6 +653,8 @@ var App = new function() {
 
   this.tab = ko('data');
 
+  this.isDirty = ko(false);
+
   this.editorDirty = false;
   this.phosphorusDirty = true;
   this.projectDirty = false;
@@ -1010,32 +1011,14 @@ App.sync = function() {
   });
 }
 
-App.makeZip = function() {
+App.exportProject = function() {
   App.sync();
   App.flushEditor(App.active());
 
-  var zip = Project.save(App.project());
-        var json = JSON.parse(zip.file('project.json').asText());
-        window.json = json;
-  var file = zip.generate({ type: 'blob' });
-  return file;
-}
-
-App.save = function() {
-  var file = this.makeZip();
-  var a = el('a', {
-    style: 'display: none;',
-    download: App.project()._fileName + '.sb2',
-    href: URL.createObjectURL(file),
-  }, " ");
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  return Project.save(App.project());
 };
 
 App.preview = function(start) {
-  App.isCompiling = true;
-
   // Switch to Player tab
   if (tabs().indexOf('player') > -1) App.tab.assign('player');
 
@@ -1043,16 +1026,23 @@ App.preview = function(start) {
   var errEl = $('#phosphorus .internal-error')[0];
   if (errEl) errEl.parentNode.removeChild(errEl);
 
-  var file = this.makeZip();
-  // TODO don't create a zip here
+  var zip = App.exportProject();
+
   if (App.stage) {
     App.stage.stopAll();
   }
   this.phosphorusDirty = false; // we're sending phosphorus a zip
-  var request = P.IO.loadSB2File(file);
+
+
+  var request = P.IO.loadSB2File(zip.generate({ type: 'blob' }));
+  // TODO send phosphorus the zip object, to avoid generation
+  // var request = P.IO.loadSB2ProjectZip(zip);
+
+  console.log('start progress');
   P.player.showProgress(request, function(stage) {
-    App.isCompiling = false;
     App.stage = stage;
+
+    console.log('end progress');
 
     [stage].concat(stage.children).forEach(function(s) {
       if (s.isStage) {
@@ -1282,7 +1272,7 @@ document.addEventListener('keydown', function(e) {
   if (e.altKey) return;
 
   // global C-bindings -> cmd on mac, ctrl otherwise
-  if (isMac ? e.metaKey : e.ctrlKey) {
+  if (Host.isMac ? e.metaKey : e.ctrlKey) {
     switch (keyCode) {
       case 13: // run:  ⌘↩
         var vim = cm.state.vim;
@@ -1292,16 +1282,16 @@ document.addEventListener('keydown', function(e) {
         e.preventDefault();
         break;
       case 83: // save: ⌘S
-        App.save();
+        Host.save();
         e.preventDefault();
         break;
       case 89: // redo: ⌘Y
-        if (isMac) return;
+        if (Host.isMac) return;
         Oops.redo();
         break;
       case 90: // undo: ⌘Z
         if (e.shiftKey) { // redo: ⇧⌘Z
-          if (!isMac) return;
+          if (!Host.isMac) return;
           Oops.redo();
         } else {
           Oops.undo();
@@ -1352,41 +1342,6 @@ setInterval(function() {
 
 // happy vim :w
 cm.save = App.preview.bind(App);
-
-// drop file to open
-
-function cancel(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'copy';
-}
-document.body.addEventListener('dragover', cancel);
-document.body.addEventListener('dragenter', cancel);
-
-document.body.addEventListener('drop', function(e) {
-  e.preventDefault();
-
-  var f = e.dataTransfer.files[0];
-  if (!f) return;
-
-  var parts = f.name.split('.');
-  var ext = parts.pop();
-  var fileName = parts.join('.');
-  if (ext === 'sb2' || ext === 'zip') {
-    var reader = new FileReader;
-    reader.onloadend = function() {
-      var ab = reader.result;
-      var zip = new JSZip(ab);
-      var project = Project.load(zip);
-      project._fileName = fileName;
-      Oops.do('replaceProject', project);
-    };
-    reader.readAsArrayBuffer(f);
-  }
-});
-
-window.onbeforeunload = function(e) {
-  return 'Ahhh';
-};
 
 /*****************************************************************************/
 
