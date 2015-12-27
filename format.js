@@ -1,13 +1,24 @@
 var Format = (function() {
 
-  var STAGE_SVG = '<svg width="480px" height="360px"><path fill="#ffffff" d="M 0 0 L 480 0 L 480 360 L 0 360 Z" /></svg>';
+  var STAGE_SVG = "<svg width='480px' height='360px'><path fill='#ffffff' d='M 0 0 L 480 0 L 480 360 L 0 360 Z' /></svg>";
 
-  var TURTLE_SVG = '<svg width="25px" height="20px"><path style="fill:#007de0;stroke:#033042;stroke-width:1;stroke-linejoin:round;" d="M 0,0 20,8 0,16 6,8 Z" /></svg>';
+  var TURTLE_SVG = "<svg width='25px' height='20px'><path style='fill:#007de0;stroke:#033042;stroke-width:1;stroke-linejoin:round;' d='M 0,0 20,8 0,16 6,8 Z' /></svg>";
+
+  function imageFromFile(ext, binary) {
+    if (ext === 'jpg') ext = 'jpeg';
+    var image = new Image;
+    if (ext === 'svg') {
+      image.src = 'data:image/svg+xml;charset=utf8,' + encodeURIComponent(binary);
+    } else {
+      image.src = 'data:image/' + ext + ';base64,' + btoa(binary);
+    }
+    return image;
+  }
 
   /***************************************************************************/
 
   var backdrop = {
-    name: 'backdrop1',
+    name: ko('backdrop1'),
     // baseLayerID: 2,
     // baseLayerMD5: 'b61b1077b0ea1931abee9dbbfa7903ff.png',
     ext: 'svg', // !
@@ -15,10 +26,11 @@ var Format = (function() {
     bitmapResolution: 1,
     rotationCenterX: 240,
     rotationCenterY: 180,
+    _$image: imageFromFile('svg', STAGE_SVG),
   };
 
   var turtle = {
-    name: 'turtle',
+    name: ko('turtle'),
     // baseLayerID: 1,
     // baseLayerMD5: '4c8c8b562674f070b5a87b91d58d6e39.svg',
     ext: 'svg', // !
@@ -26,6 +38,7 @@ var Format = (function() {
     bitmapResolution: 1,
     rotationCenterX: 8,
     rotationCenterY: 8,
+    _$image: imageFromFile('svg', TURTLE_SVG),
   };
 
 
@@ -50,7 +63,7 @@ var Format = (function() {
       lists: ko([]),
 
       costumes: ko([backdrop]),
-      currentCostumeIndex: 0,
+      currentCostumeIndex: ko(0),
       sounds: ko([]),
 
       penLayerMD5: '5c81a336fab8be57adc039a8a2b33ca9.png',
@@ -79,7 +92,7 @@ var Format = (function() {
       lists: ko([]),
 
       costumes: ko([turtle]),
-      currentCostumeIndex: 0,
+      currentCostumeIndex: ko(0),
       sounds: ko([]),
 
       scratchX: 0,
@@ -121,6 +134,29 @@ var Format = (function() {
     };
   };
 
+  Project.newCostume = function(name, ext, ab) {
+    return {
+      name: ko(name),
+      ext: ext,
+      file: ab,
+      bitmapResolution: 1,
+      rotationCenterX: 0, // TODO
+      rotationCenterY: 0, // TODO
+      _$image: imageFromFile(ext, ab), // TODO
+    };
+  };
+
+  Project.newSound = function(name, ext, ab) {
+    return {
+      name: ko(name),
+      ext: ext,
+      file: ab,
+      // sampleCount: 0, // TODO
+      // rate: 0,
+      // format: "",
+    };
+  };
+
 
   /* load */
 
@@ -148,8 +184,9 @@ var Format = (function() {
       s.variables = ko(s.variables || []);
       s.lists = ko(s.lists || []);
 
-      // koel-ify name
+      // koel-ify attrs
       s.objName = ko(s.objName);
+      s.currentCostumeIndex = ko(s.currentCostumeIndex || 0);
 
       // koel-ify variables & lists
       s.variables().forEach(function(variable) {
@@ -183,12 +220,10 @@ var Format = (function() {
         costume.ext = ext;
 
         // make an <image> element
-        var image = new Image;
-        image.src = 'data:image/' + (ext === 'jpg' ? 'jpeg' : ext) + ';base64,' + btoa(f.asBinary());
-        costume._$image = image;
+        costume._$image = imageFromFile(ext, f.asBinary());
 
         // fixup `name` property
-        costume.name = costume.costumeName;
+        costume.name = ko(costume.costumeName);
         delete costume.baseLayerID;
         delete costume.baseLayerMD5;
         delete costume.costumeName;
@@ -206,7 +241,7 @@ var Format = (function() {
         sound.ext = ext;
 
         // fixup `name` property
-        sound.name = sound.soundName;
+        sound.name = ko(sound.soundName);
         delete sound.soundID;
         delete sound.md5;
       });
