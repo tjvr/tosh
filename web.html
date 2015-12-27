@@ -1,20 +1,22 @@
 <!doctype html>
 <meta charset=utf8>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+<meta name=apple-mobile-web-app-capable content=yes>
 
 <title>tosh</title>
 
 <link rel="shortcut icon" href=../favicon.png>
 
-<link rel=stylesheet href=fonts/google-fonts.css>
+<!--
+<link href="http://fonts.googleapis.com/css?family=Noto+Sans:400,700|Source+Code+Pro:400,600" rel="stylesheet" type="text/css">
+-->
 <link rel=stylesheet href=codemirror/codemirror-combined.css>
 <link rel=stylesheet href=phosphorus/player.css>
-<link rel=stylesheet href=shared.css>
-<link rel=stylesheet href=style.css>
+<link rel=stylesheet href=tosh/tosh.css>
 
 <!---------------------------------------------------------------------------->
 
-<body class="wrap app mac">
+<body class="wrap app">
 
 <div id="shade"></div>
 
@@ -52,24 +54,22 @@
 
 <script src=codemirror/codemirror-min.js></script>
 
-<script src=util.js></script>
-<script src=koel.js></script>
+<script src=../util.js></script>
+<script src=koel/koel.js></script>
 
-<script src=commands.js></script>
-<script src=earley.js></script>
-<script src=language.js></script>
-<script src=mode.js></script>
-<script src=compile.js></script>
-<script src=format.js></script>
+<script src=tosh/tosh-min.js></script>
 
-<script src=lib/rgbcolor.js></script>
-<script src=lib/StackBlur.js></script>
-<script src=lib/canvg.js></script>
-<script src=lib/jszip.min.js></script>
-<script src=lib/md5.js></script>
-
+<script src=../help/jquery.js></script>
+<script src=../help/scratchblocks2.js></script>
 <script src=phosphorus/phosphorus.js></script>
+<script src=phosphorus/fonts.js></script>
 <script src=phosphorus/player.js></script>
+
+<script src=//cdnjs.cloudflare.com/ajax/libs/jszip/2.4.0/jszip.min.js></script>
+<script src=//canvg.googlecode.com/svn/trunk/rgbcolor.js></script>
+<script src=//canvg.googlecode.com/svn/trunk/StackBlur.js></script>
+<script src=//canvg.googlecode.com/svn/trunk/canvg.js></script>
+<script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/md5.js"></script>
 
 <script src=app.js></script>
 
