@@ -1038,11 +1038,8 @@ App.preview = function(start) {
   // TODO send phosphorus the zip object, to avoid generation
   // var request = P.IO.loadSB2ProjectZip(zip);
 
-  console.log('start progress');
   P.player.showProgress(request, function(stage) {
     App.stage = stage;
-
-    console.log('end progress');
 
     [stage].concat(stage.children).forEach(function(s) {
       if (s.isStage) {

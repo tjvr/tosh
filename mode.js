@@ -11,6 +11,10 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     this.customBlocks = {};
     this.indent = 0;
 
+    cfg.scratchVariables = cfg.scratchVariables || [];
+    cfg.scratchLists = cfg.scratchLists || [];
+    cfg.scratchDefinitions = cfg.scratchDefinitions || [];
+
     var _this = this;
     cfg.scratchVariables.forEach(function(variable) {
       var name = variable._name();
