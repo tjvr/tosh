@@ -36,8 +36,8 @@ body {
 /*****************************************************************************/
 
 body {
-  min-width: 1000px;
-  min-height: 470px;
+  min-width: 1000px; /* MIN_WIDTH */
+  min-height: 508px; /* MIN_HEIGHT */
   line-height: 1.5em;
   font-size: 12px;
 
@@ -53,7 +53,8 @@ body {
 }
 
 .ss {
-  min-width: 700px;
+  min-width: 760px;
+  min-height: 328px;
 }
 
 /*****************************************************************************/
@@ -124,9 +125,11 @@ body {
   width: 482px;
   height: 392px; /* just fwiw */
   font-size: 16px; /* required! TODO: bug Nathan */
+  transition: width 250ms ease-in-out, height 250ms ease-in-out;
 }
 .player {
   background: #fff; /* TODO #555; */
+  transition: transform 250ms ease-in-out;
 }
 
 .ss #phosphorus {
@@ -189,14 +192,12 @@ body {
   bottom: 0;
   overflow: scroll;
   background: #fff;
-
   top: 400px;
   right: 8px;
   bottom: 8px;
-
   width: 482px;
-
   font-size: 14px;
+  transition: top 250ms ease-in-out, width 250ms ease-in-out;
 }
 
 .ss .switcher {
@@ -221,6 +222,7 @@ body {
   top: 8px; bottom: 8px; left: 8px;
   right: 498px;
   display: none;
+  transition: right 250ms ease-in-out;
 }
 .scriptable-active {
   display: block;
