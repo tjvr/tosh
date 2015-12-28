@@ -311,11 +311,13 @@ var ScriptsEditor = function(sprite, project) {
   this.cm = CodeMirror(this.el, cmOptions);
 
   // resize CM when its container changes size
-  windowSize.subscribe(this.fixLayout.bind(this));
-  App.smallStage.subscribe(function(x) {
-    doNext(this.fixLayout.bind(this));
-  }.bind(this));
-  doNext(this.fixLayout.bind(this));
+  var fixLayout = this.fixLayout.bind(this);
+  //windowSize.subscribe(fixLayout);
+  /*App.smallStage.subscribe(function(isSmall) {
+    doNext(fixLayout, isSmall ? 240 : 0);
+  });*/
+  doNext(fixLayout);
+  //setInterval(this.fixLayout.bind(this), 250);
 
   this.repaint();
 
@@ -335,8 +337,8 @@ var ScriptsEditor = function(sprite, project) {
   this.cm.on('change', this.codeChange.bind(this));
 };
 
-ScriptsEditor.prototype.fixLayout = function() {
-  this.cm.setSize(this.el.clientWidth, this.el.clientHeight)
+ScriptsEditor.prototype.fixLayout = function(offset) {
+  this.cm.setSize(this.el.clientWidth + offset, this.el.clientHeight)
 };
 
 ScriptsEditor.prototype.flush = function() {
@@ -450,11 +452,23 @@ App.project.subscribe(function(project) {
 
 document.querySelector('.small-stage').addEventListener('click', App.smallStage.toggle);
 
+var MIN_WIDTH = 1000;
+var MIN_HEIGHT = 508;
+var windowTooSmall = windowSize.compute(function(size) {
+  return (size.width < MIN_WIDTH || size.height < MIN_HEIGHT);
+});
+windowTooSmall.subscribe(function(tooSmall) {
+  if (tooSmall) App.smallStage.assign(true);
+});
+
 App.smallStage.subscribe(function(isSmall) {
   if (isSmall) {
     document.body.classList.add('ss');
   } else {
     document.body.classList.remove('ss');
+  }
+  if (windowTooSmall()) {
+    setTimeout(function() { App.smallStage.assign(true); }, 50);
   }
 });
 
