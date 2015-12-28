@@ -27,6 +27,10 @@ a, button {
   float: right;
 }
 
+.no-transition * {
+  transition: none !important;
+}
+
 body {
   font-family: -apple-system, Lucida Grande, Helvetica Neue, Arial, Helvetica, sans-serif;
   color: #000;

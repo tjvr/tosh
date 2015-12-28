@@ -310,16 +310,12 @@ var ScriptsEditor = function(sprite, project) {
   this.el = el('.editor');
   this.cm = CodeMirror(this.el, cmOptions);
 
+  this.repaint();
+
   // resize CM when its container changes size
   var fixLayout = this.fixLayout.bind(this);
-  //windowSize.subscribe(fixLayout);
-  /*App.smallStage.subscribe(function(isSmall) {
-    doNext(fixLayout, isSmall ? 240 : 0);
-  });*/
+  windowSize.subscribe(fixLayout);
   doNext(fixLayout);
-  //setInterval(this.fixLayout.bind(this), 250);
-
-  this.repaint();
 
   // repaint when variable/list names change
   var _this = this;
@@ -338,7 +334,7 @@ var ScriptsEditor = function(sprite, project) {
 };
 
 ScriptsEditor.prototype.fixLayout = function(offset) {
-  this.cm.setSize(this.el.clientWidth + offset, this.el.clientHeight)
+  this.cm.setSize(NaN, this.el.clientHeight);
 };
 
 ScriptsEditor.prototype.flush = function() {
@@ -408,6 +404,52 @@ ScriptsEditor.prototype.codeChange = function() {
 
 /*****************************************************************************/
 
+var Settings = function(defaults) {
+  this.key = 'toshSettings';
+  this.settings = {};
+  this._autoSave = false;
+  this.update(defaults);
+  this.update(this.load());
+  this._autoSave = true;
+};
+
+Settings.prototype.get = function(name, defaultValue) {
+  if (!this.settings.hasOwnProperty(name)) {
+    var observable = ko(defaultValue);
+    // nb. Careful not to save while loading defaults!
+    observable.subscribe(this.save.bind(this), this._autoSave);
+    this.settings[name] = observable;
+  }
+  this[name] = this.settings[name];
+  return this.settings[name];
+};
+
+Settings.prototype.save = function() {
+  var data = Project.copyForSave(this.settings);
+  window.localStorage[this.key] = JSON.stringify(data);
+};
+
+Settings.prototype.load = function() {
+  try {
+    var data = JSON.parse(window.localStorage[this.key]);
+  } catch(e) {
+    console.log(e);
+    return;
+  }
+  if (!data) return;
+  if (typeof data !== 'object') return;
+  return data;
+};
+
+Settings.prototype.update = function(data) {
+  data = data || {};
+  Object.keys(data).forEach(function(name) {
+    var value = data[name];
+    this.get(name, value).assign(value);
+  }, this);
+};
+
+
 var Container = function(project, active) {
   var activeScriptable = ko();
   active.subscribe(function(s) {
@@ -424,6 +466,7 @@ var Container = function(project, active) {
   ]);
 };
 
+
 var App = new (function() {
 
   this.project = ko(Project.new());
@@ -432,7 +475,10 @@ var App = new (function() {
   this.projectDirty = false;
   this.phosphorusStale = false;
 
-  this.smallStage = ko(false);
+  this.settings = new Settings({
+    smallStage: false,
+  });
+  this.smallStage = this.settings.smallStage;
 
   var x = Project.newSprite();    //
   x.objName.assign('turtle2');    // XXX DEBUG
@@ -461,6 +507,7 @@ windowTooSmall.subscribe(function(tooSmall) {
   if (tooSmall) App.smallStage.assign(true);
 });
 
+document.body.classList.add('no-transition');
 App.smallStage.subscribe(function(isSmall) {
   if (isSmall) {
     document.body.classList.add('ss');
@@ -470,6 +517,9 @@ App.smallStage.subscribe(function(isSmall) {
   if (windowTooSmall()) {
     setTimeout(function() { App.smallStage.assign(true); }, 50);
   }
+});
+doNext(function() {
+  document.body.classList.remove('no-transition');
 });
 
 /*****************************************************************************/
