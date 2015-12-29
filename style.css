@@ -95,9 +95,13 @@ body {
 #wrap {
   position: absolute;
   top: 0; bottom: 0; left: 0; right: 0;
+  visibility: hidden;
 }
 #wrap.has-menu {
   top: 24px;
+}
+#wrap.visible {
+  visibility: visible;
 }
 
 /*****************************************************************************/
@@ -193,9 +197,9 @@ body {
 .switcher {
   position: absolute;
   border: 1px solid #999;
+  background: #f7f7f7; /* cf. CodeMirror-gutters */
   bottom: 0;
   overflow: scroll;
-  background: #fff;
   top: 400px;
   right: 8px;
   bottom: 8px;
@@ -308,6 +312,10 @@ body {
   font-weight: 700;
   padding: 0;
   text-align: left;
+}
+
+.pane > div {
+  margin-bottom: 16px;
 }
 
 /*****************************************************************************/

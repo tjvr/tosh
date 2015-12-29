@@ -9,7 +9,7 @@ function getEl(view) {
 }
 
 function doNext(cb) {
-  setTimeout(cb, 0);
+  setTimeout(function() { cb() }, 0);
 }
 
 /*****************************************************************************/
@@ -70,6 +70,7 @@ var Scriptable = function(s, project) {
 };
 
 Scriptable.prototype.activated = function() {
+  this.scriptsEditor.activated();
 };
 
 Scriptable.prototype.deactivated = function() {
@@ -295,8 +296,6 @@ var cmOptions = {
   lineNumbers: true,
   //gutters: ['CodeMirror-linenumbers', 'errors'],
 
-  autofocus: true,
-
   cursorHeight: 1,
 
   scratchVariables: [],
@@ -398,6 +397,12 @@ ScriptsEditor.prototype.debounceRepaint = function() {
   this.repaintTimeout = setTimeout(this.repaint.bind(this), 1000);
 };
 
+ScriptsEditor.prototype.activated = function() {
+  this.cm.refresh();
+  doNext(function() {
+    this.cm.focus();
+  }.bind(this));
+};
 
 ScriptsEditor.prototype.codeChange = function() {
 };
@@ -520,6 +525,7 @@ App.smallStage.subscribe(function(isSmall) {
 });
 doNext(function() {
   document.body.classList.remove('no-transition');
+  wrap.classList.add('visible');
 });
 
 /*****************************************************************************/
