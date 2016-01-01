@@ -31,6 +31,10 @@ a, button {
   transition: none !important;
 }
 
+.hidden {
+  visibility: hidden;
+}
+
 body {
   font-family: -apple-system, Lucida Grande, Helvetica Neue, Arial, Helvetica, sans-serif;
   color: #000;
@@ -258,15 +262,18 @@ body {
 
 .tab {
   position: relative;
+  text-transform: capitalize;
   cursor: pointer;
   display: inline-block;
   border: 1px solid transparent;
   border-bottom-color: #999;
-  background: #f8f8f8;
+  background: #f7f7f7; /* cf. CodeMirror-gutters */
   border-top-left-radius: 6px;
   border-top-right-radius: 6px;
   vertical-align: top;
   height: 24px;
+  min-width: 50px;
+  text-align: center;
 }
 .tab-active, .tab:hover {
   border-color: #999;
@@ -277,7 +284,6 @@ body {
 
   border-bottom-color: transparent;
 }
-
 
 .tab span {
   padding: 0 8px;
@@ -392,6 +398,7 @@ body {
 
   border: 1px solid #999;
   color: rgba(0, 0, 0, 0.8);
+  background: #fff; /* prevents flickering */
 
   overflow: hidden;
 }
