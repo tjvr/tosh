@@ -216,11 +216,17 @@ body {
 .sprite {
   padding: 3px 16px;
   border-bottom: 1px solid #999;
+  background: #fff;
   cursor: pointer;
 }
 .sprite-active {
   background: #0669d9;
   color: #fff;
+}
+.sprite-new {
+  background: #eee;
+  color: #888;
+  border-bottom: none;
 }
 
 /*****************************************************************************/

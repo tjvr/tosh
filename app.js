@@ -114,6 +114,7 @@ var newItem = {
 
 var ListEditor = function(obj, kind, active) {
   var items = obj[kind + 's'];
+
   if (kind === 'sprite') {
     items = items.compute(function(sprites) {
       return [obj].concat(sprites);
@@ -145,6 +146,7 @@ var ListEditor = function(obj, kind, active) {
       props.on_click = function(e) {
         active.assign(item);
       };
+
     }
 
     var itemEl = el('li.' + kind, props);
@@ -154,6 +156,30 @@ var ListEditor = function(obj, kind, active) {
 
     return itemEl;
   });
+
+  if (kind === 'sprite') {
+    var newButton = el('.sprite.sprite-new', {
+      text: "＋ new sprite",
+      on_click: function() {
+        // TODO undo
+        var sprite = Project.newSprite();
+        var name = "turtle";
+        var number = 2;
+        var p = App.project();
+        while (p._spriteNames().indexOf(name) !== -1) {
+          name = "turtle" + (number++);
+        }
+        sprite.objName.assign(name);
+        App.project().sprites.push(sprite);
+
+        App.active.assign(sprite);
+      },
+    });
+
+    itemEls = itemEls.compute(function(els) {
+      return els.concat([newButton]);
+    });
+  }
 
   var ul = el('ul.items', {
     class: 'items-' + kind + 's',
@@ -167,6 +193,8 @@ var ListEditor = function(obj, kind, active) {
 /* NamesEditor */
 
 var NamesEditor = function(sprite, kind) {
+
+  // TODO undo
 
   var factory = (kind === 'variable' ? Project.newVariable : Project.newList);
   var addText = sprite._isStage ? "＋ for all sprites" : "＋ for this sprite";
@@ -485,10 +513,6 @@ var App = new (function() {
     smallStage: false,
   });
   this.smallStage = this.settings.smallStage;
-
-  var x = Project.newSprite();    //
-  x.objName.assign('turtle2');    // XXX DEBUG
-  this.project().sprites.push(x); //
 
 })();
 

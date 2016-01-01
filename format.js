@@ -14,6 +14,10 @@ var Format = (function() {
     }
     return image;
   }
+  
+  function getName(o) {
+    return o.objName();
+  }
 
   /***************************************************************************/
 
@@ -76,6 +80,8 @@ var Format = (function() {
         scriptCount: 0, // goes stale
       },
     };
+
+    project._spriteNames = project.sprites.map(getName);
 
     return project;
   };
@@ -173,6 +179,8 @@ var Format = (function() {
       s.objName = ko(s.objName);
     });
     p.sprites = ko(p.sprites);
+
+    p._spriteNames = p.sprites.map(getName);
 
     p._isStage = true;
 
