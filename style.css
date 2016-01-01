@@ -73,7 +73,6 @@ body {
   line-height: 24px;
   height: 24px;
   background: #fffcc9;
-  font-family: Source Code Pro, monospace;
 }
 #menu > * {
   display: inline-block;
@@ -90,10 +89,12 @@ body {
   font-weight: 600;
   padding-bottom: 1px;
   margin-top: -1px;
+  font-family: Source Code Pro, monospace;
 }
 
 #menu .button {
   font-size: 14px;
+  font-family: -apple-system, Source Code Pro, monospace;
 }
 
 #wrap {
