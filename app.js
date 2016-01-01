@@ -398,9 +398,10 @@ ScriptsEditor.prototype.debounceRepaint = function() {
 };
 
 ScriptsEditor.prototype.activated = function() {
-  this.cm.refresh();
   doNext(function() {
+    this.fixLayout();
     this.cm.focus();
+    this.cm.refresh();
   }.bind(this));
 };
 
