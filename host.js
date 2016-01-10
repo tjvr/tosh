@@ -50,7 +50,8 @@ document.body.addEventListener('drop', function(e) {
 
       // TODO fix undo
       // TODO fix project storage
-      Oops.do('replaceProject', project);
+
+      App.project.assign(project);
     };
     reader.readAsArrayBuffer(f);
   }
