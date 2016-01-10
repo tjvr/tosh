@@ -468,10 +468,12 @@ Settings.prototype.save = function() {
 };
 
 Settings.prototype.load = function() {
+  var encoded = window.localStorage[this.key] || "";
+  if (!encoded) return;
   try {
-    var data = JSON.parse(window.localStorage[this.key]);
+    var data = JSON.parse(encoded);
   } catch(e) {
-    console.log(e);
+    console.log("Couldn't parse settings", e);
     return;
   }
   if (!data) return;
