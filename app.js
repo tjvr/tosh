@@ -34,12 +34,9 @@ var Scriptable = function(s, project) {
   this.scriptsEditor = new ScriptsEditor(s, project);
   s._scriptsEditor = this.scriptsEditor;
 
-  var tabNames = ['data', 'costumes', 'sounds'];
-  var tab = ko('data');
-
   function pane(name, content) {
     return el('.pane.pane-'+name, {
-      class: ko(function() { if (tab() === name) return 'pane-active'; }),
+      class: ko(function() { if (App.tab() === name) return 'pane-active'; }),
       children: content,
     });
   }
@@ -47,13 +44,15 @@ var Scriptable = function(s, project) {
   this.el = el('.scriptable', {
     class: ko(function() { return App.active() === s ? 'scriptable-active' : '' }),
     children: [
-      el('.tabs', tabNames.map(function(name) {
+      el('.tabs', ['data', 'costumes', 'sounds'].map(function(name) {
+        var tabName = name;
+        if (name === 'costumes' && s._isStage) tabName = 'backdrops';
         return el('li.tab', {
-          class: ko(function() { if (tab() === name) return 'tab-active'; }),
+          class: ko(function() { if (App.tab() === name) return 'tab-active'; }),
           on_click: function(e) {
-            tab.assign(name);
+            App.tab.assign(name);
           },
-          children: el('span', name),
+          children: el('span', tabName),
         });
       })),
 
@@ -502,6 +501,8 @@ var Container = function(project, active) {
 
 
 var App = new (function() {
+
+  this.tab = ko('data');
 
   this.project = ko(Project.new());
   this.active = ko();
