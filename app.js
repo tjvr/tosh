@@ -100,7 +100,7 @@ var renderItem = {
       el('input.name', {
         bind_value: sound.name,
       }),
-      el('.icon.icon-sound'),sound-ci
+      el('.icon.icon-sound'),
     ]);
   },
 };
@@ -336,6 +336,9 @@ var ScriptsEditor = function(sprite, project) {
   this.el = el('.editor');
   this.cm = CodeMirror(this.el, cmOptions);
 
+  var code = Compiler.generate(sprite.scripts);
+  this.cm.setValue(code);
+
   this.repaint();
 
   // resize CM when its container changes size
@@ -429,6 +432,8 @@ ScriptsEditor.prototype.activated = function() {
     this.fixLayout();
     this.cm.focus();
     this.cm.refresh();
+
+    this.debounceRepaint();
   }.bind(this));
 };
 
@@ -484,19 +489,34 @@ Settings.prototype.update = function(data) {
 
 
 var Container = function(project, active) {
-  var activeScriptable = ko();
-  active.subscribe(function(s) {
-    var scriptable = s._scriptable = s._scriptable || new Scriptable(s, project);
+  active.assign(project.sprites()[0]);
 
-    if (activeScriptable()) activeScriptable().deactivated();
-    activeScriptable.assign(scriptable);
-    scriptable.activated();
-  });
+  this.project = project;
+  this.active = active;
 
-  return el('.container', [
+  this.activeScriptable = ko();
+  this.onSwitchSprite = this.switchSprite.bind(this);
+  this.active.subscribe(this.onSwitchSprite);
+
+  this.el = el('.container', [
     el('.switcher', ListEditor(project, 'sprite', active)),
-    el('.active', activeScriptable.compute(getEl)),
+    el('.active', this.activeScriptable.compute(getEl)),
   ]);
+};
+
+Container.prototype.switchSprite = function(s) {
+  assert(this.project === App.project());
+
+  var scriptable = s._scriptable = s._scriptable
+                                || new Scriptable(s, this.project);
+
+  if (this.activeScriptable()) this.activeScriptable().deactivated();
+  this.activeScriptable.assign(scriptable);
+  scriptable.activated();
+};
+
+Container.prototype.destroy = function() {
+  this.active.unsubscribe(this.onSwitchSprite);
 };
 
 
@@ -520,11 +540,12 @@ var App = new (function() {
 var wrap = document.querySelector('#wrap');
 var container = null;
 App.project.subscribe(function(project) {
-  App.active.assign(App.project().sprites()[0]);
-
-  if (container) wrap.removeChild(container);
-  container = Container(project, App.active);
-  wrap.appendChild(container);
+  if (container) {
+    wrap.removeChild(container.el);
+    container.destroy();
+  }
+  container = new Container(project, App.active); // will assign App.active
+  wrap.appendChild(container.el);
 });
 
 document.querySelector('.small-stage').addEventListener('click', App.smallStage.toggle);
