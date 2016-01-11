@@ -28,7 +28,15 @@ var Format = (function() {
     }
     return image;
   }
-  
+
+  function audioFromFile(ext, binary) {
+    assert(ext === 'wav');
+    var audio = new Audio;
+    audio.src = 'data:audio/' + ext + ';base64,' + btoa(binary);
+    audio.controls = true;
+    return audio;
+  }
+
   function getName(o) {
     return o.objName();
   }
@@ -156,18 +164,27 @@ var Format = (function() {
 
   Project.newCostume = function(name, ext, ab) {
     var $image = imageFromFile(ext, arrayBufferToBinary(ab));
+    $image.style.visibility = 'hidden';
+    document.body.appendChild($image);
+    var width = $image.offsetWidth;
+    var height = $image.offsetHeight;
+    document.body.removeChild($image);
+    $image.style.visibility = 'visible';
+    // TODO this may give incorrect results if image is larger than document
+
     return {
       name: ko(name),
       ext: ext,
       file: ab,
       bitmapResolution: 1,
-      rotationCenterX: 0, // TODO
-      rotationCenterY: 0, // TODO
+      rotationCenterX: width / 2, // TODO test
+      rotationCenterY: height / 2,
       _$image: $image,
     };
   };
 
   Project.newSound = function(name, ext, ab) {
+    var $sound = audioFromFile(ext, arrayBufferToBinary(ab));
     return {
       name: ko(name),
       ext: ext,
@@ -175,6 +192,7 @@ var Format = (function() {
       // sampleCount: 0, // TODO
       // rate: 0,
       // format: "",
+      _$audio: $audio,
     };
   };
 
@@ -242,7 +260,7 @@ var Format = (function() {
         costume.file = f.asArrayBuffer();
         costume.ext = ext;
 
-        // make an <image> element
+        // make <image> element
         costume._$image = imageFromFile(ext, f.asBinary());
 
         // fixup `name` property
@@ -262,6 +280,9 @@ var Format = (function() {
         var f = zip.file(filename);
         sound.file = f.asArrayBuffer();
         sound.ext = ext;
+
+        // make <audio> element
+        sound._$audio = audioFromFile(ext, f.asBinary());
 
         // fixup `name` property
         sound.name = ko(sound.soundName);
