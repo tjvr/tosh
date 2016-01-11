@@ -179,7 +179,7 @@ body {
 }
 
 /*****************************************************************************/
-/* buttons */
+/* list editor */
 
 .button {
   width: 24px;
@@ -200,6 +200,22 @@ body {
 }
 .button-edit {
   background-position: -420px -4px;
+}
+
+.items {
+  position: relative;
+}
+.dragging {
+  position: absolute !important;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  box-shadow: 0 0 8px rgba(0,0,0, 0.8);
+}
+.drag-placeholder {
+  height: 25px;
+  background: #ececec;
+  border: none !important;
 }
 
 /*****************************************************************************/
@@ -271,6 +287,10 @@ body {
 }
 .sprite:hover .buttons {
   visibility: visible;
+}
+
+.sprite.dragging {
+  height: 24px;
 }
 
 /*****************************************************************************/
@@ -501,6 +521,7 @@ body {
   height: 83px;
   position: relative;
   padding: 4px;
+  background: #fff;
 }
 .costume .thumb {
   position: absolute;
