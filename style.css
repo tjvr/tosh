@@ -529,14 +529,14 @@ body {
   left: 4px;
   width: 100px;
   height: 75px;
-}
-.costume img {
+
+  background-image: url(...);
+  background-size: contain;
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translateX(-50%) translateY(-50%);
-  max-width: 100px;
-  max-height: 75px;
+  background-position: center;
+  background-repeat: no-repeat;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
 }
 .costume .details {
   padding-left: 104px;
