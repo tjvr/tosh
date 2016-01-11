@@ -561,5 +561,16 @@ body {
   position: absolute;
   right: 4px;
   bottom: 4px;
+  visibility: hidden;
+}
+.costume:hover .buttons,
+.sound:hover .buttons {
+  visibility: visible;
+}
+
+.media-number {
+  color: #999;
+  font-family: Source Code Pro, monospace;
+  font-size: 14px;
 }
 

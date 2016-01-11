@@ -96,20 +96,26 @@ var renderItem = {
       // costume._$image, // TODO
     ]);
   },
-  costume: function(costume) {
+  costume: function(costume, sprite) {
     return el('.details', [
       el('.thumb', costume._$image),
       el('input.name', {
         bind_value: costume.name,
       }),
+      el('.media-number', ko(function() {
+        return "#" + (sprite.costumes().indexOf(costume) + 1);
+      })),
     ]);
   },
-  sound: function(sound) {
+  sound: function(sound, sprite) {
     return el('.details', [
       // el('.thumb', sound._$audio), // TODO fix <audio>
       el('input.name', {
         bind_value: sound.name,
       }),
+      el('.media-number', ko(function() {
+        return "#" + (sprite.sounds().indexOf(sound) + 1);
+      })),
     ]);
   },
 };
@@ -221,7 +227,7 @@ var ListEditor = function(obj, kind, active) {
     dragHandle.addEventListener('mousedown', pointerDown);
 
     props.children = [
-      render(item),
+      render(item, obj),
       el('.buttons', buttons),
     ];
     var itemEl = el('li.' + kind, props);
@@ -742,6 +748,8 @@ var windowTooSmall = windowSize.compute(function(size) {
 windowTooSmall.subscribe(function(tooSmall) {
   if (tooSmall) App.smallStage.assign(true);
 });
+
+// careful not to show transition when window first loads
 
 document.body.classList.add('no-transition');
 App.smallStage.subscribe(function(isSmall) {
