@@ -2,7 +2,6 @@
 var Pos = CodeMirror.Pos;
 
 var Project = Format.Project;
-var Oops = Format.Oops;
 
 function getEl(view) {
   return view.el;
@@ -822,7 +821,7 @@ App.fileDropped = function(f) {
   var parts = f.name.split('.');
   var ext = parts.pop();
   var fileName = parts.join('.');
-  if (ext === 'png' || ext === 'jpg' || ext === 'svg') {
+  if (ext === 'png' || ext === 'jpg' || ext == 'jpeg' || ext === 'svg') {
     var reader = new FileReader;
     reader.onloadend = function() {
       var ab = reader.result;
