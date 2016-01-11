@@ -141,7 +141,6 @@ var ListEditor = function(obj, kind, active) {
       if (!item._isStage) {
         buttons.push(el('.button.button-edit', {
           on_click: editName,
-          disabled: !!item._isStage,
         }));
       }
     }
@@ -149,11 +148,16 @@ var ListEditor = function(obj, kind, active) {
     if (!item._isStage) {
       buttons.push(el('.button.button-remove', {
         on_click: removeItem,
+        disabled: ko(function() {
+          // can't remove last costume
+          return kind === 'costume' && items().length === 1;
+        }),
       }));
       buttons.push(dragHandle);
     }
 
     function removeItem() {
+      if (this.disabled) return;
       // TODO undo
       items.remove(items().indexOf(item));
     }
