@@ -243,6 +243,7 @@ var ListEditor = function(obj, kind, active) {
 
         // TODO undo
         App.project().sprites.push(sprite);
+        App.project().children.push(sprite);
 
         App.active.assign(sprite);
       },
