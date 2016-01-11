@@ -4,7 +4,7 @@ var Host = {};
 Host.isMac = /Mac/i.test(navigator.userAgent);
 
 Host.save = function() {
-  var zip = App.exportProject();
+  var zip = App.save();
   var blob = zip.generate({ type: 'blob' });
 
   // TODO save file properly
@@ -13,7 +13,8 @@ Host.save = function() {
     style: 'display: none;',
     download: App.project()._fileName + '.sb2',
     href: URL.createObjectURL(blob),
-  }, " ");
+    contents: " ",
+  });
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -64,4 +65,53 @@ window.onbeforeunload = function(e) {
 };
 
 // TODO toolbar
+
+// TODO keybindings
+
+document.addEventListener('keydown', function(e) {
+  // ctrl + cmd not allowed
+  if (e.metaKey && e.ctrlKey) return;
+  // alt not allowed
+  if (e.altKey) return;
+
+  // global C-bindings -> cmd on mac, ctrl otherwise
+  if (Host.isMac ? e.metaKey : e.ctrlKey) {
+    switch (e.keyCode) {
+      case 13: // run:  ⌘↩
+        var vim = cm.state.vim;
+        if (!vim || (!vim.visualMode && !vim.insertMode)) {
+          App.preview(true);
+        }
+        e.preventDefault();
+        break;
+      case 83: // save: ⌘S
+        Host.save();
+        e.preventDefault();
+        break;
+      case 89: // redo: ⌘Y
+        if (Host.isMac) return;
+        Oops.redo();
+        break;
+      case 90: // undo: ⌘Z
+        if (e.shiftKey) { // redo: ⇧⌘Z
+          if (!Host.isMac) return;
+          Oops.redo();
+        } else {
+          Oops.undo();
+        }
+        break;
+      default: return;
+    }
+  } else {
+    // plain, document-only bindings
+    if (e.target !== document.body) return;
+    if (e.metaKey || e.ctrlKey) return;
+    switch (e.keyCode) {
+      case 8: // backspace
+        break; // disable backspace to go back
+      default: return;
+    }
+  }
+  e.preventDefault();
+});
 
