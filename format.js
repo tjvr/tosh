@@ -400,87 +400,99 @@ var Format = (function() {
 
   /***************************************************************************/
 
-  /* undo + observables */
+  /* undo  */
 
-  var Action = function(op, d) {
-    this.op = op;
-    this.undo = d.undo;
-    this.redo = d.redo;
+  var actions = {
+    assign: function(newValue, oldValue) {
+      this.assign(oldValue);
+    },
+    remove: function(index, item) {
+      if (!this.insert) return;
+      this.insert(index, item);
+    },
+    insert: function(index, item) {
+      if (!this.remove) return;
+      this.remove(index);
+    },
+  }
+
+
+
+  var Operation = function(events) {
+    this.events = events;
   };
-
-  var Oops = function() {
-    this.undoStack = [];
-    this.redoStack = [];
-
-    this.actions = {};
-  };
-
-  Oops.prototype._doMaybeCombine = function(op, args, combine) {
-    var info = this.actions[op];
-
-    // .init() may modify args
-    args = info.init ? info.init.apply(null, args) : args;
-    if (!args) return false;
-
-    // make action
-    var _this = this;
-    var action = new Action(op, {
-      undo: function() {
-        if (info.begin) info.begin.apply(info, args);
-        info.undo.apply(info, args);
-        if (info.end) info.end.apply(info, args);
-      },
-      redo: function() {
-        if (info.begin) info.begin.apply(info, args);
-        info.redo.apply(info, args);
-        if (info.end) info.end.apply(info, args);
-      },
-    });
-    action.redo();
-
-    // combine with previous action of same kind
-    if (combine) {
-      var last = undoStack.pop();
-      if (last.op !== op) {
-        undoStack.push(last); // put it back
-      }
+  Operation.prototype.undo = function() {
+    var events = this.events.slice();
+    events.reverse();
+    for (var i=0; i<events.length; i++) {
+      var action = events[i];
+      var func = actions[action.name];
+      if (!func) throw action;
+      func.apply(action.target, action.args);
     }
+  };
+
+
+
+  var Oops = function(func) {
+    // run the action and log all changes
+    var op = Oops._watch(func);
 
     // save so we can undo it
-    this.undoStack.push(action);
+    Oops.undoStack.push(op);
 
     // clear redo stack
-    this.redoStack = [];
+    Oops.redoStack = [];
+  };
 
+  /* run a function and log each observable event */
+  Oops._watch = function(func) {
+    var events = [];
+    ko.watch(func, function(observable, operation, args) {
+      events.push({
+        target: observable,
+        name: operation,
+        args: args.map(copyForStore),
+      });
+    });
+    return new Operation(events);
+  };
+
+  Oops.undoStack = [];
+  Oops.redoStack = [];
+
+  function copyForStore(value) {
+    if (ko.isObservable(value)) value = value();
+    if (value && value.constructor === Array) value = value.slice();
+    return value;
+  }
+
+  Oops._reverse = function(operation) {
+    var reversed = Oops._watch(Operation.undo);
+    return reversed;
+  };
+
+  Oops.undo = function() {
+    if (!Oops.undoStack.length) return false;
+    var op = Oops.undoStack.pop();
+    var reversed = Oops._watch(function() {
+      op.undo();
+    });
+    Oops.redoStack.push(reversed);
+    console.log('undid');
     return true;
   };
 
-  Oops.prototype.do = function(op /*, args */) {
-    var args = [].slice.call(arguments, 1);
-    return this._doMaybeCombine(op, args, false);
-  };
-
-  Oops.prototype.doCombine = function(op /*, args */) {
-    var args = [].slice.call(arguments, 1);
-    return this._doMaybeCombine(op, args, true);
-  };
-
-  Oops.prototype.undo = function() {
-    if (!this.undoStack.length) return false;
-    var action = this.undoStack.pop();
-    action.undo();
-    this.redoStack.push(action);
+  Oops.redo = function() {
+    if (!Oops.redoStack.length) return false;
+    var op = Oops.redoStack.pop();
+    var reversed = Oops._watch(function() {
+      op.undo();
+    });
+    Oops.undoStack.push(reversed);
+    console.log('redid');
     return true;
   };
-
-  Oops.prototype.redo = function() {
-    if (!this.redoStack.length) return false;
-    var action = this.redoStack.pop();
-    action.redo();
-    this.undoStack.push(action);
-    return true;
-  };
-
 
 
   return {

@@ -49,10 +49,9 @@ document.body.addEventListener('drop', function(e) {
       var project = Project.load(zip);
       project._fileName = fileName;
 
-      // TODO fix undo
-      // TODO fix project storage
-
-      App.project.assign(project);
+      Oops(function() {
+        App.project.assign(project);
+      });
     };
     reader.readAsArrayBuffer(f);
   } else {
