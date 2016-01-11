@@ -566,6 +566,15 @@ App.fileDropped = function(f) {
   }
 };
 
+// hook up menu actions 
+
+if (document.querySelector('#menu')) {
+  document.querySelector('#button-load').addEventListener('click', Host.load);
+  document.querySelector('#button-save').addEventListener('click', Host.save);
+}
+
+// build scriptable pane when switching sprites
+
 var wrap = document.querySelector('#wrap');
 var container = null;
 App.project.subscribe(function(project) {
@@ -576,6 +585,8 @@ App.project.subscribe(function(project) {
   container = new Container(project, App.active); // will assign App.active
   wrap.appendChild(container.el);
 });
+
+// transition to small stage when window is too small
 
 document.querySelector('.small-stage').addEventListener('click', App.smallStage.toggle);
 
