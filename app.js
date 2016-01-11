@@ -89,10 +89,10 @@ var renderItem = {
   },
   costume: function(costume) {
     return el('.details', [
+      el('.thumb', costume._$image),
       el('input.name', {
         bind_value: costume.name,
       }),
-      // costume._$image, // TODO
     ]);
   },
   sound: function(sound) {
@@ -526,6 +526,8 @@ var App = new (function() {
 
   this.tab = ko('data');
 
+  this.isDirty = ko(true); // TODO
+
   this.project = ko(Project.new());
   this.active = ko();
 
@@ -545,6 +547,23 @@ App.save = function() {
   App.active()._scriptable.scriptsEditor.flush(); // DEBUG
 
   return Project.save(App.project());
+};
+
+App.fileDropped = function(f) {
+  var parts = f.name.split('.');
+  var ext = parts.pop();
+  var fileName = parts.join('.');
+  if (ext === 'png' || ext === 'jpg' || ext === 'svg') {
+    var reader = new FileReader;
+    reader.onloadend = function() {
+      var ab = reader.result;
+      var costume = Project.newCostume(fileName, ext, ab);
+      // TODO resize bitmaps to be less than 480x360
+      App.active().costumes.push(costume);
+      App.tab.assign('costumes');
+    };
+    reader.readAsArrayBuffer(f);
+  }
 };
 
 var wrap = document.querySelector('#wrap');
