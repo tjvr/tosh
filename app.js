@@ -82,7 +82,7 @@ var renderItem = {
   sprite: function(sprite) {
     var costume = sprite.costumes()[sprite.currentCostumeIndex()];
     return el('.details', [
-      // el('input.name', { // TODO
+      // el('input.name', { // TODO name editing
       el('.name', sprite.objName),
       // costume._$image, // TODO
     ]);
@@ -97,10 +97,10 @@ var renderItem = {
   },
   sound: function(sound) {
     return el('.details', [
+      // el('.thumb', sound._$audio), // TODO fix <audio>
       el('input.name', {
         bind_value: sound.name,
       }),
-      el('.icon.icon-sound'),
     ]);
   },
 };

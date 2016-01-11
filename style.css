@@ -447,11 +447,14 @@ body {
 }
 
 /*****************************************************************************/
+/* media panes */
 
-.pane-costumes {
+.pane-costumes,
+.pane-sounds {
   padding: 0;
 }
-.costume {
+.costume,
+.sound {
   border-bottom: 1px solid #999;
   height: 83px;
   position: relative;
@@ -479,5 +482,13 @@ body {
 }
 .costume .name {
   max-width: 100%;
+}
+
+.sound {
+  height: 64px;
+}
+.sound audio {
+  max-width: 100%;
+  height: 30px;
 }
 
