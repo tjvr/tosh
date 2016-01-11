@@ -122,23 +122,15 @@ var ListEditor = function(obj, kind, active) {
 
   var render = renderItem[kind];
   var itemEls = items.map(function(item) {
-    var props = {
-      children: [
-        render(item),
-        // TODO remove
-        /*
-        el('.button.remove', {
-          text: "(x)",
-          on_click: function() {
-            //Oops.emit(function() {
-              items.remove(items().indexOf(item));
-            //});
-          },
-          disabled: !!item._isStage,
-        }), */
-        el('.button.handle'),
-      ]
-    };
+    item._name = item.objName;
+
+    var props = {};
+    var buttons = [];
+
+    // TODO ensure unique names
+    // TODO undo
+
+    var dragHandle = el('.button.button-handle');
 
     if (kind === 'sprite') {
       props.class = active.compute(function(active) { if (active === item) return 'sprite-active'; });
@@ -146,13 +138,45 @@ var ListEditor = function(obj, kind, active) {
         active.assign(item);
       };
 
+      if (!item._isStage) {
+        buttons.push(el('.button.button-edit', {
+          on_click: editName,
+          disabled: !!item._isStage,
+        }));
+      }
     }
 
-    var itemEl = el('li.' + kind, props);
+    if (!item._isStage) {
+      buttons.push(el('.button.button-remove', {
+        on_click: removeItem,
+      }));
+      buttons.push(dragHandle);
+    }
+
+    function removeItem() {
+      // TODO undo
+      items.remove(items().indexOf(item));
+    }
+
+    function editName() {
+      var result = prompt("Rename sprite ", item._name());
+
+      // handle cancel
+      if (!result) return;
+
+      // TODO ensure unique names
+      // TODO undo
+      item._name.assign(result);
+    }
 
     // TODO drag-drop to rearrange
-    //itemEl.addEventListener('mousedown', down);
+    //dragHandle.addEventListener('mousedown', down);
 
+    props.children = [
+      render(item),
+      el('.buttons', buttons),
+    ];
+    var itemEl = el('li.' + kind, props);
     return itemEl;
   });
 
@@ -160,7 +184,6 @@ var ListEditor = function(obj, kind, active) {
     var newButton = el('.sprite.sprite-new', {
       text: "＋ new sprite",
       on_click: function() {
-        // TODO undo
         var sprite = Project.newSprite();
         var name = "turtle";
         var number = 2;
@@ -169,6 +192,8 @@ var ListEditor = function(obj, kind, active) {
           name = "turtle" + (number++);
         }
         sprite.objName.assign(name);
+
+        // TODO undo
         App.project().sprites.push(sprite);
 
         App.active.assign(sprite);
@@ -559,6 +584,7 @@ App.fileDropped = function(f) {
       var ab = reader.result;
       var costume = Project.newCostume(fileName, ext, ab);
       // TODO resize bitmaps to be less than 480x360
+      // TODO ensure unique names
       App.active().costumes.push(costume);
       App.tab.assign('costumes');
     };

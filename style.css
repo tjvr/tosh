@@ -66,6 +66,7 @@ body {
 }
 
 /*****************************************************************************/
+/* menu bar */
 
 #menu {
   position: fixed;
@@ -92,7 +93,7 @@ body {
   font-family: Source Code Pro, monospace;
 }
 
-#menu .button {
+#menu .menu-button {
   font-size: 14px;
   font-family: -apple-system, Source Code Pro, monospace;
 }
@@ -129,6 +130,7 @@ body {
 }
 
 /*****************************************************************************/
+/* phosphorus */
 
 #phosphorus {
   position: absolute;
@@ -177,6 +179,31 @@ body {
 }
 
 /*****************************************************************************/
+/* buttons */
+
+.button {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  text-align: center;
+  background-image: url(icons.svg);
+  background-position: -4px -4px;
+  opacity: 0.6;
+  float: left;
+}
+.button-remove {
+  background-position: -356px -4px;
+}
+.button-handle {
+  background-position: -388px -4px;
+  cursor: move;
+}
+.button-edit {
+  background-position: -420px -4px;
+}
+
+/*****************************************************************************/
+/* fullscreen */
 
 .fs {
   background: #000;
@@ -196,8 +223,8 @@ body {
   top: 0;
 }
 
-
 /*****************************************************************************/
+/* sprites switcher */
 
 .switcher {
   position: absolute;
@@ -219,7 +246,8 @@ body {
 }
 
 .sprite {
-  padding: 3px 16px;
+  padding: 0 16px;
+  line-height: 24px;
   border-bottom: 1px solid #999;
   background: #fff;
   cursor: pointer;
@@ -234,7 +262,19 @@ body {
   border-bottom: none;
 }
 
+.sprite .buttons {
+  position: relative;
+  top: -24px;
+  margin-right: -4px;
+  float: right;
+  visibility: hidden;
+}
+.sprite:hover .buttons {
+  visibility: visible;
+}
+
 /*****************************************************************************/
+/* scriptable */
 
 .scriptable {
   position: absolute;
@@ -251,9 +291,8 @@ body {
   right: 258px;
 }
 
-
-
 /*****************************************************************************/
+/* tabs */
 
 .tabs {
   border-bottom: 1px solid #999;
@@ -293,8 +332,9 @@ body {
 }
 
 /*****************************************************************************/
+/* panes */
 
-/* design for width=1160 */
+/* nb: design for width=1160 */
 
 .pane, .tabs { width: 200px; }
 .editor {       left: 200px; }
@@ -332,6 +372,7 @@ body {
 }
 
 /*****************************************************************************/
+/* names editor */
 
 .reporters {
   margin: 0;
@@ -390,6 +431,7 @@ body {
 }
 
 /*****************************************************************************/
+/* code editor */
 
 .editor {
   position: absolute;
@@ -490,5 +532,13 @@ body {
 .sound audio {
   max-width: 100%;
   height: 30px;
+}
+
+.costume .buttons,
+.sound .buttons {
+  display: inline-block;
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
 }
 
