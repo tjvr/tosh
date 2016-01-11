@@ -2,7 +2,7 @@
 var Pos = CodeMirror.Pos;
 
 var Project = Format.Project;
-var Oops = new Format.Oops;
+var Oops = Format.Oops;
 
 function getEl(view) {
   return view.el;
@@ -211,8 +211,9 @@ var ListEditor = function(obj, kind, active) {
 
     function removeItem() {
       if (this.disabled) return;
-      // TODO undo
-      items.remove(items().indexOf(item));
+      Oops(function() {
+        items.remove(items().indexOf(item));
+      });
     }
 
     function editName() {
@@ -222,8 +223,9 @@ var ListEditor = function(obj, kind, active) {
       if (!result) return;
 
       // TODO ensure unique names
-      // TODO undo
-      item._name.assign(result);
+      Oops(function() {
+        item._name.assign(result);
+      });
     }
 
     // drag to rearrange
@@ -286,9 +288,10 @@ var ListEditor = function(obj, kind, active) {
         }
         sprite.objName.assign(name);
 
-        // TODO undo
-        App.project().sprites.push(sprite);
-        App.project().children.push(sprite);
+        Oops(function() {
+          App.project().sprites.push(sprite);
+          App.project().children.push(sprite);
+        });
 
         App.active.assign(sprite);
       },
@@ -318,10 +321,10 @@ var ListEditor = function(obj, kind, active) {
 
         var costume = Project.newCostume(name, 'png', ab);
 
-        // TODO undo
-        obj.costumes.push(costume);
-        obj.currentCostumeIndex.assign(obj.costumes().indexOf(costume));
-
+        Oops(function() {
+          obj.costumes.push(costume);
+          obj.currentCostumeIndex.assign(obj.costumes().indexOf(costume));
+        });
       },
       children: [
         el('span', "＋ new backdrop"),
@@ -420,8 +423,9 @@ var ListEditor = function(obj, kind, active) {
     stopDragging();
 
     // This refreshes the entire pane, so must happen *after* stopDragging
-    // TODO undo
-    items.assign(newItems);
+    Oops(function() {
+      items.assign(newItems);
+    });
   }
 
   function stopDragging() {
@@ -453,8 +457,6 @@ var ListEditor = function(obj, kind, active) {
 
 var NamesEditor = function(sprite, kind) {
 
-  // TODO undo
-
   var factory = (kind === 'variable' ? Project.newVariable : Project.newList);
   var addText = sprite._isStage ? "＋ for all sprites" : "＋ for this sprite";
   var names = sprite[kind + 's'];
@@ -469,71 +471,73 @@ var NamesEditor = function(sprite, kind) {
           on_blur:  function() { variable._isEditing.assign(false); },
 
           on_keydown: function(e) {
-            if (e.metaKey || e.ctrlKey || e.altKey) return;
-            var start = this.selectionStart,
-                end = this.selectionEnd,
-                prefix = this.value.slice(0, start),
-                selection = this.value.slice(start, end),
-                suffix = this.value.slice(end);
-            switch (e.keyCode) {
-              case 13: // Return
-                variable._name.assign(prefix.trim());
+            Oops(function() {
+              if (e.metaKey || e.ctrlKey || e.altKey) return;
+              var start = this.selectionStart,
+                  end = this.selectionEnd,
+                  prefix = this.value.slice(0, start),
+                  selection = this.value.slice(start, end),
+                  suffix = this.value.slice(end);
+              switch (e.keyCode) {
+                case 13: // Return
+                  variable._name.assign(prefix.trim());
 
-                var index = names().indexOf(variable);
-                var newVar;
-                if (selection) {
-                  newVar = factory(suffix.trim());
-                  names.insert(index + 1, newVar);
+                  var index = names().indexOf(variable);
+                  var newVar;
+                  if (selection) {
+                    newVar = factory(suffix.trim());
+                    names.insert(index + 1, newVar);
 
-                  newVar = factory(selection.trim());
-                  names.insert(index + 1, newVar);
-                  newVar._isEditing.assign(true);
-                } else {
-                  newVar = factory(suffix.trim());
-                  names.insert(index + 1, newVar);
-                  newVar._isEditing.assign(true);
-                }
-                break;
-              case 8: // Backspace
-                if (variable._name()) {
+                    newVar = factory(selection.trim());
+                    names.insert(index + 1, newVar);
+                    newVar._isEditing.assign(true);
+                  } else {
+                    newVar = factory(suffix.trim());
+                    names.insert(index + 1, newVar);
+                    newVar._isEditing.assign(true);
+                  }
+                  break;
+                case 8: // Backspace
+                  if (variable._name()) {
+                    return;
+                  }
+                  var index = names().indexOf(variable);
+                  names.remove(index);
+                  if (names().length) {
+                    var focusIndex = index > 0 ? index - 1 : 0;
+                    names()[focusIndex]._isEditing.assign(true);
+                  }
+                  break;
+                case 46: // Delete
+                  if (variable._name()) {
+                    return;
+                  }
+                  var index = names().indexOf(variable);
+                  names.remove(index);
+                  if (names().length) {
+                    names()[index]._isEditing.assign(true);
+                  }
+                  break;
+                case 38: // Up
+                  var index = names().indexOf(variable);
+                  if (index - 1 >= 0) {
+                    names()[index - 1]._isEditing.assign(true);
+                  }
+                  break;
+                case 40: // Down
+                  var index = names().indexOf(variable);
+                  if (index + 1 < names().length) {
+                    names()[index + 1]._isEditing.assign(true);
+                  }
+                  break;
+                case 27: // Escape
+                  variable._isEditing.assign(false);
+                  break;
+                default:
                   return;
-                }
-                var index = names().indexOf(variable);
-                names.remove(index);
-                if (names().length) {
-                  var focusIndex = index > 0 ? index - 1 : 0;
-                  names()[focusIndex]._isEditing.assign(true);
-                }
-                break;
-              case 46: // Delete
-                if (variable._name()) {
-                  return;
-                }
-                var index = names().indexOf(variable);
-                names.remove(index);
-                if (names().length) {
-                  names()[index]._isEditing.assign(true);
-                }
-                break;
-              case 38: // Up
-                var index = names().indexOf(variable);
-                if (index - 1 >= 0) {
-                  names()[index - 1]._isEditing.assign(true);
-                }
-                break;
-              case 40: // Down
-                var index = names().indexOf(variable);
-                if (index + 1 < names().length) {
-                  names()[index + 1]._isEditing.assign(true);
-                }
-                break;
-              case 27: // Escape
-                variable._isEditing.assign(false);
-                break;
-              default:
-                return;
-            }
-            e.preventDefault();
+              }
+              e.preventDefault();
+            }.bind(this));
           },
         });
 
@@ -555,9 +559,11 @@ var NamesEditor = function(sprite, kind) {
     el('p.new a.new-variable', {
       text: addText,
       on_click: function() {
-        var newVar = factory('');
-        names.push(newVar);
-        newVar._isEditing.assign(true);
+        Oops(function() {
+          var newVar = factory('');
+          names.push(newVar);
+          newVar._isEditing.assign(true);
+        });
       },
     }),
   ]);
@@ -763,7 +769,9 @@ var Container = function(project, active) {
 
   this.el = el('.container', [
     el('.switcher', ListEditor(project, 'sprite', active)),
-    el('.active', this.activeScriptable.compute(getEl)),
+    el('.active', this.activeScriptable.compute(function(scriptable) {
+      return scriptable ? scriptable.el : "";
+    })),
   ]);
 };
 
@@ -803,7 +811,7 @@ var App = new (function() {
 })();
 
 App.save = function() {
-
+  App.compile();
   // TODO compile
   App.active()._scriptable.scriptsEditor.flush(); // DEBUG
 
@@ -821,7 +829,9 @@ App.fileDropped = function(f) {
       var costume = Project.newCostume(fileName, ext, ab);
       // TODO resize bitmaps to be less than 480x360
       // TODO ensure unique names
-      App.active().costumes.push(costume);
+      Oops(function() {
+        App.active().costumes.push(costume);
+      });
       App.tab.assign('costumes');
     };
     reader.readAsArrayBuffer(f);
