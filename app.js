@@ -218,7 +218,7 @@ var ListEditor = function(obj, kind, active) {
         var index = displayItems().indexOf(item);
         ul.insertBefore(placeholder, itemEl);
 
-        var mouseY = e.clientY - windowTop(ul);
+        var mouseY = e.clientY - windowTop(ul) + ul.parentNode.scrollTop;
         var top = itemEl.offsetTop - itemHeight; // subtract size of placeholder
         // nb. mouseY + offsetY = top
         assert(top > -2);
@@ -230,6 +230,10 @@ var ListEditor = function(obj, kind, active) {
           offsetY: top - mouseY,
           index: index,
           resetIndex: index,
+          lastClientY: e.clientY,
+          lastMouseY: null,
+          interval: setInterval(dragTick, 20),
+          scrollSpeed: 0,
         };
         itemEl.classList.add('dragging');
         itemEl.style.top = top + "px";
@@ -283,24 +287,30 @@ var ListEditor = function(obj, kind, active) {
     if (!dragging) return;
     if (kind !== 'sprite' && App.active() !== obj) return;
 
-    var mouseY = e.clientY - windowTop(ul);
+    var clientY = e.clientY || dragging.lastClientY;
+    dragging.lastClientY = clientY;
+
+    var mouseY = clientY - windowTop(ul) + ul.parentNode.scrollTop;
+    if (mouseY === dragging.lastMouseY) return;
+    dragging.lastMouseY = mouseY;
+
     var top = mouseY + dragging.offsetY;
     top = Math.max(0, top);
     dragging.el.style.top = top + "px";
 
-    // Work out position
-    top -= 4; // #item-list padding
-    var itemIndex = top / itemHeight; // App.dragging.el.offsetHeight);
+    // work out position
+    top -= 4;
+    var itemIndex = top / itemHeight;
     itemIndex = Math.round(itemIndex);
     itemIndex = Math.min(itemIndex, displayItems().length - 1);
     if (kind === 'sprite' && itemIndex < 1) itemIndex = 1;
 
+    // move placeholder if necessary
     if (itemIndex !== dragging.index) {
       var placeholder = dragging.placeholder;
       ul.removeChild(placeholder);
       var itemEl = ul.children[itemIndex];
       if (itemEl) {
-        console.log(itemEl);
         ul.insertBefore(placeholder, itemEl);
       } else {
         ul.appendChild(placeholder);
@@ -308,7 +318,33 @@ var ListEditor = function(obj, kind, active) {
       dragging.index = itemIndex;
     }
   }
-  window.addEventListener('mousemove', pointerMove);
+  window.addEventListener('mousemove', function(e) {
+    pointerMove(e);
+    e.preventDefault();
+  });
+  doNext(function() {
+    ul.parentNode.addEventListener('wheel', pointerMove);
+  });
+
+  function dragTick() {
+    if (!dragging) return;
+    if (!dragging.lastMouseY) return;
+    var SPEED = 0.08;
+
+    // hold at edge to auto-scroll
+    var mouseViewportY = dragging.lastClientY - windowTop(ul);
+    dragging.scrollSpeed *= 0.8;
+    if (mouseViewportY < 0) {
+      dragging.scrollSpeed -= SPEED;
+    } else if (mouseViewportY > ul.parentNode.offsetHeight) {
+      dragging.scrollSpeed += SPEED;
+    } else {
+      // slow down
+      dragging.scrollSpeed *= 0.1;
+    }
+
+    ul.parentNode.scrollTop += dragging.scrollSpeed * itemHeight;
+  }
 
   function drop() {
     if (!dragging) return;
@@ -339,6 +375,7 @@ var ListEditor = function(obj, kind, active) {
 
     dragging.el.classList.remove('dragging');
     dragging.el.style.top = "";
+    clearInterval(dragging.interval);
     dragging = null;
   }
   window.addEventListener('mouseup', drop);
