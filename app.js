@@ -97,8 +97,10 @@ var renderItem = {
     ]);
   },
   costume: function(costume, sprite) {
+    var thumb = el('.thumb');
+    thumb.style.backgroundImage = 'url(' + costume._$image.src + ')';
     return el('.details', [
-      el('.thumb', costume._$image),
+      thumb,
       el('input.name', {
         bind_value: costume.name,
       }),
