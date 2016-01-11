@@ -280,7 +280,7 @@ body {
   color: #fff;
 }
 .sprite-new {
-  background: #eee;
+  background: #eee; /* cf. costume-new */
   color: #888;
 }
 
@@ -535,6 +535,25 @@ body {
   padding: 4px;
   background: #fff;
 }
+
+.costume-new {
+  background: #eee;
+  color: #888;
+  height: 32px;
+  border-bottom: none;
+  cursor: pointer;
+  line-height: 24px;
+}
+.costume-new input {
+  float: right;
+  margin-right: 4px;
+  width: 5em;
+  font-family: Source Code Pro, monospace;
+  border: 1px solid #999;
+  line-height: 16px;
+  margin-top: 3px;
+}
+
 .costume .thumb {
   position: absolute;
   top: 4px;
@@ -575,9 +594,14 @@ body {
   visibility: visible;
 }
 
+.media-number,
+.media-stats {
+  font-family: Source Code Pro, monospace;
+}
 .media-number {
   color: #999;
-  font-family: Source Code Pro, monospace;
   font-size: 14px;
+}
+.media-stats {
 }
 

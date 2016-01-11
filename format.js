@@ -9,9 +9,19 @@ var Format = (function() {
     var bytes = new Uint8Array(ab);
     var len = bytes.byteLength;
     for (var i = 0; i < len; i++) {
-        binary += String.fromCharCode( bytes[ i ] );
+      binary += String.fromCharCode( bytes[ i ] );
     }
     return binary;
+  }
+
+  function binaryToArrayBuffer(binary) {
+    var len = binary.length;
+    var bytes = new Uint8Array(len);
+    for (var i = 0; i < len; i++) {
+      var ascii = binary.charCodeAt(i);
+      bytes[i] = ascii;
+    }
+    return bytes.buffer;
   }
 
   function imageFromFile(ext, binary) {
@@ -27,6 +37,19 @@ var Format = (function() {
       image.src = 'data:image/' + ext + ';base64,' + btoa(binary);
     }
     return image;
+  }
+
+  function imageSize(image) {
+    // TODO this may give incorrect results if image is larger than document
+    image.style.visibility = 'hidden';
+    document.body.appendChild(image);
+    var size = {
+      width: image.offsetWidth,
+      height: image.offsetHeight,
+    };
+    document.body.removeChild(image);
+    image.style.visibility = 'visible';
+    return size;
   }
 
   function audioFromFile(ext, binary) {
@@ -164,21 +187,13 @@ var Format = (function() {
 
   Project.newCostume = function(name, ext, ab) {
     var $image = imageFromFile(ext, arrayBufferToBinary(ab));
-    $image.style.visibility = 'hidden';
-    document.body.appendChild($image);
-    var width = $image.offsetWidth;
-    var height = $image.offsetHeight;
-    document.body.removeChild($image);
-    $image.style.visibility = 'visible';
-    // TODO this may give incorrect results if image is larger than document
-
     return {
       name: ko(name),
       ext: ext,
       file: ab,
       bitmapResolution: 1,
-      rotationCenterX: width / 2, // TODO test
-      rotationCenterY: height / 2,
+      rotationCenterX: 0, // TODO
+      rotationCenterY: 0,
       _$image: $image,
     };
   };
@@ -471,6 +486,7 @@ var Format = (function() {
   return {
     Project: Project,
     Oops: Oops,
+    binaryToArrayBuffer: binaryToArrayBuffer,
   };
 
 }());

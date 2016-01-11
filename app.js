@@ -87,17 +87,35 @@ Scriptable.prototype.deactivated = function() {
 
 /* ListEditor */
 
-function thumbnail(costume) {
+function costumeImage(costume, cb) {
+  if (!costume) return;
+  var image = costume._$image;
+  cb = cb.bind(null, image);
+  image.addEventListener('load', cb);
+  if (image.src) cb();
+}
+
+function costumeThumbnail(costume) {
   var thumb = el('.thumb');
   ko.subscribe(costume, function(costume) {
-    function update() {
-      var src = costume._$image.src;
-      if (!src) setTimeout(update, 100);
-      thumb.style.backgroundImage = 'url(' + src + ')';
-    }
-    update();
+    costumeImage(costume, function(image) {
+      thumb.style.backgroundImage = 'url(' + image.src + ')';
+    });
   });
   return thumb;
+}
+
+function costumeSize(costume) {
+  var stats = ko("..x..");
+  costumeImage(costume, function(image) {
+    console.log('load!');
+    var width = image.naturalWidth / (costume.bitmapResolution || 1);
+    var height = image.naturalHeight / (costume.bitmapResolution || 1);
+    var result = width + "x" + height;
+    if (result === "0x0") result = "";
+    stats.assign(result);
+  });
+  return stats;
 }
 
 var renderItem = {
@@ -107,19 +125,21 @@ var renderItem = {
       return sprite.costumes()[sprite.currentCostumeIndex() || 0];
     });
     return el('.details', [
-      thumbnail(costume),
+      costumeThumbnail(costume),
       el('.name', sprite.objName),
     ]);
   },
   costume: function(costume, sprite) {
+    var size = costume._size;
     return el('.details', [
-      thumbnail(costume),
+      costumeThumbnail(costume),
       el('input.name', {
         bind_value: costume.name,
       }),
       el('.media-number', ko(function() {
         return "#" + (sprite.costumes().indexOf(costume) + 1);
       })),
+      el('.media-stats', costumeSize(costume)),
     ]);
   },
   sound: function(sound, sprite) {
@@ -277,7 +297,46 @@ var ListEditor = function(obj, kind, active) {
     itemEls = itemEls.compute(function(els) {
       return els.concat([newButton]);
     });
+  } else if (kind === 'costume' && obj._isStage) {
+    var colorInput;
+    var newButton = el('.costume.costume-new', {
+      on_click: function(e) {
+        if (e.target === colorInput) return;
+
+        var name = colorInput.value.slice(1);
+
+        var canvas = el('canvas', {
+          width: 480,
+          height: 360,
+        });
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = colorInput.value;
+        ctx.fillRect(0, 0, 480, 360);
+        var base64 = canvas.toDataURL('image/png').split(',')[1];
+        var binary = atob(base64);
+        var ab = Format.binaryToArrayBuffer(binary);
+
+        var costume = Project.newCostume(name, 'png', ab);
+
+        // TODO undo
+        obj.costumes.push(costume);
+        obj.currentCostumeIndex.assign(obj.costumes().indexOf(costume));
+
+      },
+      children: [
+        el('span', "＋ new backdrop"),
+        colorInput = el('input', {
+          type: 'color',
+          value: "#FBF0E3",
+        }),
+      ],
+    });
+
+    itemEls = itemEls.compute(function(els) {
+      return els.concat([newButton]);
+    });
   }
+
 
   // drop to rearrange
   var dragging = null;
