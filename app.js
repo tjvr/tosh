@@ -87,20 +87,33 @@ Scriptable.prototype.deactivated = function() {
 
 /* ListEditor */
 
+function thumbnail(costume) {
+  var thumb = el('.thumb');
+  ko.subscribe(costume, function(costume) {
+    function update() {
+      var src = costume._$image.src;
+      if (!src) setTimeout(update, 100);
+      thumb.style.backgroundImage = 'url(' + src + ')';
+    }
+    update();
+  });
+  return thumb;
+}
+
 var renderItem = {
   sprite: function(sprite) {
-    var costume = sprite.costumes()[sprite.currentCostumeIndex()];
+    var costume = ko(function() {
+      if (sprite.objName === 'splat') debugger;
+      return sprite.costumes()[sprite.currentCostumeIndex() || 0];
+    });
     return el('.details', [
-      // el('input.name', { // TODO name editing
+      thumbnail(costume),
       el('.name', sprite.objName),
-      // costume._$image, // TODO
     ]);
   },
   costume: function(costume, sprite) {
-    var thumb = el('.thumb');
-    thumb.style.backgroundImage = 'url(' + costume._$image.src + ')';
     return el('.details', [
-      thumb,
+      thumbnail(costume),
       el('input.name', {
         bind_value: costume.name,
       }),
@@ -518,6 +531,7 @@ ScriptsEditor.prototype.fixLayout = function(offset) {
 };
 
 ScriptsEditor.prototype.flush = function() {
+  // TODO do a separate compile, rather than re-highlighting
   if (this.repaintTimeout) {
     this.repaint();
   }
