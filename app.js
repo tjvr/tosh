@@ -115,13 +115,15 @@ var ListEditor = function(obj, kind, active) {
   var items = obj[kind + 's'];
 
   if (kind === 'sprite') {
-    items = items.compute(function(sprites) {
+    displayItems = items.compute(function(sprites) {
       return [obj].concat(sprites);
     });
+  } else {
+    displayItems = items;
   }
 
   var render = renderItem[kind];
-  var itemEls = items.map(function(item) {
+  var itemEls = displayItems.map(function(item) {
     item._name = item.objName;
 
     var props = {};
