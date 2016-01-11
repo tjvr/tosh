@@ -55,6 +55,9 @@ document.body.addEventListener('drop', function(e) {
       App.project.assign(project);
     };
     reader.readAsArrayBuffer(f);
+  } else {
+    // drag in assets
+    App.fileDropped(f);
   }
 });
 

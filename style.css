@@ -446,4 +446,38 @@ body {
   display: block;
 }
 
+/*****************************************************************************/
+
+.pane-costumes {
+  padding: 0;
+}
+.costume {
+  border-bottom: 1px solid #999;
+  height: 83px;
+  position: relative;
+  padding: 4px;
+}
+.costume .thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 100px;
+  height: 75px;
+}
+.costume img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  max-width: 100px;
+  max-height: 75px;
+}
+.costume .details {
+  padding-left: 104px;
+  word-wrap: break-word;
+  overflow: hidden;
+}
+.costume .name {
+  max-width: 100%;
+}
 

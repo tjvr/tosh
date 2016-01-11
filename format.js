@@ -4,11 +4,23 @@ var Format = (function() {
 
   var TURTLE_SVG = "<svg width='25px' height='20px'><path style='fill:#007de0;stroke:#033042;stroke-width:1;stroke-linejoin:round;' d='M 0,0 20,8 0,16 6,8 Z' /></svg>";
 
+  function arrayBufferToBinary(ab) {
+    var binary = '';
+    var bytes = new Uint8Array(ab);
+    var len = bytes.byteLength;
+    for (var i = 0; i < len; i++) {
+        binary += String.fromCharCode( bytes[ i ] );
+    }
+    return binary;
+  }
+
   function imageFromFile(ext, binary) {
     if (ext === 'jpg') ext = 'jpeg';
     var image = new Image;
     if (ext === 'svg') {
-      image.src = 'data:image/svg+xml;charset=utf8,' + encodeURIComponent(binary);
+      var canvas = el('canvas');
+      canvg(canvas, binary);
+      image.src = canvas.toDataURL('image/png');
     } else {
       image.src = 'data:image/' + ext + ';base64,' + btoa(binary);
     }
@@ -141,6 +153,7 @@ var Format = (function() {
   };
 
   Project.newCostume = function(name, ext, ab) {
+    var $image = imageFromFile(ext, arrayBufferToBinary(ab));
     return {
       name: ko(name),
       ext: ext,
@@ -148,7 +161,7 @@ var Format = (function() {
       bitmapResolution: 1,
       rotationCenterX: 0, // TODO
       rotationCenterY: 0, // TODO
-      _$image: imageFromFile(ext, ab), // TODO
+      _$image: $image,
     };
   };
 

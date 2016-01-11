@@ -43,3 +43,22 @@ Host.validateMenuItem = function(name) {
   // stopProject:
 };
 
+
+// drag in assets
+
+function cancel(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+}
+document.body.addEventListener('dragover', cancel);
+document.body.addEventListener('dragenter', cancel);
+
+document.body.addEventListener('drop', function(e) {
+  e.preventDefault();
+
+  var f = e.dataTransfer.files[0];
+  if (!f) return;
+
+  App.fileDropped(f);
+});
+
