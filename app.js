@@ -12,6 +12,15 @@ function doNext(cb) {
   setTimeout(function() { cb() }, 0);
 }
 
+function windowTop(element) {
+  var y = 0;
+  do {
+    y += element.offsetTop || 0;
+    element = element.parentNode;
+  } while (element);
+  return y;
+}
+
 /*****************************************************************************/
 
 var windowSize = ko();
@@ -113,6 +122,7 @@ var newItem = {
 
 var ListEditor = function(obj, kind, active) {
   var items = obj[kind + 's'];
+  var displayItems;
 
   if (kind === 'sprite') {
     displayItems = items.compute(function(sprites) {
@@ -175,8 +185,40 @@ var ListEditor = function(obj, kind, active) {
       item._name.assign(result);
     }
 
-    // TODO drag-drop to rearrange
-    //dragHandle.addEventListener('mousedown', down);
+    // drag to rearrange
+    function pointerDown(e) {
+      if (dragging) {
+        stopDragging();
+        return;
+      }
+
+      if (e.target === dragHandle) {
+        var placeholder = el('li.' + kind + '.drag-placeholder', " ");
+        var index = displayItems().indexOf(item);
+        ul.insertBefore(placeholder, itemEl);
+
+        var mouseY = e.clientY - windowTop(ul);
+        var top = itemEl.offsetTop - itemHeight; // subtract size of placeholder
+        // nb. mouseY + offsetY = top
+        assert(top > -2);
+
+        dragging = {
+          item: item,
+          el: itemEl,
+          placeholder: placeholder,
+          offsetY: top - mouseY,
+          index: index,
+          resetIndex: index,
+        };
+        itemEl.classList.add('dragging');
+        itemEl.style.top = top + "px";
+
+        // move dragged element to end
+        ul.removeChild(itemEl);
+        ul.appendChild(itemEl);
+      }
+    }
+    dragHandle.addEventListener('mousedown', pointerDown);
 
     props.children = [
       render(item),
@@ -210,6 +252,75 @@ var ListEditor = function(obj, kind, active) {
       return els.concat([newButton]);
     });
   }
+
+  // drop to rearrange
+  var dragging = null;
+  var itemHeight = { sprite: 25, costume: 83, sound: 64 }[kind];
+
+  function pointerMove(e) {
+    if (!dragging) return;
+    if (kind !== 'sprite' && App.active() !== obj) return;
+
+    var mouseY = e.clientY - windowTop(ul);
+    var top = mouseY + dragging.offsetY;
+    top = Math.max(0, top);
+    dragging.el.style.top = top + "px";
+
+    // Work out position
+    top -= 4; // #item-list padding
+    var itemIndex = top / itemHeight; // App.dragging.el.offsetHeight);
+    itemIndex = Math.round(itemIndex);
+    itemIndex = Math.min(itemIndex, displayItems().length - 1);
+    if (kind === 'sprite' && itemIndex < 1) itemIndex = 1;
+
+    if (itemIndex !== dragging.index) {
+      var placeholder = dragging.placeholder;
+      ul.removeChild(placeholder);
+      var itemEl = ul.children[itemIndex];
+      if (itemEl) {
+        console.log(itemEl);
+        ul.insertBefore(placeholder, itemEl);
+      } else {
+        ul.appendChild(placeholder);
+      }
+      dragging.index = itemIndex;
+    }
+  }
+  window.addEventListener('mousemove', pointerMove);
+
+  function drop() {
+    if (!dragging) return;
+
+    var item = dragging.item;
+    var oldIndex = items().indexOf(item);
+    var newIndex = kind === 'sprite' ? dragging.index - 1 : dragging.index;
+    var newItems = items().slice();
+    newItems.splice(oldIndex, 1);
+    newItems.splice(newIndex, 0, item);
+    // get stopDragging to put it back in the right place
+    dragging.resetIndex = dragging.index;
+
+    stopDragging();
+
+    // This refreshes the entire pane, so must happen *after* stopDragging
+    // TODO undo
+    items.assign(newItems);
+  }
+
+  function stopDragging() {
+    if (!dragging) return;
+
+    ul.removeChild(dragging.placeholder); // TODO
+
+    ul.removeChild(dragging.el);
+    ul.insertBefore(dragging.el, ul.children[dragging.resetIndex]);
+
+    dragging.el.classList.remove('dragging');
+    dragging.el.style.top = "";
+    dragging = null;
+  }
+  window.addEventListener('mouseup', drop);
+
 
   var ul = el('ul.items', {
     class: 'items-' + kind + 's',
@@ -598,7 +709,7 @@ App.fileDropped = function(f) {
   }
 };
 
-// hook up menu actions 
+// hook up menu actions
 
 if (document.querySelector('#menu')) {
   document.querySelector('#button-load').addEventListener('click', Host.load);
