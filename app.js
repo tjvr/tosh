@@ -371,7 +371,7 @@ ScriptsEditor.prototype.flush = function() {
     this.repaint();
   }
 
-  var finalState = cm.getStateAfter(cm.getDoc().size, true);
+  var finalState = this.cm.getStateAfter(this.cm.getDoc().size, true);
   function compileLine(b) {
     if (!b) return b;
     if (b.info) {
@@ -382,7 +382,7 @@ ScriptsEditor.prototype.flush = function() {
     }
   }
 
-  cm.clearGutter('errors');
+  this.cm.clearGutter('errors');
   var lines = finalState.lines.slice();
   try {
     var scripts = Compiler.compile(lines);
@@ -390,12 +390,12 @@ ScriptsEditor.prototype.flush = function() {
     console.log(e);
     var line = finalState.lines.length - lines.length + 1;
     var marker = el('div.error', { style: 'color: #822;'}, "●")
-    cm.setGutterMarker(line, 'errors', marker);
+    this.cm.setGutterMarker(line, 'errors', marker);
     throw e;
     return;
   }
 
-  target.scripts = scripts;
+  this.sprite.scripts = scripts;
 };
 
 ScriptsEditor.prototype.repaint = function() {
@@ -538,6 +538,14 @@ var App = new (function() {
   this.smallStage = this.settings.smallStage;
 
 })();
+
+App.save = function() {
+
+  // TODO compile
+  App.active()._scriptable.scriptsEditor.flush(); // DEBUG
+
+  return Project.save(App.project());
+};
 
 var wrap = document.querySelector('#wrap');
 var container = null;
