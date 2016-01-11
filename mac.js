@@ -2,11 +2,16 @@ var Host = {};
 
 Host.isMac = true;
 
+Host._call = function(obj) {
+  var func = Host[obj.name];
+  var value = func.call(null, obj.argument);
+  return JSON.stringify({ result: value });
+}
+
 Host.load = function(assetList) {
+  if (!assetList) return;
+
   var zip = new JSZip();
-
-  console.log(assetList);
-
   assetList.forEach(function(asset) {
     zip.file(asset.name, atob(asset.base64));
   });
@@ -30,5 +35,11 @@ Host.runProject = function() {
 };
 Host.stopProject = function() {
   // TODO simulate 'esc' keypress
+};
+
+Host.validateMenuItem = function(name) {
+  return true; // TODO
+  // runProject:
+  // stopProject:
 };
 
