@@ -202,6 +202,14 @@ body {
   background-position: -420px -4px;
 }
 
+.thumb {
+  background-image: url(...);
+  background-size: contain;
+  position: absolute;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 .items {
   position: relative;
 }
@@ -213,7 +221,6 @@ body {
   box-shadow: 0 0 8px rgba(0,0,0, 0.8);
 }
 .drag-placeholder {
-  height: 25px;
   background: #ececec;
   border: none !important;
 }
@@ -262,11 +269,11 @@ body {
 }
 
 .sprite {
-  padding: 0 16px;
+  padding: 0 8px;
   line-height: 24px;
-  border-bottom: 1px solid #999;
   background: #fff;
   cursor: pointer;
+  height: 24px;
 }
 .sprite-active {
   background: #0669d9;
@@ -275,7 +282,16 @@ body {
 .sprite-new {
   background: #eee;
   color: #888;
-  border-bottom: none;
+}
+
+.sprite .thumb {
+  width: 24px;
+  height: 18px;
+  float: left;
+  margin-top: 3px;
+}
+.sprite .name {
+  margin-left: 32px;
 }
 
 .sprite .buttons {
@@ -287,10 +303,6 @@ body {
 }
 .sprite:hover .buttons {
   visibility: visible;
-}
-
-.sprite.dragging {
-  height: 24px;
 }
 
 /*****************************************************************************/
@@ -530,11 +542,6 @@ body {
   width: 100px;
   height: 75px;
 
-  background-image: url(...);
-  background-size: contain;
-  position: absolute;
-  background-position: center;
-  background-repeat: no-repeat;
   image-rendering: -webkit-crisp-edges;
   image-rendering: pixelated;
 }
