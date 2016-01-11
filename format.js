@@ -19,8 +19,10 @@ var Format = (function() {
     var image = new Image;
     if (ext === 'svg') {
       var canvas = el('canvas');
-      canvg(canvas, binary);
-      image.src = canvas.toDataURL('image/png');
+      canvg(canvas, binary, {
+      renderCallback: function() {
+        image.src = canvas.toDataURL('image/png');
+      }});
     } else {
       image.src = 'data:image/' + ext + ';base64,' + btoa(binary);
     }
