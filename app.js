@@ -892,7 +892,7 @@ var App = new (function() {
 
   this.tab = ko('data');
 
-  this.isDirty = ko(true); // TODO
+  this.needsSave = ko(false);
 
   this.project = ko(Project.new());
   this.active = ko();
