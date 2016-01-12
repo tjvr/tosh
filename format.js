@@ -317,7 +317,7 @@ var Format = (function() {
       if (ko.isObservable(v)) {
         v = v(); // specific to this
       }
-      if (v.constructor === Array) {
+      if (v && v.constructor === Array) {
         return v.map(copy);
       } else if (v.constructor === Object) {
         var d = {};
