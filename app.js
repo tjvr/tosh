@@ -810,7 +810,6 @@ var App = new (function() {
 })();
 
 App.save = function() {
-  App.compile();
   // TODO compile
   App.active()._scriptable.scriptsEditor.flush(); // DEBUG
 
