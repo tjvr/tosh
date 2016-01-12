@@ -20,24 +20,7 @@ Host.save = function() {
   document.body.removeChild(a);
 };
 
-Host.load = function() {
-};
-
-// drop file to open
-
-function cancel(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'copy';
-}
-document.body.addEventListener('dragover', cancel);
-document.body.addEventListener('dragenter', cancel);
-
-document.body.addEventListener('drop', function(e) {
-  e.preventDefault();
-
-  var f = e.dataTransfer.files[0];
-  if (!f) return;
-
+function loadProjectFile(f) {
   var parts = f.name.split('.');
   var ext = parts.pop();
   var fileName = parts.join('.');
@@ -58,6 +41,37 @@ document.body.addEventListener('drop', function(e) {
     // drag in assets
     App.fileDropped(f);
   }
+}
+
+var loadBtn = document.querySelector('#button-load');
+var fileInput = el('input', { type: 'file', });
+loadBtn.appendChild(fileInput);
+
+function handleFileSelect(e) {
+  var f = e.target.files[0];
+  if (!f) return;
+
+  loadProjectFile(f);
+}
+
+fileInput.addEventListener('change', handleFileSelect, false);
+
+// drop file to open
+
+function cancel(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+}
+document.body.addEventListener('dragover', cancel);
+document.body.addEventListener('dragenter', cancel);
+
+document.body.addEventListener('drop', function(e) {
+  e.preventDefault();
+
+  var f = e.dataTransfer.files[0];
+  if (!f) return;
+
+  loadProjectFile(f);
 });
 
 window.onbeforeunload = function(e) {
