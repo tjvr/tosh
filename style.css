@@ -224,7 +224,6 @@ body {
 }
 
 .thumb {
-  background-image: url(...);
   background-size: contain;
   position: absolute;
   background-position: center;
