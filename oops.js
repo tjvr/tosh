@@ -105,6 +105,7 @@ var Oops = (function() {
       });
     });
 
+    if (!events.length) return;
     return new Operation(events, after);
   };
 
@@ -139,13 +140,17 @@ var Oops = (function() {
   };
 
   Oops.insert = function(op) {
+    if (!op) return;
+
     // save so we can undo it
     Oops.undoStack.push(op);
 
     // clear redo stack
     Oops.redoStack = [];
-  };
 
+    // set app as dirty
+    App.needsSave.assign(true);
+  };
 
   Oops.CustomOperation = CustomOperation;
   return Oops;

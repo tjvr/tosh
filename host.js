@@ -87,7 +87,7 @@ document.body.addEventListener('drop', function(e) {
 // don't leave if we haven't saved to disk
 
 window.onbeforeunload = function(e) {
-  if (App.isDirty()) {
+  if (App.needsSave()) {
     return "You have unsaved changes!";
   }
 };
