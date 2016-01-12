@@ -19,8 +19,9 @@ var Oops = (function() {
 
   // a list of events
 
-  var Operation = function(events) {
+  var Operation = function(events, after) {
     this.events = events;
+    this.after = after;
   };
   Operation.prototype.undoAndReverse = function() {
     var events = this.events.slice();
@@ -34,6 +35,8 @@ var Oops = (function() {
         func.apply(action.target, action.args);
       }
     });
+    if (this.after) this.after();
+    reversed.after = this.after;
     return reversed;
   };
 
@@ -65,15 +68,31 @@ var Oops = (function() {
 
   /* run a function and log each observable event */
   Oops._watch = function(func) {
+    // save active sprite & tab
+    var wasActive = App.active();
+    var wasTab = App.tab();
+    var after = function() {
+      App.active.assign(wasActive);
+      App.tab.assign(wasTab);
+    };
+
     var events = [];
     ko.watch(func, function(observable, operation, args) {
+      // ignore computeds & UI scope
+      if (ko.isComputed(observable)) return;
+      if (observable === App.active || observable === App.tab) {
+        after = null; // probably a "replace project" operation
+      }
+
+      // save the event that was emitted
       events.push({
         target: observable,
         name: operation,
         args: args.map(copyForStore),
       });
     });
-    return new Operation(events);
+
+    return new Operation(events, after);
   };
 
   Oops.undoStack = [];
