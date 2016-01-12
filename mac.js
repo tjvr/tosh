@@ -1,5 +1,5 @@
-var Host = {};
 
+var Host = {};
 Host.isMac = true;
 
 Host._call = function(obj) {
@@ -7,6 +7,9 @@ Host._call = function(obj) {
   var value = func.call(null, obj.argument);
   return JSON.stringify({ result: value });
 }
+
+
+// load & save
 
 Host.load = function(assetList) {
   if (!assetList) return;
@@ -30,21 +33,25 @@ Host.save = function() {
   });
 };
 
+
+// undo & redo
+
+Host.undo = Oops.undo;
+Host.redo = Oops.redo;
+Host.canUndo = Oops.canUndo;
+Host.canRedo = Oops.canRedo;
+
+Host.onOops = function() {};
+Host.handleUndoKeys = function(e) {};
+
+
+// run & stop menu items
+
 Host.runProject = function() {
   // TODO simulate 'cmd+enter' keypress
 };
 Host.stopProject = function() {
   // TODO simulate 'esc' keypress
-};
-
-Host.undo = Oops.undo;
-Host.redo = Oops.redo;
-
-Host.canUndo = function() {
-  return Oops.undoStack.length;
-};
-Host.canRedo = function() {
-  return Oops.redoStack.length;
 };
 
 Host.validateMenuItem = function(name) {
@@ -53,10 +60,10 @@ Host.validateMenuItem = function(name) {
   // stopProject:
 };
 
-Host.handleUndoKeys = function(e) {};
-
 
 // drag in assets
+// TODO highlight areas etc
+// TODO move this to app?
 
 function cancel(e) {
   e.preventDefault();
@@ -73,4 +80,9 @@ document.body.addEventListener('drop', function(e) {
 
   App.fileDropped(f);
 });
+
+
+// do nothing
+
+Host.onAppLoad = function() {};
 

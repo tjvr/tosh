@@ -64,6 +64,42 @@ function handleFileSelect(e) {
 fileInput.addEventListener('change', handleFileSelect, false);
 
 
+// undo & redo menu items
+
+var canUndo = ko(false);
+var canRedo = ko(false);
+Host.onOops = function() {
+  canUndo.assign(Oops.canUndo());
+  canRedo.assign(Oops.canRedo());
+};
+
+var menu = document.querySelector('#menu');
+var undoBtn = el('.menu-button', {
+  class: ko(function() { return canUndo() ? "" : "hidden" }),
+  on_click: Oops.undo,
+  text: "↺",
+});
+var redoBtn = el('.menu-button', {
+  class: ko(function() { return canRedo() ? "" : "hidden" }),
+  on_click: Oops.redo,
+  text: "↻",
+});
+
+var helpBtn = document.querySelector('#button-help');
+menu.insertBefore(undoBtn, helpBtn);
+menu.insertBefore(redoBtn, helpBtn);
+
+
+// show project name in menu bar
+
+Host.onAppLoad = function() {
+  var projectName = el('.menu-title',
+    ko(function() { return App.project()._fileName })
+  );
+  menu.insertBefore(projectName, helpBtn);
+};
+
+
 // drop file to open
 // TODO highlight drop area
 
