@@ -211,6 +211,9 @@ var ListEditor = function(obj, kind, active) {
       if (this.disabled) return;
       Oops(function() {
         items.remove(items().indexOf(item));
+        if (kind === 'sprite') {
+          obj.children.splice(obj.children.indexOf(item), 1);
+        }
       });
     }
 
