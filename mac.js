@@ -37,6 +37,16 @@ Host.stopProject = function() {
   // TODO simulate 'esc' keypress
 };
 
+Host.undo = Oops.undo;
+Host.redo = Oops.redo;
+
+Host.canUndo = function() {
+  return Oops.undoStack.length;
+};
+Host.canRedo = function() {
+  return Oops.redoStack.length;
+};
+
 Host.validateMenuItem = function(name) {
   return true; // TODO
   // runProject:
