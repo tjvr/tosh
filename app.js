@@ -605,6 +605,7 @@ var ScriptsEditor = function(sprite, project) {
   this.cm.clearHistory();
   assert(this.cm.getHistory().done.length === 0);
   this.cmUndoSize = 0;
+  this.undoing = false;
 
   this.repaint();
 
@@ -695,6 +696,32 @@ ScriptsEditor.prototype.debounceRepaint = function() {
   this.repaintTimeout = setTimeout(this.repaint.bind(this), 1000);
 };
 
+ScriptsEditor.prototype.checkDefinitions = function() {
+  var contents = this.cm.getValue();
+  var lines = contents.split('\n');
+
+  var defineParser = new Earley.Parser(Language.defineGrammar);
+
+  var definitions = [];
+  lines.forEach(function(line) {
+    if (!/^define /.test(line)) return;
+    var tokens = Language.tokenize(line);
+    var results;
+    try {
+      results = defineParser.parse(tokens);
+    } catch (e) { return; }
+    if (results.length > 1) throw "ambiguous define. count: " + results.length;
+    var define = results[0].process();
+    definitions.push(define);
+  });
+
+  var oldDefinitions = this.definitions;
+  if (JSON.stringify(oldDefinitions) !== JSON.stringify(definitions)) {
+    this.definitions = definitions;
+    this.debounceRepaint();
+  }
+};
+
 ScriptsEditor.prototype.activated = function() {
   doNext(function() {
     this.fixLayout();
@@ -703,27 +730,6 @@ ScriptsEditor.prototype.activated = function() {
 
     this.debounceRepaint();
   }.bind(this));
-};
-
-ScriptsEditor.prototype.onChange = function(cm, change) {
-  // analyse affected lines
-  var lines = [];
-  for (var i=change.from.line; i<=change.to.line; i++) {
-    lines.push(this.cm.getLine(i));
-  }
-  lines = lines.concat(change.removed);
-  lines = lines.concat(change.text);
-  this.linesChanged(lines);
-
-  if (this.undoing) return;
-  // check undo state
-  var history = this.cm.getHistory();
-  if (history.done.length > this.cmUndoSize) {
-    var op = new Oops.CustomOperation(this.undo.bind(this), this.redo.bind(this));
-    Oops.insert(op);
-    this.cmUndoSize = this.cm.getHistory().done.length;
-  }
-
 };
 
 ScriptsEditor.prototype.undo = function() {
@@ -744,11 +750,32 @@ ScriptsEditor.prototype.redo = function() {
   App.active.assign(this.sprite);
 };
 
+ScriptsEditor.prototype.onChange = function(cm, change) {
+  // analyse affected lines
+  var lines = [];
+  for (var i=change.from.line; i<=change.to.line; i++) {
+    lines.push(this.cm.getLine(i));
+  }
+  lines = lines.concat(change.removed);
+  lines = lines.concat(change.text);
+  this.linesChanged(lines);
+
+  // check undo state
+  if (!this.undoing) {
+    var history = this.cm.getHistory();
+    if (history.done.length > this.cmUndoSize) {
+      var op = new Oops.CustomOperation(this.undo.bind(this), this.redo.bind(this));
+      Oops.insert(op);
+      this.cmUndoSize = this.cm.getHistory().done.length;
+    }
+  }
+};
+
 ScriptsEditor.prototype.linesChanged = function(lines) {
   for (var i=0; i<lines.length; i++) {
     var line = lines[i];
     if (/^define /.test(line)) {
-      this.refreshDefinitions();
+      this.checkDefinitions();
       return;
     }
   }
