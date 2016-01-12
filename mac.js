@@ -53,6 +53,8 @@ Host.validateMenuItem = function(name) {
   // stopProject:
 };
 
+Host.handleUndoKeys = function(e) {};
+
 
 // drag in assets
 

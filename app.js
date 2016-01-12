@@ -20,6 +20,10 @@ function windowTop(element) {
   return y;
 }
 
+function copyKeyMap(d) {
+  return JSON.parse(JSON.stringify(d));
+}
+
 /*****************************************************************************/
 
 var windowSize = ko();
@@ -472,13 +476,17 @@ var NamesEditor = function(sprite, kind) {
           on_blur:  function() { variable._isEditing.assign(false); },
 
           on_keydown: function(e) {
+            if (Host.handleUndoKeys(e)) return;
+
             Oops(function() {
               if (e.metaKey || e.ctrlKey || e.altKey) return;
+
               var start = this.selectionStart,
                   end = this.selectionEnd,
                   prefix = this.value.slice(0, start),
                   selection = this.value.slice(start, end),
                   suffix = this.value.slice(end);
+              console.log(e.keyCode);
               switch (e.keyCode) {
                 case 13: // Return
                   variable._name.assign(prefix.trim());
@@ -574,6 +582,16 @@ var NamesEditor = function(sprite, kind) {
 
 /* ScriptsEditor */
 
+function removeUndoKeys(keyMap) {
+  var keyMap = copyKeyMap(keyMap);
+  delete keyMap['Cmd-Y'];
+  delete keyMap['Cmd-Z'];
+  delete keyMap['Shift-Cmd-Z'];
+  delete keyMap['Ctrl-Y'];
+  delete keyMap['Ctrl-Z'];
+  return keyMap;
+}
+
 var cmOptions = {
   value: "",
   mode: 'tosh',
@@ -595,6 +613,8 @@ var cmOptions = {
   scratchVariables: [],
   scratchLists: [],
   scratchDefinitions: [],
+
+  keyMap: removeUndoKeys(CodeMirror.keyMap.default),
 };
 
 var ScriptsEditor = function(sprite, project) {
@@ -913,13 +933,6 @@ App.fileDropped = function(f) {
     reader.readAsArrayBuffer(f);
   }
 };
-
-// hook up menu actions
-
-if (document.querySelector('#menu')) {
-  document.querySelector('#button-load').addEventListener('click', Host.load);
-  document.querySelector('#button-save').addEventListener('click', Host.save);
-}
 
 // build scriptable pane when switching sprites
 
