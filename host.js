@@ -3,6 +3,10 @@ var Host = {};
 
 Host.isMac = /Mac/i.test(navigator.userAgent);
 
+
+// save button does <a download> trick
+// TODO replace with FileSaver js
+
 Host.save = function() {
   var zip = App.save();
   var blob = zip.generate({ type: 'blob' });
@@ -42,6 +46,10 @@ function loadProjectFile(f) {
     App.fileDropped(f);
   }
 }
+document.querySelector('#button-save').addEventListener('click', Host.save);
+
+
+// open button shows file dialog
 
 var loadBtn = document.querySelector('#button-load');
 var fileInput = el('input', { type: 'file', });
@@ -53,10 +61,11 @@ function handleFileSelect(e) {
 
   loadProjectFile(f);
 }
-
 fileInput.addEventListener('change', handleFileSelect, false);
 
+
 // drop file to open
+// TODO highlight drop area
 
 function cancel(e) {
   e.preventDefault();
@@ -74,21 +83,57 @@ document.body.addEventListener('drop', function(e) {
   loadProjectFile(f);
 });
 
+
+// don't leave if we haven't saved to disk
+
 window.onbeforeunload = function(e) {
   if (App.isDirty()) {
     return "You have unsaved changes!";
   }
 };
 
-// TODO toolbar
 
-// TODO keybindings
+// undo keybindings may need to be handled inside <inputs> etc
+// TODO is this really correct?
+
+Host.handleUndoKeys = function(e) {
+  if (e.metaKey && e.ctrlKey) return;
+  if (e.altKey) return;
+
+  if (Host.isMac ? e.metaKey : e.ctrlKey) {
+    switch (e.keyCode) {
+      case 89: // redo: ⌘Y
+        Oops.redo();
+        break;
+      case 90: // undo: ⌘Z
+        if (e.shiftKey) { // redo: ⇧⌘Z
+          if (!Host.isMac) return;
+          Oops.redo();
+        } else {
+          Oops.undo();
+        }
+        break;
+      default:
+        return;
+    }
+  } else {
+    return;
+  }
+  e.preventDefault();
+  return true;
+};
+
+
+// global keybindings
+// TODO fix
 
 document.addEventListener('keydown', function(e) {
   // ctrl + cmd not allowed
   if (e.metaKey && e.ctrlKey) return;
   // alt not allowed
   if (e.altKey) return;
+
+  if (Host.handleUndoKeys(e)) return;
 
   // global C-bindings -> cmd on mac, ctrl otherwise
   if (Host.isMac ? e.metaKey : e.ctrlKey) {
@@ -101,18 +146,6 @@ document.addEventListener('keydown', function(e) {
         break;
       case 83: // save: ⌘S
         Host.save();
-        break;
-      case 89: // redo: ⌘Y
-        if (Host.isMac) return;
-        Oops.redo();
-        break;
-      case 90: // undo: ⌘Z
-        if (e.shiftKey) { // redo: ⇧⌘Z
-          if (!Host.isMac) return;
-          Oops.redo();
-        } else {
-          Oops.undo();
-        }
         break;
       default: return;
     }

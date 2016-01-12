@@ -6,6 +6,9 @@ var Oops = (function() {
     assign: function(newValue, oldValue) {
       this.assign(oldValue);
     },
+    changed: function(newValue, oldValue) {
+      this.assign(oldValue);
+    },
     remove: function(index, item) {
       if (!this.insert) return;
       this.insert(index, item);
@@ -28,15 +31,21 @@ var Oops = (function() {
     events.reverse();
 
     var reversed = Oops._watch(function() {
+      Oops.undoing = true;
+
       for (var i=0; i<events.length; i++) {
         var action = events[i];
         var func = actions[action.name];
         if (!func) throw action;
         func.apply(action.target, action.args);
       }
+
+      Oops.undoing = false;
     });
+
     if (this.after) this.after();
     reversed.after = this.after;
+
     return reversed;
   };
 
@@ -66,8 +75,12 @@ var Oops = (function() {
     Oops.insert(op);
   };
 
+  Oops.undoing = false;
+
   /* run a function and log each observable event */
   Oops._watch = function(func) {
+    assert(!Oops.undoing);
+
     // save active sprite & tab
     var wasActive = App.active();
     var wasTab = App.tab();
