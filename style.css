@@ -80,12 +80,15 @@ body {
   vertical-align: bottom;
   padding: 0 8px;
   z-index: 3;
+  border-bottom: 1px solid transparent;
+  background: #fffcc9;
 }
-#menu > *:hover {
+.logo:hover,
+.menu-button:hover {
   background: #fffeef;
 }
 
-#menu .logo {
+.logo {
   font-size: 22px;
   letter-spacing: -1px;
   font-weight: 600;
@@ -94,10 +97,31 @@ body {
   font-family: Source Code Pro, monospace;
 }
 
+.menu-button,
+.menu-title {
+  font-family: -apple-system, Source Code Pro, monospace;
+}
 .menu-button {
   font-size: 14px;
-  font-family: -apple-system, Source Code Pro, monospace;
-  cursor: pointer;
+  cursor: default; /* Sadly my file input doesn't like cursor: pointer */
+  position: relative;
+  top: -1px;
+}
+#menu > .menu-button:hover {
+  border-bottom-color: #000;
+}
+.menu-button:active {
+  top: 0;
+}
+
+.menu-title {
+  font-size: 12px;
+  text-align: center;
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: -1 !important;
+  background: transparent;
 }
 
 #button-load {
@@ -105,9 +129,7 @@ body {
   overflow: hidden;
   position: relative;
 }
-
 .menu-button input[type=file] {
-  cursor: pointer;
   position: absolute;
   bottom: 0;
   right: 0;
@@ -118,6 +140,9 @@ body {
   z-index: 0;
 }
 
+#button-help {
+  cursor: pointer;
+}
 
 #wrap {
   position: absolute;

@@ -124,19 +124,23 @@ var Oops = (function() {
   };
 
   Oops.undo = function() {
-    if (!Oops.undoStack.length) return false;
+    if (!Oops.undoStack.length) return;
     var op = Oops.undoStack.pop();
     var reversed = op.undoAndReverse();
     Oops.redoStack.push(reversed);
-    return true;
+
+    // refresh undo/redo state
+    Host.onOops();
   };
 
   Oops.redo = function() {
-    if (!Oops.redoStack.length) return false;
+    if (!Oops.redoStack.length) return;
     var op = Oops.redoStack.pop();
     var reversed = op.undoAndReverse();
     Oops.undoStack.push(reversed);
-    return true;
+
+    // refresh undo/redo state
+    Host.onOops();
   };
 
   Oops.insert = function(op) {
@@ -150,7 +154,19 @@ var Oops = (function() {
 
     // set app as dirty
     App.needsSave.assign(true);
+
+    // refresh undo/redo state
+    Host.onOops();
   };
+
+  Oops.canUndo = function() {
+    return Oops.undoStack.length;
+  };
+  Oops.canRedo = function() {
+    return Oops.redoStack.length;
+  };
+
+
 
   Oops.CustomOperation = CustomOperation;
   return Oops;
