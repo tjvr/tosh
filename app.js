@@ -280,8 +280,9 @@ var ListEditor = function(obj, kind, active) {
     return itemEl;
   });
 
+  var newButton;
   if (kind === 'sprite') {
-    var newButton = el('.sprite.sprite-new', {
+    newButton = el('.sprite.sprite-new', {
       text: "＋ new sprite",
       on_click: function() {
         var sprite = Project.newSprite();
@@ -301,13 +302,9 @@ var ListEditor = function(obj, kind, active) {
         App.active.assign(sprite);
       },
     });
-
-    itemEls = itemEls.compute(function(els) {
-      return els.concat([newButton]);
-    });
   } else if (kind === 'costume' && obj._isStage) {
     var colorInput;
-    var newButton = el('.costume.costume-new', {
+    newButton = el('.costume.costume-new', {
       on_click: function(e) {
         if (e.target === colorInput) return;
 
@@ -339,9 +336,17 @@ var ListEditor = function(obj, kind, active) {
         }),
       ],
     });
-
+  } else {
+    newButton = el('.' + kind + '.drag-here', "drag here to import");
+  }
+  if (kind !== 'sound') {
     itemEls = itemEls.compute(function(els) {
       return els.concat([newButton]);
+    });
+  } else {
+    itemEls = itemEls.compute(function(els) {
+      if (!els.length) els = [el('.sound.drag-here', "no sounds here")]
+      return els;
     });
   }
 

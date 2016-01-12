@@ -557,12 +557,7 @@ body {
 }
 
 .costume-new {
-  background: #eee;
-  color: #888;
-  height: 32px;
-  border-bottom: none;
   cursor: pointer;
-  line-height: 24px;
 }
 .costume-new input {
   float: right;
@@ -572,6 +567,17 @@ body {
   border: 1px solid #999;
   line-height: 16px;
   margin-top: 3px;
+}
+.costume-new,
+.drag-here {
+  background: #eee;
+  color: #888;
+  height: 32px !important;
+  line-height: 24px;
+  border-bottom: none;
+}
+.drag-here {
+  text-align: center;
 }
 
 .costume .thumb {
