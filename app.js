@@ -107,7 +107,6 @@ function costumeThumbnail(costume) {
 function costumeSize(costume) {
   var stats = ko("..x..");
   costumeImage(costume, function(image) {
-    console.log('load!');
     var width = image.naturalWidth / (costume.bitmapResolution || 1);
     var height = image.naturalHeight / (costume.bitmapResolution || 1);
     var result = width + "x" + height;
@@ -603,6 +602,9 @@ var ScriptsEditor = function(sprite, project) {
 
   var code = Compiler.generate(sprite.scripts);
   this.cm.setValue(code);
+  this.cm.clearHistory();
+  assert(this.cm.getHistory().done.length === 0);
+  this.cmUndoSize = 0;
 
   this.repaint();
 
@@ -624,7 +626,7 @@ var ScriptsEditor = function(sprite, project) {
     });
   });
 
-  this.cm.on('change', this.codeChange.bind(this));
+  this.cm.on('change', this.onChange.bind(this));
 };
 
 ScriptsEditor.prototype.fixLayout = function(offset) {
@@ -703,8 +705,54 @@ ScriptsEditor.prototype.activated = function() {
   }.bind(this));
 };
 
-ScriptsEditor.prototype.codeChange = function() {
+ScriptsEditor.prototype.onChange = function(cm, change) {
+  // analyse affected lines
+  var lines = [];
+  for (var i=change.from.line; i<=change.to.line; i++) {
+    lines.push(this.cm.getLine(i));
+  }
+  lines = lines.concat(change.removed);
+  lines = lines.concat(change.text);
+  this.linesChanged(lines);
+
+  if (this.undoing) return;
+  // check undo state
+  var history = this.cm.getHistory();
+  if (history.done.length > this.cmUndoSize) {
+    var op = new Oops.CustomOperation(this.undo.bind(this), this.redo.bind(this));
+    Oops.insert(op);
+    this.cmUndoSize = this.cm.getHistory().done.length;
+  }
+
 };
+
+ScriptsEditor.prototype.undo = function() {
+  this.undoing = true;
+  this.cm.undo();
+  this.undoing = false;
+  this.cmUndoSize = this.cm.getHistory().done.length;
+
+  App.active.assign(this.sprite);
+};
+
+ScriptsEditor.prototype.redo = function() {
+  this.undoing = true;
+  this.cm.redo();
+  this.undoing = false;
+  this.cmUndoSize = this.cm.getHistory().done.length;
+
+  App.active.assign(this.sprite);
+};
+
+ScriptsEditor.prototype.linesChanged = function(lines) {
+  for (var i=0; i<lines.length; i++) {
+    var line = lines[i];
+    if (/^define /.test(line)) {
+      this.refreshDefinitions();
+      return;
+    }
+  }
+}
 
 /*****************************************************************************/
 

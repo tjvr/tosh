@@ -98,11 +98,9 @@ document.addEventListener('keydown', function(e) {
         if (!vim || (!vim.visualMode && !vim.insertMode)) {
           App.preview(true);
         }
-        e.preventDefault();
         break;
       case 83: // save: ⌘S
         Host.save();
-        e.preventDefault();
         break;
       case 89: // redo: ⌘Y
         if (Host.isMac) return;
@@ -129,5 +127,5 @@ document.addEventListener('keydown', function(e) {
     }
   }
   e.preventDefault();
-});
+}, true);
 

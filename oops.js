@@ -22,15 +22,34 @@ var Oops = (function() {
   var Operation = function(events) {
     this.events = events;
   };
-  Operation.prototype.undo = function() {
+  Operation.prototype.undoAndReverse = function() {
     var events = this.events.slice();
     events.reverse();
-    for (var i=0; i<events.length; i++) {
-      var action = events[i];
-      var func = actions[action.name];
-      if (!func) throw action;
-      func.apply(action.target, action.args);
-    }
+
+    var reversed = Oops._watch(function() {
+      for (var i=0; i<events.length; i++) {
+        var action = events[i];
+        var func = actions[action.name];
+        if (!func) throw action;
+        func.apply(action.target, action.args);
+      }
+    });
+    return reversed;
+  };
+
+
+  // CM operations are special
+
+  var CustomOperation = function(undo, redo) {
+    this.undo = undo;
+    this.redo = redo;
+  };
+  CustomOperation.prototype.reverse = function() {
+    return new CustomOperation(this.redo, this.undo);
+  };
+  CustomOperation.prototype.undoAndReverse = function() {
+    this.undo();
+    return this.reverse();
   };
 
 
@@ -40,11 +59,8 @@ var Oops = (function() {
     // run the action and log all changes
     var op = Oops._watch(func);
 
-    // save so we can undo it
-    Oops.undoStack.push(op);
-
-    // clear redo stack
-    Oops.redoStack = [];
+    // push onto undo stack
+    Oops.insert(op);
   };
 
   /* run a function and log each observable event */
@@ -77,26 +93,29 @@ var Oops = (function() {
   Oops.undo = function() {
     if (!Oops.undoStack.length) return false;
     var op = Oops.undoStack.pop();
-    var reversed = Oops._watch(function() {
-      op.undo();
-    });
+    var reversed = op.undoAndReverse();
     Oops.redoStack.push(reversed);
-    console.log('undid');
     return true;
   };
 
   Oops.redo = function() {
     if (!Oops.redoStack.length) return false;
     var op = Oops.redoStack.pop();
-    var reversed = Oops._watch(function() {
-      op.undo();
-    });
+    var reversed = op.undoAndReverse();
     Oops.undoStack.push(reversed);
-    console.log('redid');
     return true;
   };
 
+  Oops.insert = function(op) {
+    // save so we can undo it
+    Oops.undoStack.push(op);
 
+    // clear redo stack
+    Oops.redoStack = [];
+  };
+
+
+  Oops.CustomOperation = CustomOperation;
   return Oops;
 
 })();
