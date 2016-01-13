@@ -41,7 +41,9 @@ Host.redo = Oops.redo;
 Host.canUndo = Oops.canUndo;
 Host.canRedo = Oops.canRedo;
 
-Host.onOops = function() {};
+Host.onOops = function() {
+  App.onOops();
+}
 Host.handleUndoKeys = function(e) {};
 
 

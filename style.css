@@ -190,7 +190,9 @@ body {
 }
 .player {
   background: #fff; /* TODO #555; */
-  transition: transform 250ms ease-in-out;
+  transition: width 250ms ease-in-out,
+              height 250ms ease-in-out;
+  overflow: hidden;
 }
 
 .ss #phosphorus {
@@ -198,8 +200,8 @@ body {
   height: 212px;
 }
 .ss .player {
-  transform: scale(0.5);
-  box-shadow: 0 0 0 2px #999;
+  width: 240px;
+  height: 180px;
 }
 
 

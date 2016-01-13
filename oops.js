@@ -152,9 +152,6 @@ var Oops = (function() {
     // clear redo stack
     Oops.redoStack = [];
 
-    // set app as dirty
-    App.needsSave.assign(true);
-
     // refresh undo/redo state
     Host.onOops();
   };
