@@ -491,7 +491,6 @@ var NamesEditor = function(sprite, kind) {
                   prefix = this.value.slice(0, start),
                   selection = this.value.slice(start, end),
                   suffix = this.value.slice(end);
-              console.log(e.keyCode);
               switch (e.keyCode) {
                 case 13: // Return
                   variable._name.assign(prefix.trim());
@@ -630,6 +629,9 @@ var ScriptsEditor = function(sprite, project) {
 
   var code = Compiler.generate(sprite.scripts);
   this.cm.setValue(code);
+  this.needsCompile = ko(false);
+  this.hasErrors = ko(false);
+
   this.cm.clearHistory();
   assert(this.cm.getHistory().done.length === 0);
   this.cmUndoSize = 0;
@@ -662,7 +664,9 @@ ScriptsEditor.prototype.fixLayout = function(offset) {
   this.cm.setSize(NaN, this.el.clientHeight);
 };
 
-ScriptsEditor.prototype.flush = function() {
+ScriptsEditor.prototype.compile = function() {
+  if (!this.needsCompile()) return this.hasErrors();
+
   // TODO do a separate compile, rather than re-highlighting
   if (this.repaintTimeout) {
     this.repaint();
@@ -688,11 +692,16 @@ ScriptsEditor.prototype.flush = function() {
     var line = finalState.lines.length - lines.length + 1;
     var marker = el('div.error', { style: 'color: #822;'}, "●")
     this.cm.setGutterMarker(line, 'errors', marker);
-    throw e;
-    return;
+
+    this.needsCompile.assign(false);
+    this.hasErrors.assign(true);
+    return true; // has errors
   }
 
+  this.needsCompile.assign(false);
+  this.hasErrors.assign(false);
   this.sprite.scripts = scripts;
+  return false;
 };
 
 ScriptsEditor.prototype.repaint = function() {
@@ -779,6 +788,10 @@ ScriptsEditor.prototype.redo = function() {
 };
 
 ScriptsEditor.prototype.onChange = function(cm, change) {
+  // set dirty
+  this.needsCompile.assign(true);
+  App.needsCompile.assign(true);
+
   // analyse affected lines
   var lines = [];
   for (var i=change.from.line; i<=change.to.line; i++) {
@@ -897,13 +910,14 @@ var App = new (function() {
 
   this.tab = ko('data');
 
-  this.needsSave = ko(false);
-
   this.project = ko(Project.new());
   this.active = ko();
 
-  this.projectDirty = false;
-  this.phosphorusStale = false;
+  this.needsSave = ko(false);
+  this.needsCompile = ko(false);
+
+  this.stage = null;
+  this.needsPreview = ko(false);
 
   this.settings = new Settings({
     smallStage: false,
@@ -912,13 +926,87 @@ var App = new (function() {
 
 })();
 
-App.save = function() {
-  // TODO compile
-  App.active()._scriptable.scriptsEditor.flush(); // DEBUG
-
-  return Project.save(App.project());
+App.onOops = function() {
+  App.needsSave.assign(true);
+  App.needsPreview.assign(true);
 };
 
+App.save = function() {
+  // refresh CM editors
+  if (App.compile()) return;
+
+  // make project format
+  var zip = Project.save(App.project());
+
+  // no longer dirty!
+  App.needsSave.assign(false);
+  return zip;
+};
+
+/* compile each ScriptsEditor */
+App.compile = function() {
+  var project = App.project();
+  var scriptables = [project].concat(project.sprites());
+  var hasErrors = false;
+  scriptables.forEach(function(s) {
+    if (s._scriptable) {
+      hasErrors = hasErrors || s._scriptable.scriptsEditor.compile();
+    }
+  });
+  App.needsCompile.assign(false); // no longer dirty
+  return hasErrors;
+};
+
+/* send project to phosphorus */
+App.preview = function(start) {
+  // refresh CM editors
+  if (App.compile()) return;
+
+  if (App.stage) {
+    App.stage.pause();
+    App.stage.stopAll();
+    window.oldStages = (window.oldStages || []).concat([App.stage]); // DEBUG
+    App.stage = null;
+  }
+
+  // make project format
+  var zip = Project.save(App.project());
+
+  // TODO send phosphorus the zip object, to avoid generation
+  var request = P.IO.loadSB2File(zip.generate({ type: 'blob' }));
+  //var request = P.IO.loadSB2ProjectZip(zip);
+
+  P.player.showProgress(request, function(stage) {
+    App.stage = stage;
+
+    [stage].concat(stage.children).forEach(function(s) {
+      if (s.isStage) {
+        s._tosh = App.project();
+      } else if (s.isSprite) {
+        s._tosh = App.project().sprites()[s.indexInLibrary];
+      }
+    });
+
+    updateStageZoom();
+    if (start) {
+      stage.focus();
+      stage.triggerGreenFlag();
+    }
+  });
+
+  // no longer dirty
+  App.needsPreview.assign(false);
+};
+
+/* preview when green flag clicked, if needed */
+App.preFlagClick = function() {
+  if (App.needsPreview) {
+    App.preview(true);
+    return true; // tell phosphorus not to start project
+  }
+};
+
+/* drop media file on window */
 App.fileDropped = function(f) {
   var parts = f.name.split('.');
   var ext = parts.pop();
@@ -937,7 +1025,9 @@ App.fileDropped = function(f) {
     };
     reader.readAsArrayBuffer(f);
   }
+  // TODO sounds
 };
+
 
 // build scriptable pane when switching sprites
 
@@ -952,6 +1042,14 @@ App.project.subscribe(function(project) {
   wrap.appendChild(container.el);
 });
 
+
+// preview project (but stopped!) when first loaded
+
+App.project.subscribe(function(project) {
+  App.preview(false);
+});
+
+
 // transition to small stage when window is too small
 
 document.querySelector('.small-stage').addEventListener('click', App.smallStage.toggle);
@@ -965,23 +1063,39 @@ windowTooSmall.subscribe(function(tooSmall) {
   if (tooSmall) App.smallStage.assign(true);
 });
 
+
 // careful not to show transition when window first loads
 
 document.body.classList.add('no-transition');
 App.smallStage.subscribe(function(isSmall) {
+  if (!isSmall && windowTooSmall()) {
+    App.smallStage.assign(true);
+    return;
+  }
   if (isSmall) {
     document.body.classList.add('ss');
   } else {
     document.body.classList.remove('ss');
-  }
-  if (windowTooSmall()) {
-    setTimeout(function() { App.smallStage.assign(true); }, 50);
   }
 });
 doNext(function() {
   document.body.classList.remove('no-transition');
   wrap.classList.add('visible');
 });
+
+
+// scale phosphorus to small stage
+
+function updateStageZoom() {
+  var stage = App.stage;
+  if (!stage) return;
+  stage.setZoom(App.smallStage() ? 0.5 : 1);
+  if (!stage.isRunning) {
+    stage.draw();
+  }
+}
+App.smallStage.subscribe(updateStageZoom);
+window.addEventListener('resize', updateStageZoom);
 
 /*****************************************************************************/
 

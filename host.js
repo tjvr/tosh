@@ -71,6 +71,8 @@ var canRedo = ko(false);
 Host.onOops = function() {
   canUndo.assign(Oops.canUndo());
   canRedo.assign(Oops.canRedo());
+
+  App.onOops();
 };
 
 var menu = document.querySelector('#menu');
@@ -175,10 +177,7 @@ document.addEventListener('keydown', function(e) {
   if (Host.isMac ? e.metaKey : e.ctrlKey) {
     switch (e.keyCode) {
       case 13: // run:  ⌘↩
-        var vim = cm.state.vim;
-        if (!vim || (!vim.visualMode && !vim.insertMode)) {
-          App.preview(true);
-        }
+        App.preview(true);
         break;
       case 83: // save: ⌘S
         Host.save();
