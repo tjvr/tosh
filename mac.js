@@ -86,3 +86,10 @@ document.body.addEventListener('drop', function(e) {
 
 Host.onAppLoad = function() {};
 
+
+// don't scroll the window!
+
+document.addEventListener('wheel', function(e) {
+  e.preventDefault();
+});
+
