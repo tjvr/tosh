@@ -640,12 +640,8 @@ var ScriptsEditor = function(sprite, project) {
   this.cmUndoSize = 0;
   this.undoing = false;
 
+  // send options to CM, so initial highlight is correct
   this.repaint();
-
-  // resize CM when its container changes size
-  var fixLayout = this.fixLayout.bind(this);
-  windowSize.subscribe(fixLayout);
-  doNext(fixLayout);
 
   // repaint when variable/list names change
   var _this = this;
@@ -1112,6 +1108,7 @@ App.fullScreenClick = function() {
   App.isFullScreen.assign(document.documentElement.classList.contains('fs'));
 };
 
+
 // scale phosphorus to small stage
 
 function updateStageZoom() {
@@ -1129,7 +1126,20 @@ App.isFullScreen.subscribe(updateStageZoom);
 // TODO make phosphorus player not handle resize
 window.addEventListener('resize', updateStageZoom);
 
+// careful not to animate player size when coming out of fullscreen!
+
 App.isFullScreen.subscribe(cancelTransitions);
+
+
+// resize CM when its container changes size
+
+function fixActiveScriptsEditor() {
+  // if window is resized while fullscreen, CM gets upset
+  if (App.isFullScreen()) return;
+  App.active()._scriptable.scriptsEditor.fixLayout();
+}
+windowSize.subscribe(fixActiveScriptsEditor);
+App.isFullScreen.subscribe(fixActiveScriptsEditor);
 
 /*****************************************************************************/
 
