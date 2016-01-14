@@ -932,6 +932,7 @@ var App = new (function() {
     smallStage: false,
   });
   this.smallStage = this.settings.smallStage;
+  this.isFullScreen = ko(false);
 
 })();
 
@@ -1061,7 +1062,8 @@ App.project.subscribe(function(project) {
 
 // transition to small stage when window is too small
 
-document.querySelector('.small-stage').addEventListener('click', App.smallStage.toggle);
+var smallStageBtn = document.querySelector('.small-stage');
+smallStageBtn.addEventListener('click', App.smallStage.toggle);
 
 var MIN_WIDTH = 1000;
 var MIN_HEIGHT = 508;
@@ -1070,12 +1072,27 @@ var windowTooSmall = windowSize.compute(function(size) {
 });
 windowTooSmall.subscribe(function(tooSmall) {
   if (tooSmall) App.smallStage.assign(true);
+  if (tooSmall) {
+    smallStageBtn.classList.add('disabled');
+  } else {
+    smallStageBtn.classList.remove('disabled');
+  }
 });
 
 
 // careful not to show transition when window first loads
 
-document.body.classList.add('no-transition');
+function cancelTransitions() {
+  document.body.classList.add('no-transition');
+  doNext(function() {
+    document.body.classList.remove('no-transition');
+
+    // if first load, we can now show the app
+    wrap.classList.add('visible');
+  });
+}
+cancelTransitions();
+
 App.smallStage.subscribe(function(isSmall) {
   if (!isSmall && windowTooSmall()) {
     App.smallStage.assign(true);
@@ -1087,15 +1104,19 @@ App.smallStage.subscribe(function(isSmall) {
     document.body.classList.remove('ss');
   }
 });
-doNext(function() {
-  document.body.classList.remove('no-transition');
-  wrap.classList.add('visible');
-});
 
+
+// keep track of whether phosphorus is fullscreen
+
+App.fullScreenClick = function() {
+  App.isFullScreen.assign(document.documentElement.classList.contains('fs'));
+};
 
 // scale phosphorus to small stage
 
 function updateStageZoom() {
+  if (App.isFullScreen()) return;
+
   var stage = App.stage;
   if (!stage) return;
   stage.setZoom(App.smallStage() ? 0.5 : 1);
@@ -1104,7 +1125,11 @@ function updateStageZoom() {
   }
 }
 App.smallStage.subscribe(updateStageZoom);
+App.isFullScreen.subscribe(updateStageZoom);
+// TODO make phosphorus player not handle resize
 window.addEventListener('resize', updateStageZoom);
+
+App.isFullScreen.subscribe(cancelTransitions);
 
 /*****************************************************************************/
 
