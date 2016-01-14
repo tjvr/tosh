@@ -65,6 +65,11 @@ body {
   min-height: 328px;
 }
 
+.fs body {
+  min-width: 0;
+  min-height: 0;
+}
+
 /*****************************************************************************/
 /* menu bar */
 
@@ -203,6 +208,10 @@ body {
   width: 240px;
   height: 180px;
 }
+.fs .ss .player {
+  width: 480px;
+  height: 360px;
+}
 
 
 #phosphorus * {
@@ -224,6 +233,10 @@ body {
 }
 .ss .controls .small-stage {
   background-position: -320px -32px;
+}
+.small-stage.disabled,
+.small-stage.disabled:active {
+  opacity: 0.4 !important;
 }
 
 /*****************************************************************************/
@@ -275,8 +288,20 @@ body {
 /*****************************************************************************/
 /* fullscreen */
 
-.fs {
+.fs body {
   background: #000;
+  position: absolute;
+}
+.fs #wrap {
+  top: 0;
+}
+.fs #menu,
+.fs .tab-bar,
+.fs .sidebar,
+.fs .editor,
+.fs .container,
+.fs .small-stage {
+  display: none;
 }
 .fs #phosphorus {
   position: static;
@@ -286,11 +311,10 @@ body {
   bottom: 0;
   width: auto;
 }
-.fs #toolbar, .fs #editor, .fs #sidebar, .fs #tab-bar, .fs #switcher {
-  display: none;
-}
-.fs #wrap {
-  top: 0;
+.fs .player {
+  background: #fff;
+  transition: none;
+  overflow: visible;
 }
 
 /*****************************************************************************/
