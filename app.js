@@ -610,9 +610,12 @@ var cmOptions = {
   cursorScrollMargin: 80,
 
   lineNumbers: true,
+  // TODO show errors
   //gutters: ['CodeMirror-linenumbers', 'errors'],
 
   cursorHeight: 1,
+
+  undoDepth: NaN,
 
   scratchVariables: [],
   scratchLists: [],
@@ -773,7 +776,7 @@ ScriptsEditor.prototype.undo = function() {
   this.undoing = true;
   this.cm.undo();
   this.undoing = false;
-  this.cmUndoSize = this.cm.getHistory().done.length;
+  this.cmUndoSize = this.cm.historySize().undo;
 
   App.active.assign(this.sprite);
 };
@@ -782,7 +785,7 @@ ScriptsEditor.prototype.redo = function() {
   this.undoing = true;
   this.cm.redo();
   this.undoing = false;
-  this.cmUndoSize = this.cm.getHistory().done.length;
+  this.cmUndoSize = this.cm.historySize().undo;
 
   App.active.assign(this.sprite);
 };
@@ -803,12 +806,18 @@ ScriptsEditor.prototype.onChange = function(cm, change) {
 
   // check undo state
   if (!this.undoing) {
-    var history = this.cm.getHistory();
-    if (history.done.length > this.cmUndoSize) {
-      var op = new Oops.CustomOperation(this.undo.bind(this), this.redo.bind(this));
+    // TODO. We assume that every CM history operation will emit 'change'
+    var historySize = this.cm.historySize();
+    // nb. historySize appears to exclude selection operations, which is good
+    if (historySize.undo !== this.cmUndoSize) {
+      // assume every 'change' event create at most one undo operation
+      assert(historySize.undo === this.cmUndoSize + 1)
+      var op = new Oops.CustomOperation(this.undo.bind(this),
+                                        this.redo.bind(this));
       Oops.insert(op);
-      this.cmUndoSize = this.cm.getHistory().done.length;
+      this.cmUndoSize++;
     }
+    assert(this.cmUndoSize === historySize.undo);
   }
 };
 
@@ -820,7 +829,7 @@ ScriptsEditor.prototype.linesChanged = function(lines) {
       return;
     }
   }
-}
+};
 
 /*****************************************************************************/
 
