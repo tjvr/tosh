@@ -197,3 +197,6 @@ document.addEventListener('keydown', function(e) {
   e.preventDefault();
 }, true);
 
+
+// TODO project keybindings
+

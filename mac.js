@@ -51,16 +51,20 @@ Host.handleUndoKeys = function(e) {};
 // run & stop menu items
 
 Host.runProject = function() {
-  // TODO simulate 'cmd+enter' keypress
+  App.preview(true); // simulate ⌘↩
 };
 Host.stopProject = function() {
-  // TODO simulate 'esc' keypress
+  // simulate ⎋ ESC
+  if (App.stage) App.stage.pause();
+  App.active()._scriptable.scriptsEditor.cm.focus();
+  // TODO update pause button
 };
 
 Host.validateMenuItem = function(name) {
-  return true; // TODO
-  // runProject:
-  // stopProject:
+  switch (name) {
+    case 'runProject:':  return true;
+    case 'stopProject:': return (App.stage && App.stage.isRunning);
+  }
 };
 
 
