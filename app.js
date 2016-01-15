@@ -1017,7 +1017,7 @@ App.preview = function(start) {
 
 /* preview when green flag clicked, if needed */
 App.preFlagClick = function() {
-  if (App.needsPreview) {
+  if (App.needsPreview()) {
     App.preview(true);
     return true; // tell phosphorus not to start project
   }
