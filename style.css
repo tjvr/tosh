@@ -59,6 +59,9 @@ body {
 
   -webkit-user-select: none;
 }
+.mac {
+  overflow: hidden;
+}
 
 .ss {
   min-width: 760px;
