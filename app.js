@@ -214,7 +214,18 @@ var ListEditor = function(obj, kind, active) {
     function removeItem() {
       if (this.disabled) return;
       Oops(function() {
-        items.remove(items().indexOf(item));
+        var index = items().indexOf(item);
+        // update costume index if needed
+        if (kind === 'costume') {
+          if (obj.currentCostumeIndex() >= index) {
+            obj.currentCostumeIndex.assign(Math.max(0, index - 1));
+          }
+        }
+
+        // remove
+        items.remove(index);
+
+        // remove sprite from children array too
         if (kind === 'sprite') {
           obj.children.splice(obj.children.indexOf(item), 1);
         }
