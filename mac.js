@@ -16,7 +16,8 @@ Host.load = function(assetList) {
 
   var zip = new JSZip();
   assetList.forEach(function(asset) {
-    zip.file(asset.name, atob(asset.base64));
+    var ab = Format.binaryToArrayBuffer(atob(asset.base64));
+    zip.file(asset.name, ab);
   });
 
   App.project.assign(Project.load(zip));
