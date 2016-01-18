@@ -102,7 +102,7 @@ var Format = (function() {
 
       _fileName: 'tosh',
 
-      children: [sprite],
+      children: ko([sprite]),
       sprites: ko([sprite]), // !
 
       scripts: [],
@@ -227,6 +227,7 @@ var Format = (function() {
       s.objName = ko(s.objName);
     });
     p.sprites = ko(p.sprites);
+    p.children = ko(p.children);
 
     p._spriteNames = p.sprites.map(getName);
 
