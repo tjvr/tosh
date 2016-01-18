@@ -705,8 +705,9 @@ ScriptsEditor.prototype.compile = function() {
   } catch (e) {
     console.log(e);
     var line = finalState.lines.length - lines.length + 1;
-    var marker = el('div.error', { style: 'color: #822;'}, "●")
+    var marker = el('div.error', { style: 'color: #822;', text: "●"})
     this.cm.setGutterMarker(line, 'errors', marker);
+    // TODO gutters don't work
 
     this.needsCompile.assign(false);
     this.hasErrors.assign(true);
