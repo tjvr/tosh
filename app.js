@@ -1092,6 +1092,8 @@ App.runProject = function() {
   if (App.needsPreview()) {
     App.preview(true);
   } else {
+    assert(App.stage);
+    App.stage.stopAll();
     App.stage.triggerGreenFlag();
   }
 }
