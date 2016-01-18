@@ -51,7 +51,7 @@ Host.handleUndoKeys = function(e) {};
 // run & stop menu items
 
 Host.runProject = function() {
-  App.runProject();
+  App.preview(true);
 };
 Host.stopProject = function() {
   // simulate ⎋ ESC
