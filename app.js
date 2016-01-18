@@ -909,6 +909,13 @@ var Container = function(project, active) {
       return scriptable ? scriptable.el : "";
     })),
   ]);
+
+  // refresh stage when adding/removing sprites
+  project.sprites.subscribe(function() {
+    doNext(function() {
+      App.preview(false);
+    });
+  });
 };
 
 Container.prototype.switchSprite = function(s) {
