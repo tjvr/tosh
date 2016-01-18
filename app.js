@@ -976,7 +976,54 @@ App.compile = function() {
     }
   });
   App.needsCompile.assign(false); // no longer dirty
-  return hasErrors;
+
+  if (hasErrors) {
+    return true;
+  }
+
+  // sync phosphorus data
+  App.sync();
+  return false;
+};
+
+/* copy data back from phosphorus */
+App.sync = function() {
+  var phosphorus = App.stage;
+  if (!phosphorus) return;
+
+  [phosphorus].concat(phosphorus.children).forEach(function(s) {
+    if (s.isStage || s.isSprite) {
+      if (s.isClone) return;
+
+      var t = s._tosh;
+      assert(t.objName() === s.objName);
+
+      // variables could be created after we last sent the project to
+      // phosphorus, so we have fallback values
+      t.variables().forEach(function(variable) {
+        var name = variable._name();
+        variable.value = s.vars[name] || 0;
+      });
+      t.lists().forEach(function(list) {
+        var name = list._name();
+        list.contents = s.lists[name] || [];
+      });
+      t.currentCostumeIndex.assign(s.currentCostumeIndex);
+
+      if (s.isStage) {
+        t.tempoBPM = s.tempoBPM;
+      } else {
+        t.scratchX = s.scratchX;
+        t.scratchY = s.scratchY;
+        t.direction = s.direction;
+        t.rotationStyle = s.rotationStyle;
+        t.visible = s.visible;
+      }
+
+    } else if (s.target) {
+      // Watcher
+    }
+  });
 };
 
 /* send project to phosphorus */
@@ -1003,14 +1050,15 @@ App.preview = function(start) {
     App.stage = stage;
 
     stage._tosh = project;
+    assert(stage._tosh);
 
     // sync() needs references to original scriptable 
     var children = project.children();
     assert(stage.children.length === children.length);
     for (var i=0; i<stage.children.length; i++) {
-      var s = children[i];
-      stage.children[i]._tosh = s;
-      assert(s === project.sprites()[s.indexInLibrary]);
+      var s = stage.children[i];
+      s._tosh = children[i];
+      assert(s._tosh === project.sprites()[s.indexInLibrary]);
     }
 
     updateStageZoom();
@@ -1031,6 +1079,14 @@ App.preFlagClick = function() {
     return true; // tell phosphorus not to start project
   }
 };
+
+App.runProject = function() {
+  if (App.needsPreview()) {
+    App.preview(true);
+  } else {
+    App.stage.triggerGreenFlag();
+  }
+}
 
 /* drop media file on window */
 App.fileDropped = function(f) {

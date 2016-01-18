@@ -177,7 +177,7 @@ document.addEventListener('keydown', function(e) {
   if (Host.isMac ? e.metaKey : e.ctrlKey) {
     switch (e.keyCode) {
       case 13: // run:  ⌘↩
-        App.preview(true);
+        App.runProject();
         break;
       case 83: // save: ⌘S
         Host.save();
