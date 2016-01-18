@@ -227,7 +227,7 @@ var ListEditor = function(obj, kind, active) {
 
         // remove sprite from children array too
         if (kind === 'sprite') {
-          obj.children.splice(obj.children.indexOf(item), 1);
+          obj.children.remove(obj.children().indexOf(item));
         }
       });
     }
@@ -987,7 +987,8 @@ App.preview = function(start) {
   }
 
   // make project format
-  var zip = Project.save(App.project());
+  var project = App.project();
+  var zip = Project.save(project);
 
   // TODO send phosphorus the zip object, to avoid generation
   var request = P.IO.loadSB2File(zip.generate({ type: 'blob' }));
@@ -996,13 +997,16 @@ App.preview = function(start) {
   P.player.showProgress(request, function(stage) {
     App.stage = stage;
 
-    [stage].concat(stage.children).forEach(function(s) {
-      if (s.isStage) {
-        s._tosh = App.project();
-      } else if (s.isSprite) {
-        s._tosh = App.project().sprites()[s.indexInLibrary];
-      }
-    });
+    stage._tosh = project;
+
+    // sync() needs references to original scriptable 
+    var children = project.children();
+    assert(stage.children.length === children.length);
+    for (var i=0; i<stage.children.length; i++) {
+      var s = children[i];
+      stage.children[i]._tosh = s;
+      assert(s === project.sprites()[s.indexInLibrary]);
+    }
 
     updateStageZoom();
     if (start) {
