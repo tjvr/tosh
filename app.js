@@ -190,6 +190,7 @@ var ListEditor = function(obj, kind, active) {
     if (kind === 'sprite') {
       props.class = active.compute(function(active) { if (active === item) return 'sprite-active'; });
       props.on_click = function(e) {
+        if (e.target.classList.contains('button')) return;
         active.assign(item);
       };
 
@@ -228,6 +229,10 @@ var ListEditor = function(obj, kind, active) {
         // remove sprite from children array too
         if (kind === 'sprite') {
           obj.children.remove(obj.children().indexOf(item));
+
+          if (App.active() === item) {
+            App.active.assign(items()[index] || items()[index - 1] || App.project());
+          }
         }
       });
     }
