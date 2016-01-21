@@ -653,6 +653,42 @@ var NamesEditor = function(sprite, kind) {
 
 
 /* ScriptsEditor */
+var extraKeys = {
+  'Ctrl-Space': function(cm) {
+    if (cm.somethingSelected()) {
+      cm.replaceSelection(''); // TODO complete on a selection
+    }
+    requestHint(cm);
+  },
+  'Tab': function(cm) {
+    // TODO if there's no error with the input, just do an inputSeek.
+    // TODO tab at beginning of line
+    // TODO I think indentation breaks completion
+
+    if (!cm.somethingSelected()) {
+      var results = computeHint(cm);
+      // TODO: cache hints, so this doesn't suck
+      if (results && results.list && results.list.length) {
+        requestHint(cm);
+        return;
+      }
+    }
+    if (inputSeek(cm, +1)) return;
+
+    // indent
+    if (cm.somethingSelected()) {
+      cm.indentSelection('add');
+    } else {
+      cm.replaceSelection("\t", 'end', '+input');
+    }
+  },
+  'Shift-Tab': function(cm) {
+    if (inputSeek(cm, -1)) return;
+
+    // dedent
+    cm.indentSelection('subtract');
+  },
+};
 
 function removeUndoKeys(keyMap) {
   var keyMap = copyKeyMap(keyMap);
@@ -689,6 +725,7 @@ var cmOptions = {
   scratchDefinitions: [],
 
   keyMap: removeUndoKeys(CodeMirror.keyMap.default),
+  extraKeys: extraKeys,
 };
 
 var ScriptsEditor = function(sprite, project) {
@@ -892,6 +929,9 @@ ScriptsEditor.prototype.onChange = function(cm, change) {
     }
     assert(this.cmUndoSize === historySize.undo);
   }
+
+  // trigger auto-complete!
+  requestHint(this.cm);
 };
 
 ScriptsEditor.prototype.linesChanged = function(lines) {
@@ -904,6 +944,387 @@ ScriptsEditor.prototype.linesChanged = function(lines) {
       return;
     }
   }
+};
+
+/*****************************************************************************/
+/* completion */
+
+function inputSeek(cm, dir) {
+  // TODO fix for ellipsises
+  var l = tokenizeAtCursor(cm, { splitSelection: false });
+  if (!l) return false;
+  if (l.selection.indexOf('\n') > -1) return false;
+
+  var index = l.cursor + dir;
+  if (dir > 0 && l.tokens[l.cursor] && l.tokens[l.cursor].text === '-') index += 1;
+  for (var i = index;
+       dir > 0 ? i < l.tokens.length : i >= 0;
+       i += dir
+  ) {
+    var token = l.tokens[i];
+    if (['symbol', 'lparen', 'rparen', 'langle', 'rangle',
+         'lsquare', 'rsquare'].indexOf(token.kind) === -1) {
+      var start = l.start.ch + measureTokens(l.tokens.slice(0, i));
+      end = start + token.text.replace(/ *$/, "").length;
+      var line = l.from.line;
+      if (token.kind === 'number' && l.tokens[i - 1].text === '-') start--;
+      if (token.kind === 'string') { start++; end--; }
+
+      var from = { line: line, ch: start };
+      var to = { line: line, ch: end };
+      if (l.cursor.ch === from.ch && l.cursor.ch + l.selection.length === to.ch) {
+        continue;
+      }
+      cm.setSelection(from, to);
+      return true;
+    }
+  }
+
+  c = dir > 0 ? l.end : l.start;
+  if (c.ch === l.cursor.ch) return false;
+  cm.setCursor(c);
+  return true;
+}
+
+function indentify(text) {
+  text = text || '';
+  var indentation = '';
+  for (var i=0; i<indent; i++) indentation += '\t';
+  var lines = text.split('\n');
+  for (var j=1; j<lines.length; j++) {
+    lines[j] = indentation + lines[j];
+  }
+  return lines.join('\n');
+}
+
+function measureTokens(tokens) {
+  var length = 0;
+  for (var i=0; i<tokens.length; i++) {
+    length += tokens[i].text.length;
+  }
+  return length;
+}
+
+function tokenizeAtCursor(cm, options) {
+  var selection = cm.getSelection();
+  var cursor = cm.getCursor('from');
+  var text = cm.doc.getLine(cursor.line);
+
+  var indent = /^\t*/.exec(text)[0].length;
+  var prefix = text.slice(indent, cursor.ch);
+  var suffix = text.slice(cursor.ch);
+
+  var isPartial = !/ $/.test(prefix);
+
+  var tokens,
+      cursorIndex;
+  if (options.splitSelection) {
+    var beforeTokens = Language.tokenize(prefix);
+    var afterTokens = Language.tokenize(suffix);
+    tokens = beforeTokens.concat(afterTokens);
+    cursorIndex = beforeTokens.length;
+  } else {
+    var tokens = Language.tokenize(prefix + suffix);
+    var size = indent;
+    for (var i=0; i<tokens.length; i++) {
+      size += tokens[i].text.length;
+      if (size > cursor.ch) {
+        break;
+      }
+    }
+    cursorIndex = i;
+  }
+
+  var to = measureTokens(tokens.slice(0, cursorIndex));
+  var from;
+  if (isPartial) {
+    from = measureTokens(tokens.slice(0, cursorIndex - 1));
+  } else {
+    from = to;
+  }
+
+  return {
+    from:  { line: cursor.line, ch: indent + from },
+    to:    { line: cursor.line, ch: indent + to   },
+    end:   { line: cursor.line, ch: text.length   },
+    start: { line: cursor.line, ch: indent        },
+
+    selection: selection,
+
+    state: cm.getStateAfter(cursor.line),
+    cursor: cursorIndex,
+    tokens: tokens,
+    isPartial: isPartial,
+  }
+}
+
+function requestHint(cm) {
+  cm.showHint({
+    hint: computeHint,
+    completeSingle: false,
+    alignWithWord: true,
+    customKeys: {
+      Up:       function(_, menu) { menu.moveFocus(-1); },
+      Down:     function(_, menu) { menu.moveFocus(1); },
+      Home:     function(_, menu) { menu.setFocus(0);},
+      End:      function(_, menu) { menu.setFocus(menu.length - 1); },
+      // Enter:    function(_, menu) { menu.pick() },
+      Tab:      function(_, menu) { menu.pick(); },
+      Esc:      function(_, menu) { menu.close() },
+    },
+  });
+}
+
+function expandCompletions(completions, g) {
+  function expand(symbol) {
+    if (typeof symbol !== 'string') {
+      return [[symbol]];
+    }
+    if (/^@/.test(symbol)) {
+      return [g.rulesByName[symbol][0].symbols];
+    } if (/^[md]_/.test(symbol) || /^[A-Z]/.test(symbol)) {
+      return (g.rulesByName[symbol] || []).map(function(rule) {
+        return rule.symbols;
+      });
+    }
+    return [[symbol]];
+  }
+
+  var choices = [];
+  completions.forEach(function(c) {
+    var symbols = c.completion;
+    if (!symbols.length) return;
+    var first = symbols[0],
+    rest = symbols.slice(1);
+    var more = expand(first).map(function(symbols) {
+      return {
+        completion: symbols.concat(rest),
+        via: c,
+      };
+    });
+    choices = choices.concat(more);
+  });
+  return choices;
+}
+
+function computeHint(cm) {
+  var l = tokenizeAtCursor(cm, { splitSelection: true });
+  if (!l) return false;
+  if (l.cursor === 0) {
+    if (l.state.indent > 0) {
+      var result = {
+        list: [{
+          text: 'end',
+          hint: applyHint,
+        }, {
+          text: 'else',
+          hint: applyHint,
+        }],
+        from: l.from,
+        to:   l.to,
+      };
+      return result;
+    }
+    return false;
+  }
+  /*
+  if (!(l.selection === "" || l.selection === "_" ||
+        l.selection === "<>")) {
+    return false;
+  }*/
+
+  var g = l.state.grammar;
+  var parser = new Earley.Parser(g);
+
+  var tokens = l.tokens.slice();
+  var cursor = l.cursor;
+  var partial;
+  var isValid;
+  if (l.isPartial) {
+    partial = tokens[cursor - 1];
+    tokens.splice(cursor - 1, 1);
+    cursor--;
+
+    try {
+      parser.parse(tokens); isValid = true;
+    } catch (e) {
+      isValid = false;
+      // console.log(e); // DEBUG
+    }
+  }
+
+  var completer = new Earley.Completer(g);
+  var completions = completer.complete(tokens, cursor);
+  if (!completions) {
+    return false; // There was an error!
+  }
+
+  completions.filter(function(c) {
+    if (c.pre.length === 1 && typeof c.pre[0] === "string") return;
+    if (c.pre[0] === "block") return;
+    if (c.rule.process.name === 'unaryMinus') return;
+    if (c.rule.process._info === undefined) return;
+    return true;
+  });
+
+  var expansions = expandCompletions(completions, g);
+  expansions.forEach(function(x) {
+    x.length = x.via.end - x.via.start;
+  });
+
+  expansions.sort(function(a, b) {
+    return a.length < b.length ? +1 : a.length > b.length ? -1 : 0;
+  });
+  /*
+  if (expansions.length) {
+    var shortest = Math.min.apply(null, expansions.map(function(x) {
+      return x.completion.filter(function(symbol) { return symbol.kind !== 'symbol' }).length;
+    }));
+    expansions = expansions.filter(function(x) {
+      var length = x.completion.filter(function(symbol) { return symbol.kind !== 'symbol' }).length;
+      return length === shortest;
+    });
+  }
+  */
+
+  if (l.isPartial) {
+    expansions = expansions.filter(function(x) {
+      var first = x.completion[0];
+      return (first.kind === 'symbol' && partial.kind === 'symbol' &&
+              first.value.indexOf(partial.value) === 0
+        ); // || (typeof first === 'string' && x.via.pre.length);
+    });
+  } else {
+    // don't complete keys!
+    expansions = expansions.filter(function(x) {
+      var first = x.completion[0];
+      return !(first.kind === 'symbol' && /^[a-z0-9]$/.test(first.value));
+    })
+
+    if (cursor === tokens.length) {
+      expansions = expansions.filter(function(x) {
+        return x.via.pre.length || x.via.post.length;
+      })
+    }
+  }
+
+  var list = [];
+  expansions.forEach(function(x) {
+    var symbols = x.completion.slice();
+    var c = x.via;
+
+    assert(symbols.length);
+
+    var selection;
+    var text = "";
+    var displayText = "";
+    for (var i=0; i<symbols.length; i++) {
+      var part = symbols[i];
+      var displayPart = undefined;
+
+      if (i > 0 && part.value !== "?") {
+        displayText += " ";
+        text += " ";
+      }
+
+      if (typeof part === "string") {
+        var name = symbols[i];
+        if (name[0] === "@") {
+          part = g.rulesByName[name][0].symbols[0].value;
+        } else {
+          if (/^b[0-9]?$/.test(name)) {
+            part = "<>";
+          } else {
+            part = "_";
+          }
+
+          if (partial && i === 0) {
+            displayPart = part;
+            part = partial.value;
+            if (!selection) selection = { ch: text.length + part.length, size: 0 };
+          } else {
+            if (!selection) selection = { ch: text.length, size: part.length };
+          }
+
+          /*
+          if (l.isPartial && i === 0) {
+            // Sometimes we need more than one token!
+            // Not sure what to do about this…
+
+            var token = l.tokens[l.cursor - 1];
+            displayPart = part;
+            part = token.text;
+            selection = { ch: part.length };
+          }
+          */
+        }
+      } else if (part && part.kind === "symbol") {
+        part = part.value;
+      } else {
+          return;
+      }
+      text += part;
+      displayText += (displayPart === undefined ? part : displayPart);
+    }
+
+    if (displayText === "<>" || displayText === "_") return;
+
+    assert(text);
+
+    text += " ";
+
+    var completion = {
+      displayText: displayText,
+      text: text,
+      hint: applyHint,
+      selection: selection,
+    };
+
+    /*
+    if (l.isPartial) {
+      completion.text += " ";
+
+      if (text === "_") {
+        completion.selection = undefined;
+      }
+
+      if (!completion.selection) {
+        completion.seekInput = true;
+      }
+
+      var nextToken = l.tokens[l.cursor];
+      if (nextToken && /^ /.test(nextToken.text)) {
+        completion.to = { line: l.to.line, ch: l.to.ch + 1 };
+      }
+    }
+    */
+
+    list.push(completion);
+  });
+
+  var result = {
+    list: list,
+    from: l.from,
+    to:   l.to,
+  };
+
+  function applyHint(cm, data, completion) {
+    var text = completion.text;
+    cm.replaceRange(text, completion.from || data.from,
+                          completion.to || data.to, "complete");
+    if (completion.selection) {
+      var line = result.from.line;
+      var start = result.from.ch + completion.selection.ch;
+      var end = start + (completion.selection.size || 0);
+      cm.setSelection({ line: line, ch: start }, { line: line, ch: end });
+    }
+    if (completion.seekInput) {
+      inputSeek(cm, +1);
+    }
+    cm.indentLine(l.start.line);
+  }
+
+  return result;
 };
 
 /*****************************************************************************/
