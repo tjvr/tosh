@@ -1004,7 +1004,6 @@ App.sync = function() {
       if (s.isClone) return;
 
       var t = s._tosh;
-      assert(t.objName() === s.objName);
 
       // variables could be created after we last sent the project to
       // phosphorus, so we have fallback values
