@@ -99,6 +99,7 @@ var Format = (function() {
     var project = {
       objName: ko('Stage'),
       _isStage: true,
+      _hasErrors: ko(false),
 
       _fileName: 'tosh',
 
@@ -135,6 +136,7 @@ var Format = (function() {
     var sprite = {
       objName: ko('turtle'),
       indexInLibrary: 1, // goes stale
+      _hasErrors: ko(false),
 
       scripts: [],
       scriptComments: [],
@@ -240,6 +242,9 @@ var Format = (function() {
 
       s.variables = ko(s.variables || []);
       s.lists = ko(s.lists || []);
+
+      // UI-only properties
+      s._hasErrors = ko(false);
 
       // koel-ify attrs
       s.objName = ko(s.objName);
