@@ -1068,7 +1068,7 @@ function requestHint(cm) {
       Down:     function(_, menu) { menu.moveFocus(1); },
       Home:     function(_, menu) { menu.setFocus(0);},
       End:      function(_, menu) { menu.setFocus(menu.length - 1); },
-      // Enter:    function(_, menu) { menu.pick() },
+      Enter:    function(_, menu) { menu.pick() }, // TODO decide
       Tab:      function(_, menu) { menu.pick(); },
       Esc:      function(_, menu) { menu.close() },
     },
