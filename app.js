@@ -1103,9 +1103,11 @@ App.runProject = function() {
   if (App.needsPreview()) {
     App.preview(true);
   } else {
-    assert(App.stage);
+    App.stage.start();
     App.stage.stopAll();
     App.stage.triggerGreenFlag();
+    App.stage.focus();
+    // TODO this doesn't focus the player!
   }
 }
 
