@@ -353,6 +353,7 @@ body {
   background: #fff;
   cursor: pointer;
   height: 24px;
+  position: relative;
 }
 .sprite-active {
   background: #0669d9;
@@ -379,9 +380,28 @@ body {
   margin-right: -4px;
   float: right;
   visibility: hidden;
+  background: inherit;
+  z-index: 1;
 }
 .sprite:hover .buttons {
   visibility: visible;
+}
+
+.icon-error { /* cf .button */
+  display: none;
+  width: 12px;
+  height: 24px;
+  opacity: 1;
+  position: absolute;
+  right: 10px;
+  top: 0;
+  font-size: 20px;
+  text-align: center;
+  color: #822; /* cf .error-marker */
+  line-height: 22px;
+}
+.has-errors .icon-error {
+  display: inline-block;
 }
 
 /*****************************************************************************/
@@ -582,7 +602,20 @@ body {
 .CodeMirror-gutters {
   border-right: 1px solid #999;
 }
-
+.CodeMirror-gutter.errors {
+  width: 8px;
+}
+.error-marker {
+  position: absolute;
+  display: inline-block;
+  width: 12px;
+  left: 0;
+  top: 2px;
+  color: #822;
+  font-size: 32px;
+  line-height: 16px;
+  vertical-align: middle;
+}
 
 .CodeMirror-hints {
   max-height: 400px;

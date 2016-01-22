@@ -22,16 +22,6 @@ var Compiler = (function() {
 
   // line-level parser
 
-  function Stream(seq) {
-    this.seq = seq;
-  }
-  Stream.prototype.token = function() {
-    return this.seq[0];
-  }
-  Stream.prototype.next = function() {
-    this.shift();
-  }
-
   function compileFile(lines) {
     lines.push({info: {shape: 'eof'}});
     var scripts = [];

@@ -123,7 +123,6 @@ function costumeSize(costume) {
 var renderItem = {
   sprite: function(sprite) {
     var costume = ko(function() {
-      if (sprite.objName === 'splat') debugger;
       return sprite.costumes()[sprite.currentCostumeIndex() || 0];
     });
     return el('.details', [
@@ -188,7 +187,12 @@ var ListEditor = function(obj, kind, active) {
     var dragHandle = el('.button.button-handle');
 
     if (kind === 'sprite') {
-      props.class = active.compute(function(active) { if (active === item) return 'sprite-active'; });
+      props.class = active.compute(function(active) {
+        var classes = [];
+        if (active === item) classes.push('sprite-active');
+        if (item._hasErrors()) classes.push('has-errors');
+        return classes;
+      });
       props.on_click = function(e) {
         if (e.target.classList.contains('button')) return;
         active.assign(item);
@@ -288,10 +292,18 @@ var ListEditor = function(obj, kind, active) {
     }
     dragHandle.addEventListener('mousedown', pointerDown);
 
+    // build children
     props.children = [
       render(item, obj),
       el('.buttons', buttons),
     ];
+
+    if (kind === 'sprite') {
+      props.children.push(el('.icon-error', {
+        text: "•",
+      }));
+    }
+
     var itemEl = el('li.' + kind, props);
     return itemEl;
   });
@@ -626,8 +638,7 @@ var cmOptions = {
   cursorScrollMargin: 80,
 
   lineNumbers: true,
-  // TODO show errors
-  //gutters: ['CodeMirror-linenumbers', 'errors'],
+  gutters: ['errors', 'CodeMirror-linenumbers'],
 
   cursorHeight: 1,
 
@@ -649,7 +660,8 @@ var ScriptsEditor = function(sprite, project) {
   var code = Compiler.generate(sprite.scripts);
   this.cm.setValue(code);
   this.needsCompile = ko(false);
-  this.hasErrors = ko(false);
+  this.hasErrors = sprite._hasErrors;
+  assert(ko.isObservable(sprite._hasErrors));
 
   this.cm.clearHistory();
   assert(this.cm.getHistory().done.length === 0);
@@ -699,15 +711,15 @@ ScriptsEditor.prototype.compile = function() {
   }
 
   this.cm.clearGutter('errors');
-  var lines = finalState.lines.slice();
+  var stream = finalState.lines.slice(); // treat lines as a stream
   try {
-    var scripts = Compiler.compile(lines);
+    var scripts = Compiler.compile(stream);
   } catch (e) {
     console.log(e);
-    var line = finalState.lines.length - lines.length + 1;
-    var marker = el('div.error', { style: 'color: #822;', text: "●"})
+    var line = finalState.lines.length - stream.length + 1;
+    line = Math.min(line, finalState.lines.length - 1);
+    var marker = el('.error-marker', { text: "•" });
     this.cm.setGutterMarker(line, 'errors', marker);
-    // TODO gutters don't work
 
     this.needsCompile.assign(false);
     this.hasErrors.assign(true);
