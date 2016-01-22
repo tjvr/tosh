@@ -642,8 +642,8 @@ body {
 
 .CodeMirror-hints {
   max-height: 400px;
-  font-family: Source Code Pro, monospace;
-  font-size: 13px;
+  font-family: Noto Sans, sans-serif;
+  font-size: 14px;
 }
 .CodeMirror-hints .empty {
   height: 6px;
@@ -652,6 +652,7 @@ body {
 .CodeMirror-hint {
   position: relative;
   max-width: 23em; /* 19 + 4 */
+  padding: 1px 4px;
   padding-right: 60px; /* 48 + 12 */
 }
 .CodeMirror-hint-active:after {
