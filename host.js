@@ -198,5 +198,21 @@ document.addEventListener('keydown', function(e) {
 }, true);
 
 
-// TODO project keybindings
+// project keybindings
+
+document.querySelector('.player').addEventListener('keydown', function(e) {
+  if (!App.stage) return;
+  if (/INPUT/i.test(e.target.tagName)) return;
+  switch (e.keyCode) {
+    case 27: // stop:  ESC
+      if (App.stage) {
+        App.active()._scriptable.activated()
+        break;
+      }
+    default:
+      return;
+  }
+  e.preventDefault();
+}, true);
+
 
