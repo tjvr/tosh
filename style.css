@@ -644,29 +644,29 @@ body {
   max-height: 400px;
   font-family: Source Code Pro, monospace;
   font-size: 13px;
-  overflow-x: visible;
-  overflow-y: visible;
 }
 .CodeMirror-hints .empty {
   height: 6px;
   display: block;
 }
-.CodeMirror-hint-active {
+.CodeMirror-hint {
   position: relative;
-  overflow: visible;
+  max-width: 23em; /* 19 + 4 */
+  padding-right: 60px; /* 48 + 12 */
 }
 .CodeMirror-hint-active:after {
-  display: block;
   position: absolute;
+  display: inline-block;
+  right: 0;
+  top: 0;
   content: "Tab ⇥";
-  left: -55px;
-  width: 52px;
-  text-align: center;
-  top: -1px;
-  background: #f8f8f8;
-  color: #000;
-  border-radius: 3px;
-  border: 1px solid silver;
+  text-align: right;
+  padding-left: 4px;
+  padding-right: 2px;
+  font-size: 11px;
+  background: rgba(255,255,255, 0.3);
+  color: #fff;
+  border-radius: 2px;
 }
 
 /*****************************************************************************/
