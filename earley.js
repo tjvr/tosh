@@ -40,7 +40,7 @@ var Earley = (function() {
 
 
 
-  var Item = function(rule, origin, position, node, predictedBy) {
+  var Item = function(rule, origin, position, node, predictedBy, edits) {
     this.rule = rule;
     this.origin = origin;
     this.position = position || 0;
@@ -48,6 +48,7 @@ var Earley = (function() {
     if (!this.isFinished) this.expect = this.rule.symbols[this.position];
     this.node = node || [];
     this.predictedBy = predictedBy || [];
+    this.edits = edits || 0;
   };
 
   Item.prototype.toString = function() {
@@ -56,7 +57,7 @@ var Earley = (function() {
 
   Item.prototype.next = function(value) {
     // consume one token or nonterminal
-    return new Item(this.rule, this.origin, this.position + 1, this.node.concat([value]), this.predictedBy);
+    return new Item(this.rule, this.origin, this.position + 1, this.node.concat([value]), this.predictedBy, this.edits);
   };
 
 
@@ -114,11 +115,6 @@ var Earley = (function() {
     }
     return this._reversed;
   };
-
-
-
-  function earleyParse(grammar, table, tokens) {
-  }
 
 
   var Parser = function(grammar) {
@@ -346,9 +342,9 @@ var Earley = (function() {
 
 
 
-  var Completer = function(grammar) {
-    this.leftParser = new Parser(grammar);
-    this.rightParser = new Parser(grammar.reverse());
+  var Completer = function(grammar, maxEdits) {
+    this.leftParser = new Parser(grammar, maxEdits);
+    this.rightParser = new Parser(grammar.reverse(), maxEdits);
   };
 
   Completer.cursorToken = {

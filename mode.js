@@ -11,6 +11,10 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     this.customBlocks = {};
     this.indent = 0;
 
+    // TODO build the grammar here
+    // TODO store a copy, for clearing scope correctly
+    // TODO maintain two Completer objects, therefore
+
     cfg.scratchVariables = cfg.scratchVariables || [];
     cfg.scratchLists = cfg.scratchLists || [];
     cfg.scratchDefinitions = cfg.scratchDefinitions || [];
@@ -40,6 +44,9 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     s.indent = this.indent;
 
     // don't copy these. when they change, app will refresh the entire mode.
+    // TODO instead copy across Completer object ref
+    // for definition lines--create a fresh Completer
+    // for blank lines --reset to the initial one
     s.grammar = this.grammar;
     s.customBlocks = this.customBlocks;
     return s;
