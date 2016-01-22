@@ -414,7 +414,6 @@ body {
 .tab {
   position: relative;
   text-transform: capitalize;
-  cursor: pointer;
   display: inline-block;
   border: 1px solid transparent;
   border-bottom-color: #999;
