@@ -15,7 +15,7 @@ Host.save = function() {
 
   var a = el('a', {
     style: 'display: none;',
-    download: App.project()._fileName + '.sb2',
+    download: (App.project()._fileName || "tosh" ) + ".sb2",
     href: URL.createObjectURL(blob),
     contents: " ",
   });
