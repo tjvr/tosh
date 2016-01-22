@@ -101,7 +101,7 @@ var Format = (function() {
       _isStage: true,
       _hasErrors: ko(false),
 
-      _fileName: 'tosh',
+      _fileName: '',
 
       children: ko([sprite]),
       sprites: ko([sprite]), // !
