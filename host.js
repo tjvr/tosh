@@ -4,27 +4,36 @@ var Host = {};
 Host.isMac = /Mac/i.test(navigator.userAgent);
 
 
-// save button does <a download> trick
-// TODO replace with FileSaver js
+// save button uses FileSaver.js
 
 Host.save = function() {
   var zip = App.save();
   var blob = zip.generate({ type: 'blob' });
+  var fileName = (App.project()._fileName || "tosh") + ".sb2";
 
-  // TODO save file properly
-
-  var a = el('a', {
-    style: 'display: none;',
-    download: (App.project()._fileName || "tosh" ) + ".sb2",
-    href: URL.createObjectURL(blob),
-    contents: " ",
-  });
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  if (!isSafari) {
+    saveAs(blob, fileName, true);
+  } else {
+    var url = "data:application/zip;base64," + zip.generate({ type:"base64" });
+    location.href = url;
+  }
 };
+document.querySelector('#button-save').addEventListener('click', Host.save);
 
-function loadProjectFile(f) {
+// doesn't seem to work in Safari!
+
+var isSafari = /Safari/.test(navigator.userAgent);
+if (isSafari) {
+  if (!localStorage.hasSeenSaveAlert) {
+    alert("Saving projects may not be supported by Safari. Please be careful!");
+  }
+  localStorage.hasSeenSaveAlert = "yes";
+}
+
+
+// load dropped in / opened file
+
+function loadFile(f) {
   var parts = f.name.split('.');
   var ext = parts.pop();
   var fileName = parts.join('.');
@@ -46,7 +55,6 @@ function loadProjectFile(f) {
     App.fileDropped(f);
   }
 }
-document.querySelector('#button-save').addEventListener('click', Host.save);
 
 
 // open button shows file dialog
@@ -59,7 +67,7 @@ function handleFileSelect(e) {
   var f = e.target.files[0];
   if (!f) return;
 
-  loadProjectFile(f);
+  loadFile(f);
 }
 fileInput.addEventListener('change', handleFileSelect, false);
 
@@ -118,7 +126,7 @@ document.body.addEventListener('drop', function(e) {
   var f = e.dataTransfer.files[0];
   if (!f) return;
 
-  loadProjectFile(f);
+  loadFile(f);
 });
 
 
