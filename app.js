@@ -985,6 +985,7 @@ var App = new (function() {
 App.onOops = function() {
   App.needsSave.assign(true);
   App.needsPreview.assign(true);
+  console.log(Oops.undoStack.length, Oops.redoStack.length);
 };
 
 // initial project load should not push onto undo stack
