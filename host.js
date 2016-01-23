@@ -168,6 +168,7 @@ Host.handleUndoKeys = function(e) {
     return;
   }
   e.preventDefault();
+  e.stopPropagation();
   return true;
 };
 
