@@ -190,7 +190,9 @@ document.addEventListener('keydown', function(e) {
         App.runProject();
         break;
       case 83: // save: ⌘S
+        e.preventDefault(); // this is important
         Host.save();
+        // TODO feedback on error
         break;
       default: return;
     }
