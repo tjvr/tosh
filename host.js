@@ -22,7 +22,7 @@ document.querySelector('#button-save').addEventListener('click', Host.save);
 
 // doesn't seem to work in Safari!
 
-var isSafari = /Safari/.test(navigator.userAgent);
+var isSafari = /Version\/[\d\.]+.*Safari/.test(navigator.userAgent);
 if (isSafari) {
   if (!localStorage.hasSeenSaveAlert) {
     alert("Saving projects may not be supported by Safari. Please be careful!");
