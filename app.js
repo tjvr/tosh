@@ -1095,8 +1095,10 @@ App.preview = function(start) {
     assert(stage.children.length === children.length);
     for (var i=0; i<stage.children.length; i++) {
       var s = stage.children[i];
-      s._tosh = children[i];
-      assert(s._tosh === project.sprites()[s.indexInLibrary]);
+      if (s.isSprite) {
+        s._tosh = children[i];
+        assert(s._tosh === project.sprites()[s.indexInLibrary]);
+      }
     }
 
     updateStageZoom();
