@@ -8,6 +8,7 @@ Host.isMac = /Mac/i.test(navigator.userAgent);
 
 Host.save = function() {
   var zip = App.save();
+  // TODO show alert if zip is null
   var blob = zip.generate({ type: 'blob' });
   var fileName = (App.project()._fileName || "tosh") + ".sb2";
 
