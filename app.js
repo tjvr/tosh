@@ -953,6 +953,7 @@ var App = new (function() {
 
   this.project = ko(Project.new());
   this.active = ko();
+  this.isBlank = ko(true);
 
   this.needsSave = ko(false);
   this.needsCompile = ko(false);
@@ -971,6 +972,24 @@ var App = new (function() {
 App.onOops = function() {
   App.needsSave.assign(true);
   App.needsPreview.assign(true);
+};
+
+// initial project load should not push onto undo stack
+
+App.project.subscribe(function(project) {
+  App.isBlank.assign(false);
+}, false);
+
+App.loadProject = function(project) {
+  if (App.isBlank() && !Oops.canUndo()) {
+    // blank project, so don't push onto undo stack
+    App.project.assign(project);
+    assert(Oops.redoStack.length === 0);
+  } else {
+    Oops(function() {
+      App.project.assign(project);
+    });
+  }
 };
 
 App.save = function() {

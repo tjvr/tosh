@@ -45,9 +45,7 @@ function loadFile(f) {
       var project = Project.load(zip);
       project._fileName = fileName;
 
-      Oops(function() {
-        App.project.assign(project);
-      });
+      App.loadProject(project);
     };
     reader.readAsArrayBuffer(f);
   } else {
