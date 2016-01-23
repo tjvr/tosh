@@ -395,6 +395,10 @@ var Format = (function() {
         delete sound.file;
       });
 
+      // fixup names
+      s.variables = fixNameObjects(s.variables);
+      s.lists = fixNameObjects(s.lists);
+
     });
 
     // store json
@@ -402,6 +406,20 @@ var Format = (function() {
 
     return zip;
   };
+
+  function fixNameObjects(objects) {
+    var seen = {};
+    var result = [];
+    for (var i=0; i<objects.length; i++) {
+      var obj = objects[i];
+      var name = obj.name || obj.listName;
+      if (!name) continue;
+      if (seen.hasOwnProperty(name)) continue;
+      result.push(obj);
+      seen[name] = true;
+    }
+    return result;
+  }
 
   /***************************************************************************/
 
