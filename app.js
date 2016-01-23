@@ -508,13 +508,24 @@ var NamesEditor = function(sprite, kind) {
 
   var variableList = names.map(function(variable) {
     return el('li', el('p', ko(function() {
+
+        function onNameChange(e) {
+          console.log(this.value);
+          Oops(function() {
+            variable._name.assign(this.value);
+          }.bind(this));
+        }
+
         var input = el('input', {
-          bind_value: variable._name,
+          value: variable._name,
+          on_input: onNameChange,
+
           placeholder: "my "+kind,
 
           on_focus: function() { variable._isEditing.assign(true); },
           on_blur:  function() { variable._isEditing.assign(false); },
 
+          // TODO clean up
           on_keydown: function(e) {
             if (Host.handleUndoKeys(e)) return;
 
@@ -985,7 +996,6 @@ var App = new (function() {
 App.onOops = function() {
   App.needsSave.assign(true);
   App.needsPreview.assign(true);
-  console.log(Oops.undoStack.length, Oops.redoStack.length);
 };
 
 // initial project load should not push onto undo stack
