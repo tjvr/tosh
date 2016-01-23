@@ -20,8 +20,9 @@ Host.load = function(assetList) {
     zip.file(asset.name, ab);
   });
 
-  App.project.assign(Project.load(zip));
-};
+  var project = Project.load(zip);
+  App.loadProject(project);
+;
 
 Host.save = function() {
   var zip = App.save();
