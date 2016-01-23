@@ -242,10 +242,6 @@ var ListEditor = function(obj, kind, active) {
 
     function editSpriteName() {
       var result = prompt("Rename sprite ", item._name());
-
-      // handle cancel
-      if (!result) return;
-
       onNameBlur(null, result);
     }
 
