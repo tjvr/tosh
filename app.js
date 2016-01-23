@@ -1130,7 +1130,11 @@ App.runProject = function() {
   }
 }
 
-/* drop media file on window */
+/* drop media files on window */
+App.filesDropped = function(files) {
+  [].slice.apply(files).forEach(App.fileDropped);
+};
+
 App.fileDropped = function(f) {
   var parts = f.name.split('.');
   var ext = parts.pop();

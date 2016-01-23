@@ -48,10 +48,20 @@ function loadFile(f) {
       App.loadProject(project);
     };
     reader.readAsArrayBuffer(f);
-  } else {
-    // drag in assets
-    App.fileDropped(f);
+    return true;
   }
+}
+
+function loadFiles(files) {
+  // if single file, try to load project
+  if (files.length === 1) {
+    var f = files[0];
+    if (!f) return;
+    if (loadFile(f)) return;
+  }
+
+  // drag in assets
+  App.filesDropped(files);
 }
 
 
@@ -62,10 +72,8 @@ var fileInput = el('input', { type: 'file', });
 loadBtn.appendChild(fileInput);
 
 function handleFileSelect(e) {
-  var f = e.target.files[0];
-  if (!f) return;
+  loadFiles(e.target.files);
 
-  loadFile(f);
 }
 fileInput.addEventListener('change', handleFileSelect, false);
 
@@ -120,11 +128,7 @@ document.body.addEventListener('dragenter', cancel);
 
 document.body.addEventListener('drop', function(e) {
   e.preventDefault();
-
-  var f = e.dataTransfer.files[0];
-  if (!f) return;
-
-  loadFile(f);
+  loadFiles(e.dataTransfer.files);
 });
 
 
