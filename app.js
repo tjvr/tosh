@@ -130,12 +130,13 @@ var renderItem = {
       el('.name', sprite.objName),
     ]);
   },
-  costume: function(costume, sprite) {
+  costume: function(costume, sprite, onNameBlur) {
     var size = costume._size;
     return el('.details', [
       costumeThumbnail(costume),
       el('input.name', {
-        bind_value: costume.name,
+        value: costume.name,
+        on_blur: onNameBlur,
       }),
       el('.media-number', ko(function() {
         return "#" + (sprite.costumes().indexOf(costume) + 1);
@@ -143,11 +144,12 @@ var renderItem = {
       el('.media-stats', costumeSize(costume)),
     ]);
   },
-  sound: function(sound, sprite) {
+  sound: function(sound, sprite, onNameBlur) {
     return el('.details', [
       // el('.thumb', sound._$audio), // TODO fix <audio>
       el('input.name', {
-        bind_value: sound.name,
+        value: sound.name,
+        on_blur: onNameBlur,
       }),
       el('.media-number', ko(function() {
         return "#" + (sprite.sounds().indexOf(sound) + 1);
@@ -181,9 +183,6 @@ var ListEditor = function(obj, kind, active) {
     var props = {};
     var buttons = [];
 
-    // TODO ensure unique names
-    // TODO undo
-
     var dragHandle = el('.button.button-handle');
 
     if (kind === 'sprite') {
@@ -200,7 +199,7 @@ var ListEditor = function(obj, kind, active) {
 
       if (!item._isStage) {
         buttons.push(el('.button.button-edit', {
-          on_click: editName,
+          on_click: editSpriteName,
         }));
       }
     }
@@ -241,15 +240,27 @@ var ListEditor = function(obj, kind, active) {
       });
     }
 
-    function editName() {
+    function editSpriteName() {
       var result = prompt("Rename sprite ", item._name());
 
       // handle cancel
       if (!result) return;
 
-      // TODO ensure unique names
+      onNameBlur(null, result);
+    }
+
+    function onNameBlur(e, name) {
+      var name = name || this.value;
+
+      // name can't be empty
+      if (!name) return;
+
+      // name must be unique
+      // TODO
+
+      var observable = item.name || item._name;
       Oops(function() {
-        item._name.assign(result);
+        observable.assign(name);
       });
     }
 
@@ -294,7 +305,7 @@ var ListEditor = function(obj, kind, active) {
 
     // build children
     props.children = [
-      render(item, obj),
+      render(item, obj, onNameBlur),
       el('.buttons', buttons),
     ];
 
