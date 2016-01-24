@@ -275,6 +275,17 @@ var Language = (function(Earley) {
     }
   }
 
+  function paintLiteralWords(category) {
+    // warning: mutates argument
+    return function() {
+      var words = [].slice.apply(arguments);
+      return words.map(function(a) {
+        a.category = category;
+        return a.value;
+      }).join(" ");
+    }
+  }
+
   function paint(category) {
     // warning: mutates arguments
     return function() {
@@ -885,8 +896,6 @@ var Language = (function(Earley) {
         argIndexes.push(symbols.length);
         symbols.push(x.arg);
         parts.push("%" + x.arg);
-        grammar.addRule(new Rule("BlockParam", textSymbols(x.name),
-                            paintLiteral("parameter")));
       } else {
         symbols.push([x]);
         parts.push(x);
@@ -908,6 +917,18 @@ var Language = (function(Earley) {
     grammar.addRule(new Rule("block", symbols,
                         blockArgs.apply(null, [info].concat(argIndexes))));
     return info;
+  }
+
+  function addParameters(grammar, result) {
+    var isAtomic = result.isAtomic;
+    var specParts = result.parts;
+
+    specParts.forEach(function(x, index) {
+      if (x.arg) {
+        grammar.addRule(new Rule("BlockParam", textSymbols(x.name),
+                              paintLiteralWords("parameter")));
+      }
+    });
   }
 
 
@@ -976,6 +997,7 @@ var Language = (function(Earley) {
     addDefinition: addDefinition,
     addCustomBlock: addCustomBlock,
     splitStringToken: splitStringToken,
+    addParameters: addParameters,
 
     // for Compiler
     precedence: precedence,
