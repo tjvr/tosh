@@ -679,6 +679,7 @@ var ScriptsEditor = function(sprite, project) {
   this.undoing = false;
 
   // send options to CM, so initial highlight is correct
+  this.checkDefinitions();
   this.repaint();
 
   // repaint when variable/list names change
@@ -799,7 +800,7 @@ ScriptsEditor.prototype.checkDefinitions = function() {
   var oldDefinitions = this.definitions;
   if (JSON.stringify(oldDefinitions) !== JSON.stringify(definitions)) {
     this.definitions = definitions;
-    this.debounceRepaint();
+    return true;
   }
 };
 
@@ -866,7 +867,9 @@ ScriptsEditor.prototype.linesChanged = function(lines) {
   for (var i=0; i<lines.length; i++) {
     var line = lines[i];
     if (/^define /.test(line)) {
-      this.checkDefinitions();
+      if (this.checkDefinitions()) {
+        this.debounceRepaint();
+      }
       return;
     }
   }
