@@ -220,10 +220,9 @@ document.querySelector('.player').addEventListener('keydown', function(e) {
   if (/INPUT/i.test(e.target.tagName)) return;
   switch (e.keyCode) {
     case 27: // stop:  ESC
-      if (App.stage) {
-        App.active()._scriptable.activated()
-        break;
-      }
+      player.pauseClick({ preventDefault: function(){} });
+      App.active()._scriptable.activated();
+      break;
     default:
       return;
   }

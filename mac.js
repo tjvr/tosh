@@ -56,8 +56,8 @@ Host.runProject = function() {
 };
 Host.stopProject = function() {
   // simulate ⎋ ESC
-  if (App.stage) App.stage.pause();
-  App.active()._scriptable.scriptsEditor.cm.focus();
+  player.pauseClick({ preventDefault: function(){} });
+  App.active()._scriptable.activated();
   // TODO update pause button
 };
 

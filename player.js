@@ -278,6 +278,7 @@ Player = (function() {
   return {
     loadProject: loadProject,
     flagClick: flagClick,
+    pauseClick: pauseClick,
   };
 
 });
