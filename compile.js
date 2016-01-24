@@ -83,6 +83,7 @@ var Compiler = (function() {
     while (true) {
       switch (lines[0].info.shape) {
         case 'cap':
+        case 'c-block cap':
           var block = compileBlock(lines);
           if (block) result.push(block);
           return result;
