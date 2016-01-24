@@ -1108,7 +1108,7 @@ App.preview = function(start) {
   var request = P.IO.loadSB2File(zip.generate({ type: 'blob' }));
   //var request = P.IO.loadSB2ProjectZip(zip);
 
-  P.player.showProgress(request, function(stage) {
+  player.loadProject(request, function(stage) {
     App.stage = stage;
 
     stage._tosh = project;
@@ -1125,9 +1125,7 @@ App.preview = function(start) {
       }
     }
 
-    updateStageZoom();
     if (start) {
-      stage.focus();
       stage.triggerGreenFlag();
     }
   });
@@ -1145,16 +1143,8 @@ App.preFlagClick = function() {
 };
 
 App.runProject = function() {
-  if (App.needsPreview()) {
-    App.preview(true);
-  } else {
-    App.stage.start();
-    App.stage.stopAll();
-    App.stage.triggerGreenFlag();
-    App.stage.focus();
-    // TODO this doesn't focus the player!
-  }
-}
+  player.flagClick({ shiftKey: false, preventDefault: function(){} });
+};
 
 /* drop media files on window */
 App.filesDropped = function(files) {
@@ -1199,84 +1189,10 @@ App.project.subscribe(function(project) {
 
 // preview project (but stopped!) when first loaded
 
+var player = Player();
 App.project.subscribe(function(project) {
   App.preview(false);
 });
-
-
-// transition to small stage when window is too small
-
-var smallStageBtn = document.querySelector('.small-stage');
-smallStageBtn.addEventListener('click', App.smallStage.toggle);
-
-var MIN_WIDTH = 1000;
-var MIN_HEIGHT = 508;
-var windowTooSmall = windowSize.compute(function(size) {
-  return (size.width < MIN_WIDTH || size.height < MIN_HEIGHT);
-});
-windowTooSmall.subscribe(function(tooSmall) {
-  if (tooSmall) App.smallStage.assign(true);
-  if (tooSmall) {
-    smallStageBtn.classList.add('disabled');
-  } else {
-    smallStageBtn.classList.remove('disabled');
-  }
-});
-
-
-// careful not to show transition when window first loads
-
-function cancelTransitions() {
-  document.body.classList.add('no-transition');
-  doNext(function() {
-    document.body.classList.remove('no-transition');
-
-    // if first load, we can now show the app
-    wrap.classList.add('visible');
-  });
-}
-cancelTransitions();
-
-App.smallStage.subscribe(function(isSmall) {
-  if (!isSmall && windowTooSmall()) {
-    App.smallStage.assign(true);
-    return;
-  }
-  if (isSmall) {
-    document.body.classList.add('ss');
-  } else {
-    document.body.classList.remove('ss');
-  }
-});
-
-
-// keep track of whether phosphorus is fullscreen
-
-App.fullScreenClick = function() {
-  App.isFullScreen.assign(document.documentElement.classList.contains('fs'));
-};
-
-
-// scale phosphorus to small stage
-
-function updateStageZoom() {
-  if (App.isFullScreen()) return;
-
-  var stage = App.stage;
-  if (!stage) return;
-  stage.setZoom(App.smallStage() ? 0.5 : 1);
-  if (!stage.isRunning) {
-    stage.draw();
-  }
-}
-App.smallStage.subscribe(updateStageZoom);
-App.isFullScreen.subscribe(updateStageZoom);
-// TODO make phosphorus player not handle resize
-window.addEventListener('resize', updateStageZoom);
-
-// careful not to animate player size when coming out of fullscreen!
-
-App.isFullScreen.subscribe(cancelTransitions);
 
 
 // resize CM when its container changes size
