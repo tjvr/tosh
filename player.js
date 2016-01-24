@@ -192,7 +192,6 @@ Player = (function() {
       updateFullScreen();
 
       stage.root.addEventListener('keydown', exitFullScreen);
-      stage.handleError = showError;
 
       player.appendChild(stage.root);
       stage.focus();
@@ -204,10 +203,6 @@ Player = (function() {
     request.onerror = function(e) {
       console.error(e.stack);
     };
-  }
-
-  function showError(e) {
-    console.log("Phosphorus error:", e);
   }
 
 
