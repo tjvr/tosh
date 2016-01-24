@@ -502,7 +502,6 @@ var NamesEditor = function(sprite, kind) {
     return el('li', el('p', ko(function() {
 
         function onNameChange(e) {
-          console.log(this.value);
           Oops(function() {
             variable._name.assign(this.value);
           }.bind(this));
@@ -772,6 +771,7 @@ ScriptsEditor.prototype.repaint = function() {
 };
 
 ScriptsEditor.prototype.debounceRepaint = function() {
+  this.needsCompile.assign(true);
   if (this.repaintTimeout) {
     clearTimeout(this.repaintTimeout);
   }
