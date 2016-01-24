@@ -786,7 +786,7 @@ ScriptsEditor.prototype.checkDefinitions = function() {
 
   var definitions = [];
   lines.forEach(function(line) {
-    if (!/^define /.test(line)) return;
+    if (!/^define(-atomic)? /.test(line)) return;
     var tokens = Language.tokenize(line);
     var results;
     try {
@@ -947,7 +947,7 @@ var Container = function(project, active) {
     doNext(function() {
       App.preview(false);
     });
-  });
+  }, false);
 };
 
 Container.prototype.switchSprite = function(s) {
@@ -1112,6 +1112,11 @@ App.preview = function(start) {
 
     // sync() needs references to original scriptable 
     var children = project.children();
+    // phosphorus doesn't support list watchers
+    children = children.filter(function(obj) {
+      if (obj.listName) return false;
+      return true;
+    });
     assert(stage.children.length === children.length);
     for (var i=0; i<stage.children.length; i++) {
       var s = stage.children[i];

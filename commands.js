@@ -134,7 +134,7 @@ var Scratch = (function() {
     ["%m.mathOp of %n",						"r", 8, "computeFunction:of:",	"sqrt", 9],
     ["item %d.listItem of %m.list",						"r", 12, "getLine:ofList:"],
     ["length of %m.list",								"r", 12, "lineCountOfList:"],
-    ["%m.list contains %s",								"b", 12, "list:contains:"],
+    ["%m.list contains %s?",								"b", 12, "list:contains:"],
 
   ];
 

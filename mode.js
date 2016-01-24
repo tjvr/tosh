@@ -70,22 +70,13 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
       define = results[0].process();
     } catch (err) {}
     if (define) {
-      // paint the first few words properly, to workaround broken grammar
-      // TODO fix grammar
-      for (var i=0; i<tokens.length; i++) {
-        var token = tokens[i];
-        if (token.kind == 'lparen') break;
-        token.category = 'custom';
-      }
-
       // make the definition block
 
-      var isAtomic = (define[0] === 'atomic');
-      if (isAtomic) define.shift();
+      var isAtomic = define.isAtomic;
 
       var inputNames = [];
       var defaults = [];
-      var specParts = define.map(function(part) {
+      var specParts = define.parts.map(function(part) {
         if (typeof part === 'string') {
           return part;
         } else {
