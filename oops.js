@@ -163,6 +163,11 @@ var Oops = (function() {
     return Oops.redoStack.length;
   };
 
+  Oops.reset = function() {
+    Oops.undoStack = [];
+    Oops.redoStack = [];
+    Host.onOops();
+  };
 
 
   Oops.CustomOperation = CustomOperation;
