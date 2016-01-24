@@ -254,12 +254,12 @@ body {
   content: "";
   display: block;
   position: absolute;
-  width: 6px;
-  height: 6px;
-  background: #2EAEDF;
+  width: 8px;
+  height: 8px;
+  background: #FF9300;
   border-radius: 4px;
-  bottom: 8px;
-  right: 7px;
+  bottom: 7px;
+  right: 6px;
 }
 
 /*****************************************************************************/
