@@ -1,5 +1,7 @@
-P.player = (function() {
+Player = (function() {
   'use strict';
+
+  /* based on b3ba0df */
 
   var stage;
   var isFullScreen = false; // TODO ko-ify
@@ -99,13 +101,12 @@ P.player = (function() {
       document.body.style.marginLeft =
       document.body.style.marginTop = '';
     }
+    App.isFullScreen.assign(document.documentElement.classList.contains('fs'));
     updateFullScreen();
     if (!stage.isRunning) {
       stage.draw();
     }
     stage.focus();
-
-    App.fullScreenClick();
   }
 
   function exitFullScreen(e) {
@@ -129,7 +130,10 @@ P.player = (function() {
       document.body.style.marginTop = (window.innerHeight - h - padding) / 2 + 'px';
       stage.setZoom(w / 480);
     } else {
-      stage.setZoom(1);
+      stage.setZoom(App.smallStage() ? 0.5 : 1);
+      if (!stage.isRunning) {
+        stage.draw();
+      }
     }
   }
 
@@ -171,8 +175,8 @@ P.player = (function() {
     if (isFullScreen !== document.webkitIsFullScreen) fullScreenClick();
   });
 
-  // TODO rename
-  function showProgress(request, loadCallback) {
+
+  function loadProject(request, loadCallback) {
     if (stage) {
       // TODO is this duplicated in app.js?
       stage.stopAll();
@@ -183,10 +187,9 @@ P.player = (function() {
     pause.className = 'pause';
     
     request.onload = function(s) {
-      var zoom = stage ? stage.zoom : 1;
       window.stage = stage = s;
       stage.start();
-      stage.setZoom(zoom);
+      updateFullScreen();
 
       stage.root.addEventListener('keydown', exitFullScreen);
       stage.handleError = showError;
@@ -207,9 +210,68 @@ P.player = (function() {
     console.log("Phosphorus error:", e);
   }
 
+
+  // transition to small stage when window is too small
+
+  var smallStageBtn = document.querySelector('.small-stage');
+  smallStageBtn.addEventListener('click', App.smallStage.toggle);
+
+  var MIN_WIDTH = 1000;
+  var MIN_HEIGHT = 508;
+  var windowTooSmall = windowSize.compute(function(size) {
+    return (size.width < MIN_WIDTH || size.height < MIN_HEIGHT);
+  });
+  windowTooSmall.subscribe(function(tooSmall) {
+    if (tooSmall) App.smallStage.assign(true);
+    if (tooSmall) {
+      smallStageBtn.classList.add('disabled');
+    } else {
+      smallStageBtn.classList.remove('disabled');
+    }
+  });
+
+
+  // careful not to show transition when window first loads
+
+  function cancelTransitions() {
+    document.body.classList.add('no-transition');
+    doNext(function() {
+      document.body.classList.remove('no-transition');
+
+      // if first load, we can now show the app
+      wrap.classList.add('visible');
+    });
+  }
+  cancelTransitions();
+
+  App.smallStage.subscribe(function(isSmall) {
+    if (!isSmall && windowTooSmall()) {
+      App.smallStage.assign(true);
+      return;
+    }
+    if (isSmall) {
+      document.body.classList.add('ss');
+    } else {
+      document.body.classList.remove('ss');
+    }
+  });
+
+
+  // scale phosphorus to small stage
+
+  App.smallStage.subscribe(updateFullScreen);
+  App.isFullScreen.subscribe(updateFullScreen);
+
+
+  // careful not to animate player size when coming out of fullscreen!
+
+  App.isFullScreen.subscribe(cancelTransitions);
+
+
   return {
-    showProgress: showProgress
+    loadProject: loadProject,
+    flagClick: flagClick,
   };
 
-}());
+});
 
