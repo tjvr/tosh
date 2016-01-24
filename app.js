@@ -1003,7 +1003,8 @@ App.loadProject = function(project) {
   if (App.isBlank() && !Oops.canUndo()) {
     // blank project, so don't push onto undo stack
     App.project.assign(project);
-    assert(Oops.redoStack.length === 0);
+    // clear redo stack
+    Oops.reset();
   } else {
     Oops(function() {
       App.project.assign(project);
