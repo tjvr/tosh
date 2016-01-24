@@ -24,32 +24,52 @@ var Format = (function() {
     return bytes.buffer;
   }
 
-  function imageFromFile(ext, binary) {
+  function loadImage(ext, binary) {
+    // here, we abuse observables as a sort of Promise.
+    // move along now...
+
+    var $image = ko(null);
     if (ext === 'jpg') ext = 'jpeg';
-    var image = new Image;
     if (ext === 'svg') {
       var canvas = el('canvas');
       canvg(canvas, binary, {
       renderCallback: function() {
-        image.src = canvas.toDataURL('image/png');
+        $image.assign(new Image);
+        $image().src = canvas.toDataURL('image/png');
       }});
     } else {
-      image.src = 'data:image/' + ext + ';base64,' + btoa(binary);
+      $image.assign(new Image);
+      $image().src = 'data:image/' + ext + ';base64,' + btoa(binary);
     }
-    return image;
-  }
 
-  function imageSize(image) {
-    // TODO this may give incorrect results if image is larger than document
-    image.style.visibility = 'hidden';
-    document.body.appendChild(image);
-    var size = {
-      width: image.offsetWidth,
-      height: image.offsetHeight,
+    var src = ko(null);
+    $image.subscribe(function(image) {
+      if (!image) return;
+      if (image.src) {
+        src.assign(image.src);
+      } else {
+        image.addEventListener('load', function(e) {
+          src.assign(image.src);
+        });
+      }
+    });
+
+    var size = ko(null);
+    src.subscribe(function() {
+      if (!src) return;
+      var image = $image();
+      if (!image) return;
+      size.assign({
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+      });
+    });
+
+    return {
+      $image: $image,
+      src: src,
+      size: size,
     };
-    document.body.removeChild(image);
-    image.style.visibility = 'visible';
-    return size;
   }
 
   function audioFromFile(ext, binary) {
@@ -66,6 +86,7 @@ var Format = (function() {
 
   /***************************************************************************/
 
+  var backdropDetails = loadImage('svg', STAGE_SVG);
   var backdrop = {
     name: ko('backdrop1'),
     // baseLayerID: 2,
@@ -75,9 +96,12 @@ var Format = (function() {
     bitmapResolution: 1,
     rotationCenterX: 240,
     rotationCenterY: 180,
-    _$image: imageFromFile('svg', STAGE_SVG),
+    _$image: backdropDetails.$image,
+    _src: backdropDetails.src,
+    _size: backdropDetails.size,
   };
 
+  var turtleDetails = loadImage('svg', TURTLE_SVG);
   var turtle = {
     name: ko('turtle'),
     // baseLayerID: 1,
@@ -87,7 +111,9 @@ var Format = (function() {
     bitmapResolution: 1,
     rotationCenterX: 8,
     rotationCenterY: 8,
-    _$image: imageFromFile('svg', TURTLE_SVG),
+    _$image: turtleDetails.$image,
+    _src: turtleDetails.src,
+    _size: turtleDetails.size,
   };
 
 
@@ -188,16 +214,24 @@ var Format = (function() {
   };
 
   Project.newCostume = function(name, ext, ab) {
-    var $image = imageFromFile(ext, arrayBufferToBinary(ab));
-    return {
+    var details = loadImage(ext, arrayBufferToBinary(ab));
+    var costume = {
       name: ko(name),
       ext: ext,
       file: ab,
       bitmapResolution: 1,
-      rotationCenterX: 0, // TODO
+      rotationCenterX: 0,
       rotationCenterY: 0,
-      _$image: $image,
+      _$image: details.$image,
+      _src: details.src,
+      _size: details.size,
     };
+    details.size.subscribe(function(size) {
+      // TODO bitmapResolution ??
+      costume.rotationCenterX = size.width / 2;
+      costume.rotationCenterY = size.height / 2;
+    });
+    return costume;
   };
 
   Project.newSound = function(name, ext, ab) {
@@ -282,7 +316,10 @@ var Format = (function() {
         costume.ext = ext;
 
         // make <image> element
-        costume._$image = imageFromFile(ext, f.asBinary());
+        var details = loadImage(ext, f.asBinary());
+        costume._$image = details.$image;
+        costume._src = details.src;
+        costume._size = details.size;
 
         // fixup `name` property
         costume.name = ko(costume.costumeName);
