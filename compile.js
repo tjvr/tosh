@@ -382,7 +382,7 @@ var Compiler = (function() {
           names = block[2].slice(),
           defaults = block[3].slice(), // ignore these
           isAtomic = block[4];
-      var result = 'define ' + (isAtomic ? 'atomic ' : '')
+      var result = isAtomic ? 'define-atomic ' : 'define ';
       return result + spec.split(Scratch.inputPat).map(function(part) {
         var m = Scratch.inputPat.exec(part);
         if (m) {

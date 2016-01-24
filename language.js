@@ -305,18 +305,9 @@ var Language = (function(Earley) {
     switch (a.kind) {
       case "lparen": return {arg: "n", name: b};
       case "langle": return {arg: "b", name: b};
-      case "lsquare": return {arg: "s", name: b};
+      case "lsquare": return {arg: "sb", name: b};
     }
   };
-
-  function stringParam(a) {
-    a.category = "parameter";
-    return {arg: "s", name: a.value};
-  }
-
-  function variableDefinition(a, b, c) {
-    return {name: a, value: c};
-  }
 
   function listItems(a, b, c) {
     // warning: mutates arguments
@@ -324,10 +315,18 @@ var Language = (function(Earley) {
     return b;
   }
 
+  function definition(a, b) {
+    return {
+      isAtomic: a === 'define-atomic',
+      parts: b,
+    }
+  }
+
   var defineGrammar = new Grammar([
-      Rule("line", ["define", "spec-seq"], second),
+      Rule("line", ["define", "spec-seq"], definition),
 
       Rule("define", [["define"]], paintLiteral("custom")),
+      Rule("define", [["define-atomic"]], paintLiteral("custom")),
 
       Rule("spec-seq", ["spec-seq", "spec"], push),
       Rule("spec-seq", ["spec"], box),
@@ -341,21 +340,6 @@ var Language = (function(Earley) {
       Rule("word-seq", ["word-seq", "word"], push),
       Rule("word-seq", ["word"], box),
       Rule("word", [{kind: 'symbol'}], identity),
-
-      Rule("var-name", ["word-seq"], paintList("variable")),
-      Rule("var=", [["="]], paintLiteral("variable")),
-      Rule("list-name", ["word-seq"], paintList("list")),
-      Rule("list=", [["="]], paintLiteral("list")),
-      Rule("sep", [[","]], paintLiteral("list")),
-
-      Rule("items", [{kind: 'zero'}], constant([])), // "()"
-      Rule("items", [{kind: 'lparen'}, "value-seq", {kind: 'rparen'}],
-               listItems),
-      Rule("value-seq", ["value-seq", "sep", "value"], push2),
-      Rule("value-seq", ["value"], box),
-
-      Rule("value", [{kind: 'number'}], literal),
-      Rule("value", [{kind: 'string'}], literal),
   ]);
 
 
@@ -651,7 +635,7 @@ var Language = (function(Earley) {
     Rule("@turnRight", [["cw"]], identity),
     Rule("@turnRight", [["right"]], identity),
 
-  ], ["SpriteVariable", "SpriteList", "AnyVariable", "BlockParam"]);
+  ], ["VariableName", "ListName", "AttributeVariable", "BlockParam"]);
 
   var coreGrammar = g.copy();
 
@@ -767,10 +751,10 @@ var Language = (function(Earley) {
 
   // TODO:  "(last v)"
 
-  g.addRule(Rule("m_attribute", ["AnyVariable"], identity));
-  g.addRule(Rule("m_var", ["SpriteVariable"], identity));
-  g.addRule(Rule("m_varName", ["SpriteVariable"], identity));
-  g.addRule(Rule("m_list", ["SpriteList"], identity));
+  g.addRule(Rule("m_attribute", ["AttributeVariable"], identity));
+  g.addRule(Rule("m_var", ["VariableName"], identity));
+  g.addRule(Rule("m_varName", ["VariableName"], identity));
+  g.addRule(Rule("m_list", ["ListName"], identity));
 
 
   /* For Compiler.generate() */
@@ -853,9 +837,9 @@ var Language = (function(Earley) {
     });
 
     if (block.selector === "readVariable") {
-      symbols = ["SpriteVariable"];
+      symbols = ["VariableName"];
     } else if (block.selector === "contentsOfList:") {
-      symbols = ["SpriteList"];
+      symbols = ["ListName"];
     } else if (block.selector === "getParam") {
       symbols = ["BlockParam"];
     }
@@ -884,35 +868,25 @@ var Language = (function(Earley) {
 
   function addDefinition(grammar, result) {
     var symbols = textSymbols(result.name);
-    var kind;
-    if (result.value instanceof Array) {
-      grammar.addRule(new Rule("SpriteList", symbols, embed));
-      kind = 'list';
-    } else {
-      grammar.addRule(new Rule("AnyVariable", symbols, embed));
-      grammar.addRule(new Rule("SpriteVariable", symbols, embed));
-      kind = 'variable';
-    }
-    return {
-      kind: 'list',
-      name: result.name,
-      value: result.value,
-    };
+    var kind = result.value instanceof Array ? "ListName" : "VariableName";
+    grammar.addRule(new Rule(kind, symbols, embed));
   }
 
   function addCustomBlock(grammar, result) {
+    var isAtomic = result.isAtomic;
+    var specParts = result.parts;
+
     var symbols = [];
     var parts = [];
     var argIndexes = [];
-    result.forEach(function(x, index) {
+
+    specParts.forEach(function(x, index) {
       if (x.arg) {
         argIndexes.push(symbols.length);
         symbols.push(x.arg);
         parts.push("%" + x.arg);
         grammar.addRule(new Rule("BlockParam", textSymbols(x.name),
                             paintLiteral("parameter")));
-      } else if (index === 0 && x === 'atomic') {
-        // ignore
       } else {
         symbols.push([x]);
         parts.push(x);
@@ -927,6 +901,9 @@ var Language = (function(Earley) {
       category: "custom",
       shape: 'stack',
     };
+    info.inputs = info.parts.filter(function(p) {
+      return Scratch.inputPat.test(p);
+    });
 
     grammar.addRule(new Rule("block", symbols,
                         blockArgs.apply(null, [info].concat(argIndexes))));
