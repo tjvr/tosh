@@ -190,9 +190,10 @@ document.addEventListener('keydown', function(e) {
     switch (e.keyCode) {
       case 13: // run:  ⌘↩
         App.runProject();
+        e.stopPropagation(); // otherwise CM keeps focus somehow
         break;
       case 83: // save: ⌘S
-        e.preventDefault(); // this is important
+        e.preventDefault(); // don't accidentally save page
         Host.save();
         // TODO feedback on error
         break;

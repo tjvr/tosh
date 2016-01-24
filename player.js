@@ -31,7 +31,7 @@ Player = (function() {
     turbo.style.display = stage.isTurbo ? 'block' : 'none';
   }
   function flagClick(e) {
-    window.App.preFlagClick();
+    if (window.App.preFlagClick()) return;
 
     if (!stage) return;
     if (flagTouchTimeout === true) return;
