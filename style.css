@@ -247,6 +247,21 @@ body {
   opacity: 0.4 !important;
 }
 
+.controls .flag {
+  position: relative;
+}
+.flag.needs-preview:after {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #2EAEDF;
+  border-radius: 4px;
+  bottom: 8px;
+  right: 7px;
+}
+
 /*****************************************************************************/
 /* list editor */
 

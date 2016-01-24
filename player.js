@@ -268,6 +268,13 @@ Player = (function() {
   App.isFullScreen.subscribe(cancelTransitions);
 
 
+  // indicate we need to compile
+
+  App.needsPreview.subscribe(function(needsPreview) {
+    flag.classList[needsPreview ? 'add' : 'remove']('needs-preview');
+  });
+
+
   return {
     loadProject: loadProject,
     flagClick: flagClick,
