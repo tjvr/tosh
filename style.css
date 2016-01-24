@@ -229,12 +229,31 @@ body {
 .player {
   box-shadow: 0 0 0 1px #999;
 }
+
 .controls {
   margin-left: -2px;
 }
 .controls span {
   opacity: 1;
+  position: relative;
 }
+
+.flag.needs-preview:after {
+  content: "!";
+  display: block;
+  position: absolute;
+  color: #FF9300;
+  border-radius: 4px;
+  bottom: 5px;
+  right: 12px;
+  line-height: 24px;
+  height: 24px;
+  width: 8px;
+  font-weight: 700;
+  font-family: Noto Sans, sans-serif;
+  font-size: 22px;
+}
+
 .controls .small-stage {
   float: left;
   background-position: -320px 0;
@@ -245,21 +264,6 @@ body {
 .small-stage.disabled,
 .small-stage.disabled:active {
   opacity: 0.4 !important;
-}
-
-.controls .flag {
-  position: relative;
-}
-.flag.needs-preview:after {
-  content: "";
-  display: block;
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: #FF9300;
-  border-radius: 4px;
-  bottom: 7px;
-  right: 6px;
 }
 
 /*****************************************************************************/
