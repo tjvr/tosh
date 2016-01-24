@@ -90,34 +90,26 @@ Scriptable.prototype.deactivated = function() {
 
 /* ListEditor */
 
-function costumeImage(costume, cb) {
-  if (!costume) return;
-  var image = costume._$image;
-  cb = cb.bind(null, image);
-  image.addEventListener('load', cb);
-  if (image.src) cb();
-}
-
-function costumeThumbnail(costume) {
-  var thumb = el('.thumb');
-  ko.subscribe(costume, function(costume) {
-    costumeImage(costume, function(image) {
-      thumb.style.backgroundImage = 'url(' + image.src + ')';
-    });
-  });
-  return thumb;
-}
-
 function costumeSize(costume) {
   var stats = ko("..x..");
-  costumeImage(costume, function(image) {
-    var width = image.naturalWidth / (costume.bitmapResolution || 1);
-    var height = image.naturalHeight / (costume.bitmapResolution || 1);
+  costume._size.subscribe(function(size) {
+    var width = size.width / (costume.bitmapResolution || 1);
+    var height = size.height / (costume.bitmapResolution || 1);
     var result = width + "x" + height;
     if (result === "0x0") result = "";
     stats.assign(result);
   });
   return stats;
+}
+
+function costumeThumbnail(costume) {
+  var thumb = el('.thumb');
+  ko.subscribe(costume, function(costume) {
+    costume._src.subscribe(function(src) {
+      thumb.style.backgroundImage = 'url(' + src + ')';
+    });
+  });
+  return thumb;
 }
 
 var renderItem = {
