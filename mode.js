@@ -7,34 +7,32 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
   var State = function() {
     this.lines = [];
     this.lineTokens = [];
-    this.grammar = Language.grammar.copy();
-    this.customBlocks = {};
     this.indent = 0;
-
-    // TODO build the grammar here
-    // TODO store a copy, for clearing scope correctly
-    // TODO maintain two Completer objects, therefore
 
     cfg.scratchVariables = cfg.scratchVariables || [];
     cfg.scratchLists = cfg.scratchLists || [];
     cfg.scratchDefinitions = cfg.scratchDefinitions || [];
 
-    var _this = this;
+    var grammar = Language.grammar.copy();
     cfg.scratchVariables.forEach(function(variable) {
       var name = variable._name();
       if (!name) return;
-      Language.addDefinition(_this.grammar, { name: name, });
+      Language.addDefinition(grammar, { name: name, });
     });
     cfg.scratchLists.forEach(function(list) {
       var name = list._name();
       if (!name) return;
-      Language.addDefinition(_this.grammar, { name: name, value: [] });
+      Language.addDefinition(grammar, { name: name, value: [] });
+    });
+    cfg.scratchDefinitions.forEach(function(result) {
+      Language.addCustomBlock(grammar, result);
     });
 
-    cfg.scratchDefinitions.forEach(function(result) {
-      var info = Language.addCustomBlock(_this.grammar, result);
-      _this.customBlocks[info.spec] = info;
-    });
+    // store original grammar, for clearing scope correctly
+    this.startGrammar = grammar;
+    // custom block parameters are added to scopeGrammar
+    this.scopeGrammar = this.startGrammar.copy()
+    // TODO make a Completer and store it
   };
 
   State.prototype.copy = function() {
@@ -47,16 +45,22 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     // TODO instead copy across Completer object ref
     // for definition lines--create a fresh Completer
     // for blank lines --reset to the initial one
-    s.grammar = this.grammar;
-    s.customBlocks = this.customBlocks;
+    s.startGrammar = this.startGrammar;
+    if (this.isBlankLine) {
+      s.scopeGrammar = null;
+    } else {
+      s.scopeGrammar = this.scopeGrammar;
+    }
     return s;
   };
 
   State.prototype.parseAndPaint = function(tokens) {
     if (!tokens.length) {
       this.lines.push({info: {shape: 'blank'}});
+      this.isBlankLine = true;
       return;
     }
+    this.scopeGrammar = this.scopeGrammar || this.startGrammar;
 
     var defineParser = new Earley.Parser(Language.defineGrammar);
 
@@ -89,19 +93,22 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
         }
       });
 
+      this.scopeGrammar = this.scopeGrammar.copy();
+      Language.addParameters(this.scopeGrammar, define);
+
       var spec = specParts.join(' ');
       var args = [spec, inputNames, defaults, isAtomic];
       this.lines.push({info: {shape: 'hat', selector: 'procDef'}, args: args});
       return;
     }
 
-    var p = new Earley.Parser(this.grammar);
+    var p = new Earley.Parser(this.scopeGrammar);
 
     var result;
     try {
       results = p.parse(tokens);
     } catch (err) {
-      console.log(err); // DEBUG
+      // console.log(err); // DEBUG
       this.lines.push({info: {shape: 'error'}});
       results = err.partialResult;
     }
