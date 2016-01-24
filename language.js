@@ -39,7 +39,7 @@ var Language = (function(Earley) {
     ['langle',  /\</],   ['rangle',  /\>/],
     ['lsquare', /\[/],   ['rsquare', /\]/],
     ['symbol',  /\.{3}/],                        // ellipsis
-    ['symbol',  /[-%#+*/=^,↻↺⚑☁?]/],             // single character
+    ['symbol',  /[-%#+*/=^,☁?]/],             // single character
 //  ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',]*/],   // words
     ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',.]*/],  // TODO ew
   ];
@@ -644,15 +644,12 @@ var Language = (function(Earley) {
 
     Rule("@greenFlag", [["flag"]], paint("green")),
     Rule("@greenFlag", [["green"], ["flag"]], paint("green")),
-    Rule("@greenFlag", [["⚑"]], paint("green")),
 
     Rule("@turnLeft",  [["ccw"]], identity),
     Rule("@turnLeft",  [["left"]], identity),
-    Rule("@turnLeft",  [["↺"]], identity),
 
     Rule("@turnRight", [["cw"]], identity),
     Rule("@turnRight", [["right"]], identity),
-    Rule("@turnRight", [["↻"]], identity),
 
   ], ["SpriteVariable", "SpriteList", "AnyVariable", "BlockParam"]);
 
