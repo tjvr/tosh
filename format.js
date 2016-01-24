@@ -436,6 +436,8 @@ var Format = (function() {
       s.variables = fixNameObjects(s.variables);
       s.lists = fixNameObjects(s.lists);
 
+      // TODO set persistent if cloud ☁ in name
+
     });
 
     // store json
