@@ -997,6 +997,7 @@ var Language = (function(Earley) {
     'to',
     'on',
     'of',
+    'for',
     'with',
     'y:',
   ];
