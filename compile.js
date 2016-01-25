@@ -3,7 +3,9 @@ var Compiler = (function() {
   /* compile: tosh -> AST */
 
   function compile(lines) {
-    var scriptBlocks = compileFile(lines);
+    lines.push({info: {shape: 'eof'}});
+    var stream = new Stream(lines);
+    var scriptBlocks = compileFile(stream);
     // console.log(JSON.stringify(scriptBlocks).replace(/],/g, "],\n")); //
     // DEBUG
 
@@ -19,22 +21,38 @@ var Compiler = (function() {
   }
 
 
+  function Stream(lines) {
+    this.lines = lines;
+  }
+  Stream.prototype.peek = function() {
+    var value = this.lines[0];
+    assert(value);
+    return value;
+  };
+  Stream.prototype.shift = function() {
+    var value = this.lines.shift();
+    while (this.lines.length && !this.lines[0]) {
+      this.lines.shift(); // skip comments
+    }
+    return value;
+  };
+
+
 
   // line-level parser
 
-  function compileFile(lines) {
-    lines.push({info: {shape: 'eof'}});
+  function compileFile(stream) {
     var scripts = [];
     while (true) {
-      switch (lines[0].info.shape) {
+      switch (stream.peek().info.shape) {
         case 'blank':
-          lines.shift();
+          stream.shift();
           break;
         case 'eof':
           return scripts;
         default:
-          scripts.push(compileScript(lines));
-          switch (lines[0].info.shape) {
+          scripts.push(compileScript(stream));
+          switch (stream.peek().info.shape) {
             case 'blank':
               break;
             case 'eof':
@@ -46,49 +64,49 @@ var Compiler = (function() {
     }
   }
 
-  function compileBlank(lines, isRequired) {
+  function compileBlank(stream, isRequired) {
     if (isRequired) {
-      assert(lines[0].info.shape === 'blank');
-      lines.shift();
+      assert(stream.peek().info.shape === 'blank');
+      stream.shift();
     }
     while (true) {
-      if (lines[0].info.shape === 'blank') {
-        lines.shift();
+      if (stream.peek().info.shape === 'blank') {
+        stream.shift();
       } else {
         return;
       }
     }
   }
 
-  function compileScript(lines) {
-    switch (lines[0].info.shape) {
+  function compileScript(stream) {
+    switch (stream.peek().info.shape) {
       case 'reporter':
       case 'predicate':
-        var block = compileReporter(lines.shift());
+        var block = compileReporter(stream.shift());
         return [block];
       default:
-        var first = compileBlock(lines, true);
-        var blocks = compileBlocks(lines); //, true);
+        var first = compileBlock(stream, true);
+        var blocks = compileBlocks(stream); //, true);
         blocks.splice(0, 0, first);
         return blocks;
     }
   }
 
-  function compileBlocks(lines) {
+  function compileBlocks(stream) {
     var result = [];
-    if (lines[0].info.shape === 'ellipsis') {
-      lines.shift();
+    if (stream.peek().info.shape === 'ellipsis') {
+      stream.shift();
       return [];
     }
     while (true) {
-      switch (lines[0].info.shape) {
+      switch (stream.peek().info.shape) {
         case 'cap':
         case 'c-block cap':
-          var block = compileBlock(lines);
+          var block = compileBlock(stream);
           if (block) result.push(block);
           return result;
         default:
-          var block = compileBlock(lines);
+          var block = compileBlock(stream);
           if (block) {
             result.push(block);
           } else {
@@ -98,48 +116,48 @@ var Compiler = (function() {
     }
   }
 
-  function compileBlock(lines, maybeHat) {
+  function compileBlock(stream, maybeHat) {
     var selector;
     var args;
-    switch (lines[0].info.shape) {
+    switch (stream.peek().info.shape) {
       case 'c-block':
       case 'c-block cap':
-        block = lines.shift();
+        block = stream.shift();
         selector = block.info.selector;
         args = block.args.map(compileReporter);
 
-        args.push(compileBlocks(lines));
-        assert(lines[0].info.shape === 'end',
-            'Expected "end", not ' + lines[0].info.shape);
-        lines.shift();
+        args.push(compileBlocks(stream));
+        assert(stream.peek().info.shape === 'end',
+            'Expected "end", not ' + stream.peek().info.shape);
+        stream.shift();
         break;
       case 'if-block':
-        block = lines.shift();
+        block = stream.shift();
         args = block.args.map(compileReporter);
 
-        args.push(compileBlocks(lines));
+        args.push(compileBlocks(stream));
 
         selector = 'doIf';
-        switch (lines[0].info.shape) {
+        switch (stream.peek().info.shape) {
           case 'else':
             selector = 'doIfElse';
-            lines.shift();
+            stream.shift();
 
-            args.push(compileBlocks(lines));
+            args.push(compileBlocks(stream));
 
             // FALL-THRU
           case 'end':
-            assert(lines[0].info.shape === 'end',
-                'Expected "end", not ' + lines[0].info.shape);
-            lines.shift();
+            assert(stream.peek().info.shape === 'end',
+                'Expected "end", not ' + stream.peek().info.shape);
+            stream.shift();
             break;
           default:
-            assert(false, 'Expected "else" or "end", not ' + lines[0].info.shape);
+            assert(false, 'Expected "else" or "end", not ' + stream.peek().info.shape);
         }
         break;
       case 'cap':
       case 'stack':
-          block = lines.shift();
+          block = stream.shift();
           selector = block.info.selector;
           args = block.args.map(compileReporter);
           if (block.info.isCustom) {
@@ -148,7 +166,7 @@ var Compiler = (function() {
           break;
       case 'hat':
         if (maybeHat) {
-          block = lines.shift();
+          block = stream.shift();
           selector = block.info.selector;
           args = (selector === 'procDef') ? block.args.slice()
                                           : block.args.map(compileReporter);

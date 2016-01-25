@@ -732,7 +732,7 @@ ScriptsEditor.prototype.compile = function() {
     var scripts = Compiler.compile(stream);
   } catch (e) {
     console.log(e);
-    var line = finalState.lines.length - stream.length + 1;
+    var line = finalState.lines.length - (stream.length - 1); // -1 because EOF
     line = Math.min(line, finalState.lines.length - 1);
     var marker = el('.error-marker', { text: "•" });
     this.cm.setGutterMarker(line, 'errors', marker);
