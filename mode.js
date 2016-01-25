@@ -123,7 +123,9 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
 
     if (results.length > 1) {
       console.log("AMBIGUOUS: " + results.length + " results");
-      console.log(tokens);
+      results.forEach(function(result) {
+        console.log(result.pretty());
+      });
     }
     var result = results[0];
     result = result.process();
