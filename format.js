@@ -1,9 +1,5 @@
 var Format = (function() {
 
-  var STAGE_SVG = "<svg width='480px' height='360px'><path fill='#ffffff' d='M 0 0 L 480 0 L 480 360 L 0 360 Z' /></svg>";
-
-  var TURTLE_SVG = "<svg width='25px' height='20px'><path style='fill:#007de0;stroke:#033042;stroke-width:1;stroke-linejoin:round;' d='M 0,0 20,8 0,16 6,8 Z' /></svg>";
-
   function arrayBufferToBinary(ab) {
     var binary = '';
     var bytes = new Uint8Array(ab);
@@ -66,7 +62,6 @@ var Format = (function() {
     });
 
     return {
-      $image: $image,
       src: src,
       size: size,
     };
@@ -86,34 +81,28 @@ var Format = (function() {
 
   /***************************************************************************/
 
-  var backdropDetails = loadImage('svg', STAGE_SVG);
+  // cache image thumbnails to make initial load faster
+
   var backdrop = {
     name: ko('backdrop1'),
-    // baseLayerID: 2,
-    // baseLayerMD5: 'b61b1077b0ea1931abee9dbbfa7903ff.png',
-    ext: 'svg', // !
-    file: STAGE_SVG, // !
+    ext: 'svg',
+    file: "<svg width='480px' height='360px'><path fill='#ffffff' d='M 0 0 L 480 0 L 480 360 L 0 360 Z' /></svg>",
     bitmapResolution: 1,
     rotationCenterX: 240,
     rotationCenterY: 180,
-    _$image: backdropDetails.$image,
-    _src: backdropDetails.src,
-    _size: backdropDetails.size,
+    _src: ko("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAIAAAA7ljmRAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAA6ZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IlhNUCBDb3JlIDUuNC4wIj4KICAgPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICAgICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIKICAgICAgICAgICAgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIgogICAgICAgICAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgICAgICAgICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iPgogICAgICAgICA8eG1wOk1vZGlmeURhdGU+MjAxNi0wMS0yNVQyMTowMToyMjwveG1wOk1vZGlmeURhdGU+CiAgICAgICAgIDx4bXA6Q3JlYXRvclRvb2w+UGl4ZWxtYXRvciAzLjQuMjwveG1wOkNyZWF0b3JUb29sPgogICAgICAgICA8dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPgogICAgICAgICA8dGlmZjpDb21wcmVzc2lvbj41PC90aWZmOkNvbXByZXNzaW9uPgogICAgICAgICA8dGlmZjpSZXNvbHV0aW9uVW5pdD4yPC90aWZmOlJlc29sdXRpb25Vbml0PgogICAgICAgICA8dGlmZjpZUmVzb2x1dGlvbj43MjwvdGlmZjpZUmVzb2x1dGlvbj4KICAgICAgICAgPHRpZmY6WFJlc29sdXRpb24+NzI8L3RpZmY6WFJlc29sdXRpb24+CiAgICAgICAgIDxleGlmOlBpeGVsWERpbWVuc2lvbj40PC9leGlmOlBpeGVsWERpbWVuc2lvbj4KICAgICAgICAgPGV4aWY6Q29sb3JTcGFjZT4xPC9leGlmOkNvbG9yU3BhY2U+CiAgICAgICAgIDxleGlmOlBpeGVsWURpbWVuc2lvbj4zPC9leGlmOlBpeGVsWURpbWVuc2lvbj4KICAgICAgPC9yZGY6RGVzY3JpcHRpb24+CiAgIDwvcmRmOlJERj4KPC94OnhtcG1ldGE+Ci3MB8YAAAAVSURBVAgdY/z//z8DDDDBGCAahQMAby0DAwzQlZYAAAAASUVORK5CYII="),
+    _size: ko({ width: 480, height: 360 }),
   };
 
-  var turtleDetails = loadImage('svg', TURTLE_SVG);
   var turtle = {
     name: ko('turtle'),
-    // baseLayerID: 1,
-    // baseLayerMD5: '4c8c8b562674f070b5a87b91d58d6e39.svg',
-    ext: 'svg', // !
-    file: TURTLE_SVG, // !
+    ext: 'svg',
+    file: "<svg width='25px' height='20px'><path style='fill:#007de0;stroke:#033042;stroke-width:1;stroke-linejoin:round;' d='M 0,0 20,8 0,16 6,8 Z' /></svg>",
     bitmapResolution: 1,
     rotationCenterX: 8,
     rotationCenterY: 8,
-    _$image: turtleDetails.$image,
-    _src: turtleDetails.src,
-    _size: turtleDetails.size,
+    _src: ko("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAUCAYAAAB4d5a9AAABTElEQVQ4T2NkMnT5xcDI/JWBmWXmvy+fJjJcP/ycgcqAkckiIPM/n3wbg4AiB+P9Pf8ZGRhP//31uZvh4oEt1LKLEWQQo0XQRga1ANf/8nacDC8vMjDd3fmR4f3d/9TyHdgSEGAy8Xr9z75JhIFLBCLw4wMD48MDP6jhO7glDIZO8kysvFf+uU/kwQgmCn2HsATkG1D8CKq2/DfJFsIaH2T6DsUSjPjBF/Mk+A7DEqzxg88yJN/9//fn3v+zO3TQlVPHkgf7fzI+2PuP4d/fe//ObidsCTg5qwe4/Jez48KbTyDB9Ynhw91/DEz4MzJmxAuotvw3xRPxUFeTkmlJScJEuRqb7/FnRjJcjdMSlHggIayJLdsgBSQvqIBU4ASlEFLCmnhLQEU9E/NXQimEWAOxB5e+gw81i3W8EU+JSwnpxZrjCWkiVZ4ulgAAfsb6FdvZrw8AAAAASUVORK5CYII="),
+    _size: ko({ width: 25, height: 20 }),
   };
 
 
@@ -222,7 +211,6 @@ var Format = (function() {
       bitmapResolution: 1,
       rotationCenterX: 0,
       rotationCenterY: 0,
-      _$image: details.$image,
       _src: details.src,
       _size: details.size,
     };
@@ -354,7 +342,6 @@ var Format = (function() {
 
         // make <image> element
         var details = loadImage(ext, f.asBinary());
-        costume._$image = details.$image;
         costume._src = details.src;
         costume._size = details.size;
 
