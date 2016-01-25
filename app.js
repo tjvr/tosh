@@ -697,6 +697,7 @@ function removeUndoKeys(keyMap) {
   delete keyMap['Shift-Cmd-Z'];
   delete keyMap['Ctrl-Y'];
   delete keyMap['Ctrl-Z'];
+  delete keyMap['Shift-Ctrl-Z'];
   return keyMap;
 }
 
