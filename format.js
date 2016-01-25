@@ -269,6 +269,11 @@ var Format = (function() {
 
     p._isStage = true;
 
+    var n = 0;
+
+    var scriptableMappings = {};
+
+    var stageSeen = {};
     [p].concat(p.sprites()).forEach(function(s) {
       // ensure properties are present
       s.scripts = s.scripts || [];
@@ -284,6 +289,13 @@ var Format = (function() {
       s.objName = ko(s.objName);
       s.currentCostumeIndex = ko(s.currentCostumeIndex || 0);
 
+      // sort scripts
+      s.scripts.sort(function(a, b) {
+        var ax = a[0], ay = a[1], bx = b[0], by = b[1];
+        return ay > by ? +1 : ay < by ? -1
+             : ax > bx ? +1 : ax < bx ? -1 : 0;
+      });
+
       // koel-ify variables & lists
       s.variables().forEach(function(variable) {
         variable._name = variable.name = ko(variable.name);
@@ -294,12 +306,37 @@ var Format = (function() {
         list._isEditing = ko(false);
       });
 
-      // sort scripts
-      s.scripts.sort(function(a, b) {
-        var ax = a[0], ay = a[1], bx = b[0], by = b[1];
-        return ay > by ? +1 : ay < by ? -1
-             : ax > bx ? +1 : ax < bx ? -1 : 0;
+      // TODO create undefined variables & lists
+      // if they are referenced from a script somewhere
+
+      // validate variable, list, and parameter names
+      var details = {
+        variable: {},
+        list: {},
+        definitions: {},
+      };
+      var target = s.objName();
+      var seen = {};
+      if (s === p) {
+        target = "_stage_";
+        stageSeen = seen;
+      }
+      s.variables().forEach(function(variable) {
+        var name = variable._name();
+        var newName = Language.cleanName('variable', name, seen, stageSeen);
+        seen[newName] = true;
+        details.variable[name] = newName;
+        variable._name.assign(newName);
       });
+      s.lists().forEach(function(list) {
+        var name = list._name();
+        var newName = Language.cleanName('list', name, seen, stageSeen);
+        seen[newName] = true;
+        details.list[name] = newName;
+        list._name.assign(newName);
+      });
+      // TODO definition parameters
+      scriptableMappings[target] = details;
 
       // load costumes
       s.costumes = ko(s.costumes || []);
@@ -348,6 +385,50 @@ var Format = (function() {
         delete sound.md5;
       });
     });
+
+
+    // automatic variable/list/parameter renaming
+
+    [p].concat(p.sprites()).forEach(function(s) {
+      var defaultTarget = s === p ? "_stage_" : s.objName();
+
+      var rename = function(defineSpec, kind, name, target) {
+        var target = target || defaultTarget;
+
+        if (name instanceof Array) return name;
+
+        var details = scriptableMappings[target];
+        var mapping = details[kind];
+        var result;
+        if (kind === 'parameter') {
+          mapping = mapping[defineSpec];
+          if (!mapping) return;
+          result = mapping[name];
+        } else {
+          if (!mapping[name]) {
+            details = scriptableMappings["_stage_"];
+            mapping = details[kind];
+          }
+          result = mapping[name];
+        }
+
+        if (result !== name) {
+          console.log(target + ": " + name + " -> " + result);
+        }
+        return result;
+      };
+
+      var mappingForScript = function(firstBlock) {
+        var spec = null;
+        if (firstBlock[0] === 'procDef') {
+          spec = firstBlock[1];
+        }
+        return rename.bind(this, spec);
+      }
+
+      s.scripts = s.scripts.map(Compiler.renameInScript.bind(this, mappingForScript));
+    });
+
 
     return p;
   };

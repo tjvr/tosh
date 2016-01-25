@@ -19,6 +19,10 @@ var Language = (function(Earley) {
     return this.kind === other.kind && this.value === other.value;
   };
 
+  function getValue(token) {
+    return token.value;
+  }
+
 
   // TODO should we allow () as an empty number input slot?
 
@@ -38,10 +42,11 @@ var Language = (function(Earley) {
     ['lparen',  /\(/],   ['rparen',  /\)/],
     ['langle',  /\</],   ['rangle',  /\>/],
     ['lsquare', /\[/],   ['rsquare', /\]/],
-    ['symbol',  /\.{3}/],                        // ellipsis
-    ['symbol',  /[-%#+*/=^,☁?]/],             // single character
+    ['cloud',  /[☁]/],
+    ['symbol',  /[-%#+*/=^,?]/],             // single character
 //  ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',]*/],   // words
     ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',.]*/],  // TODO ew
+    ['identifier',  /[^ \t]+/],  // argh
   ];
 
   var backslashEscapeSingle = /(\\['\\])/g;
@@ -877,7 +882,7 @@ var Language = (function(Earley) {
   }
 
   function addDefinition(grammar, result) {
-    var symbols = textSymbols(result.name);
+    var symbols = nameSymbols(result.name);
     var kind = result.value instanceof Array ? "ListName" : "VariableName";
     grammar.addRule(new Rule(kind, symbols, embed));
   }
@@ -924,11 +929,130 @@ var Language = (function(Earley) {
 
     specParts.forEach(function(x, index) {
       if (x.arg) {
-        grammar.addRule(new Rule("BlockParam", textSymbols(x.name),
+        grammar.addRule(new Rule("BlockParam", nameSymbols(x.name),
                               paintLiteralWords("parameter")));
       }
     });
   }
+
+
+  /* for variable (re)naming */
+
+  function nameSymbols(text) {
+    var tokens = tokenize(text);
+    return tokens.map(function(token) {
+      assert(token.kind !== "error", text);
+      return new SymbolSpec(token.kind, token.value);
+    });
+  }
+
+  var reservedNames = [
+    // conflicts with set _ to _
+    'x',
+    'y',
+    'z', // so people don't hate me
+    'pen color',
+    'pen shade',
+    'pen size',
+    'video transparency',
+    'instrument',
+    'color effect',
+    'whirl effect',
+    'pixelate effect',
+    'mosaic effect',
+    'brightness effect',
+    'ghost effect',
+    'fisheye effect',
+
+    // found in the attribute _ of _ block
+    'costume name',
+
+    // simple reporters
+    'x position',
+    'y position',
+    'direction',
+    'costume #',
+    'size',
+    'backdrop name',
+    'backdrop #',
+    'volume',
+    'tempo',
+    'answer',
+    'mouse x',
+    'mouse y',
+    'loudness',
+    'timer',
+    'current year',
+    'current month',
+    'current date',
+    'current day of week',
+    'current hour',
+    'current minute',
+    'current second',
+    'days since 2000',
+    'username',
+  ];
+
+  var reservedWords = [
+    'to',
+    'on',
+    'of',
+    'with',
+    'y:',
+  ];
+
+  function cleanName(kind, name, seen, stageSeen) {
+    var lastToken;
+    while (true) {
+      var tokens = Language.tokenize(name);
+      if (!tokens.length) throw "ahhh";
+      var lastToken = tokens[tokens.length - 1];
+      if (lastToken.kind === 'error') {
+        if (lastToken.value !== "Expected whitespace") {
+          throw new Error(lastToken.value);
+        }
+        tokens.pop();
+      }
+      var name = tokens.map(getValue).join(" ");
+      if (lastToken.kind === 'error') {
+        name += " " + lastToken.text;
+      }
+      if (lastToken.kind !== 'error') break;
+    }
+    tokens = tokens.filter(function(token, index) {
+      return (
+        token.kind === 'symbol' ||
+        token.kind === 'identifier' ||
+        token.kind === 'number' ||
+        (token.kind === 'cloud' && index === 0)
+      ) && reservedWords.indexOf(token.value) === -1;
+    });
+    name = tokens.map(getValue).join(" ");
+
+    // don't put space before question mark
+    name = name.replace(/ \?( |$)/g, "?");
+
+    var shortKind = kind === 'variable' ? "var" : kind;
+    if (!name) name = shortKind;
+
+    nameSymbols(name); // Check this doesn't crash
+
+    // ambiguity check
+    var isInvalid = (reservedNames.indexOf(name) > -1);
+    if (isInvalid) {
+      name += " " + shortKind;
+    }
+
+    // unique check
+    var offset = 1;
+    while (stageSeen.hasOwnProperty(name) || seen.hasOwnProperty(name)) {
+      name = name + offset;
+      offset++;
+    }
+
+    return name;
+  }
+
 
 
   /* for c-blocks and `end`s */
@@ -1002,6 +1126,9 @@ var Language = (function(Earley) {
     precedence: precedence,
     menusThatAcceptReporters: menusThatAcceptReporters,
     menuOptions: menuOptions,
+
+    // for automatic variable renaming
+    cleanName: cleanName,
   };
 
 }(Earley));
