@@ -520,17 +520,7 @@ var Compiler = (function() {
         if (!value) return '<>';
         assert(false, 'literal non-false booleans not allowed: ' + value);
       case 'readonly-menu':
-        switch (value) {
-          case '_mouse_':  return 'mouse-pointer';
-          case '_myself_': return 'myself';
-          case '_Stage_':  return 'Stage';
-          case '_edge_':  return 'edge';
-        }
-        if (Language.menusThatAcceptReporters.indexOf(menu) > -1) {
-          return generateStringLiteral(value);
-        } else {
-          return value;
-        }
+        return generateMenuLiteral(value, menu);
       case 'string':
         // Does it look like a number?
         if (/^-?[0-9]+\.?[0-9]*$/.test(value)) {
@@ -545,6 +535,31 @@ var Compiler = (function() {
         // TODO
         return value;
     }
+  }
+
+  function generateMenuLiteral(value, menu) {
+    switch (value) {
+      case '_mouse_':  return 'mouse-pointer';
+      case '_myself_': return 'myself';
+      case '_Stage_':  return 'Stage';
+      case '_edge_':  return 'edge';
+    }
+    if (isStringMenu(menu, value)) {
+      return generateStringLiteral(value);
+    } else {
+      return value;
+    }
+  }
+
+  function isStringMenu(menu, value) {
+    if (Language.menusThatAcceptReporters.indexOf(menu) > -1) {
+      return true;
+    }
+    if (menu === 'attribute' &&
+        -1 === ['x position', 'y position', 'direction', 'costume #', 'size', 'volume'].indexOf(value)) {
+      return true;
+    }
+    return false;
   }
 
   function generateStringLiteral(value) {
