@@ -866,7 +866,7 @@ ScriptsEditor.prototype.onChange = function(cm, change) {
 ScriptsEditor.prototype.linesChanged = function(lines) {
   for (var i=0; i<lines.length; i++) {
     var line = lines[i];
-    if (/^define /.test(line)) {
+    if (/^define(-atomic)? /.test(line)) {
       if (this.checkDefinitions()) {
         this.debounceRepaint();
       }
