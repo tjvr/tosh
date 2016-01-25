@@ -556,7 +556,7 @@ var Compiler = (function() {
       return true;
     }
     if (menu === 'attribute' &&
-        -1 === ['x position', 'y position', 'direction', 'costume #', 'size', 'volume'].indexOf(value)) {
+        Language.menuOptions.attribute.indexOf(value) === -1) {
       return true;
     }
     return false;

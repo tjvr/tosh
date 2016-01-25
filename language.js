@@ -675,7 +675,7 @@ var Language = (function(Earley) {
       'sound', 'spriteOnly', 'spriteOrMouse', 'spriteOrStage', 'touching'];
 
   var menuOptions = {
-    'attribute': ['x position', 'y position', 'direction', 'costume #', 'size', 'volume'],
+    'attribute': ['x position', 'y position', 'direction', 'costume #', 'costume name', 'backdrop #', 'backdrop name', 'size', 'volume'],
     'backdrop': [],
     'booleanSensor': ['button pressed', 'A connected', 'B connected',
     'C connected', 'D connected'],
@@ -721,7 +721,7 @@ var Language = (function(Earley) {
 
   menus.forEach(function(name) {
     if (menusThatAcceptReporters.indexOf(name) > -1) {
-      g.addRule(Rule("m_" + name, ["s2"], identity));
+      g.addRule(Rule("m_" + name, ["jpart"], identity));
     }
     var options = menuOptions[name];
     if (options && options.length) {
@@ -761,7 +761,7 @@ var Language = (function(Earley) {
 
   // TODO:  "(last v)"
 
-  g.addRule(Rule("m_attribute", ["s2"], identity));
+  g.addRule(Rule("m_attribute", ["jpart"], identity));
   g.addRule(Rule("m_var", ["VariableName"], identity));
   g.addRule(Rule("m_varName", ["VariableName"], identity));
   g.addRule(Rule("m_list", ["ListName"], identity));
@@ -1001,6 +1001,7 @@ var Language = (function(Earley) {
     // for Compiler
     precedence: precedence,
     menusThatAcceptReporters: menusThatAcceptReporters,
+    menuOptions: menuOptions,
   };
 
 }(Earley));
