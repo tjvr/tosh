@@ -1133,7 +1133,7 @@ function computeHint(cm) {
     return false;
   }*/
 
-  var g = l.state.grammar;
+  var g = l.state.scopedGrammar || l.state.startGrammar;
   var parser = new Earley.Parser(g);
 
   var tokens = l.tokens.slice();
