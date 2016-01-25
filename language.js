@@ -675,8 +675,7 @@ var Language = (function(Earley) {
       'sound', 'spriteOnly', 'spriteOrMouse', 'spriteOrStage', 'touching'];
 
   var menuOptions = {
-    'attribute': ['x position', 'y position', 'direction', 'costume #',
-    'size', 'volume'],
+    'attribute': ['x position', 'y position', 'direction', 'costume #', 'size', 'volume'],
     'backdrop': [],
     'booleanSensor': ['button pressed', 'A connected', 'B connected',
     'C connected', 'D connected'],
@@ -762,7 +761,7 @@ var Language = (function(Earley) {
 
   // TODO:  "(last v)"
 
-  g.addRule(Rule("m_attribute", ["AttributeVariable"], identity));
+  g.addRule(Rule("m_attribute", ["s2"], identity));
   g.addRule(Rule("m_var", ["VariableName"], identity));
   g.addRule(Rule("m_varName", ["VariableName"], identity));
   g.addRule(Rule("m_list", ["ListName"], identity));
