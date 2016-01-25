@@ -340,6 +340,25 @@ var Earley = (function() {
     return this._ast;
   };
 
+  Result.prototype.pretty = function() {
+    var tokens = this.tokens;
+
+    function pretty(item) {
+      var children = [item.rule.name];
+      for (var i=0; i<item.node.length; i++) {
+        var child = item.node[i];
+        if (child.node) { // Item
+          child = pretty(child);
+        } else { // Token index
+          child = JSON.stringify(tokens[child].value);
+        }
+        children.push(child);
+      }
+      return "(" + children.join(" ") + ")";
+    }
+
+    return pretty(this.item);
+  };
 
 
   var Completer = function(grammar, maxEdits) {
@@ -379,7 +398,7 @@ var Earley = (function() {
     }
     try {
       this.rightParser.parse(right); assert(false);
-    } catch (e) { 
+    } catch (e) {
       if (e.found !== Completer.cursorToken) {
         return; // Error before we reached cursor
       }

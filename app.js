@@ -514,7 +514,7 @@ var NamesEditor = function(sprite, kind) {
 
         function onNameChange(e) {
           clearTimeout(changeTimeout);
-          changeTimeout = setTimeout(onNameBlur.bind(this), 1000);
+          changeTimeout = setTimeout(onNameBlur.bind(this), 500);
         }
 
         function onNameBlur() {
@@ -806,7 +806,7 @@ ScriptsEditor.prototype.debounceRepaint = function() {
   if (this.repaintTimeout) {
     clearTimeout(this.repaintTimeout);
   }
-  this.repaintTimeout = setTimeout(this.repaint.bind(this), 1000);
+  this.repaintTimeout = setTimeout(this.repaint.bind(this), 500);
 };
 
 ScriptsEditor.prototype.checkDefinitions = function() {
