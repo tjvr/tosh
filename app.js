@@ -725,7 +725,6 @@ var cmOptions = {
   scratchLists: [],
   scratchDefinitions: [],
 
-  keyMap: removeUndoKeys(CodeMirror.keyMap.default),
   extraKeys: extraKeys,
 
   autoCloseBrackets: "()<>[]''\"\"",
@@ -772,6 +771,20 @@ var ScriptsEditor = function(sprite, project) {
   App.needsPreview.assign(true);
 
   this.cm.on('change', this.onChange.bind(this));
+
+  // vim mode
+  App.settings.keyMap.subscribe(function(keyMap) {
+    if (keyMap === 'default') {
+      keyMap = removeUndoKeys(CodeMirror.keyMap.default);
+    }
+    this.cm.setOption('keyMap', keyMap);
+  }.bind(this));
+
+  this.cm.save = App.preview.bind(App, true);
+  this.cmUndo = this.cm.undo.bind(this.cm);
+  this.cmRedo = this.cm.redo.bind(this.cm);
+  this.cm.undo = Oops.undo;
+  this.cm.redo = Oops.redo;
 };
 
 ScriptsEditor.prototype.fixLayout = function(offset) {
@@ -887,7 +900,7 @@ ScriptsEditor.prototype.activated = function() {
 
 ScriptsEditor.prototype.undo = function() {
   this.undoing = true;
-  this.cm.undo();
+  this.cmUndo();
   this.undoing = false;
   this.cmUndoSize = this.cm.historySize().undo;
 
@@ -896,7 +909,7 @@ ScriptsEditor.prototype.undo = function() {
 
 ScriptsEditor.prototype.redo = function() {
   this.undoing = true;
-  this.cm.redo();
+  this.cmRedo();
   this.undoing = false;
   this.cmUndoSize = this.cm.historySize().undo;
 
@@ -1437,6 +1450,7 @@ var App = new (function() {
 
   this.settings = new Settings({
     smallStage: false,
+    keyMap: 'default',
   });
   this.smallStage = this.settings.smallStage;
   this.isFullScreen = ko(false);
