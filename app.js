@@ -766,7 +766,6 @@ var ScriptsEditor = function(sprite, project) {
   App.needsCompile.assign(true);
   this.compile();
   App.needsPreview.assign(true);
-  App.needsSave.assign(true);
 
   this.cm.on('change', this.onChange.bind(this));
 };
