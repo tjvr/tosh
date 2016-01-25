@@ -3,7 +3,10 @@
 .cm-s-string, .cm-s-menu { color: #904949; }
 .cm-s-escape { color: #ffadd1; }
 .cm-s-color { color: #b09542; }
-.cm-s-comment { color: #c8b898; }
+.cm-s-comment {
+  color: #c8b898;
+  text-decoration: strikethrough;
+}
 
 .cm-s-false { color: #000; } /* TODO */
 .cm-s-empty { color: #000; } /* TODO */
