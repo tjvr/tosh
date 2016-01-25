@@ -572,12 +572,14 @@ var Language = (function(Earley) {
 
     Rule("b8", ["b-and"], identity),
     Rule("b8", ["b-or"], identity),
+    Rule("b8", ["b7"], identity),
 
-    // disallow nesting and/or
+    // require parentheses when nesting and/or
     Rule("b-and", ["b-and", ["and"], "b7"], infix("&")),
-    Rule("b-and", ["b7"], identity),
+    Rule("b-and", ["b7", ["and"], "b7"], infix("&")),
+
     Rule("b-or", ["b-or", ["or"], "b7"], infix("|")),
-    Rule("b-or", ["b7"], identity),
+    Rule("b-or", ["b7", ["or"], "b7"], infix("|")),
 
     Rule("b7", [["not"], "b7"], block("not", 1)),
     Rule("b7", ["b6"], identity),
