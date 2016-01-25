@@ -239,19 +239,19 @@ body {
 }
 
 .flag.needs-preview:after {
-  content: "!";
+  content: "▶";
   display: block;
   position: absolute;
   color: #FF9300;
   border-radius: 4px;
-  bottom: 5px;
-  right: 12px;
+  bottom: 0px;
+  right: 11px;
   line-height: 24px;
   height: 24px;
   width: 8px;
   font-weight: 700;
   font-family: Noto Sans, sans-serif;
-  font-size: 22px;
+  font-size: 14px;
 }
 
 .controls .small-stage {
