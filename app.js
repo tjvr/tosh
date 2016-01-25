@@ -492,6 +492,15 @@ var ListEditor = function(obj, kind, active) {
 
 /* NamesEditor */
 
+function seenVariables(variables) {
+  var seen = {};
+  variables.forEach(function(variable) {
+    var name = variable._name();
+    seen[name] = true;
+  });
+  return seen;
+}
+
 var NamesEditor = function(sprite, kind) {
 
   var factory = (kind === 'variable' ? Project.newVariable : Project.newList);
@@ -501,10 +510,29 @@ var NamesEditor = function(sprite, kind) {
   var variableList = names.map(function(variable) {
     return el('li', el('p', ko(function() {
 
+        var changeTimeout;
+
         function onNameChange(e) {
-          Oops(function() {
-            variable._name.assign(this.value);
-          }.bind(this));
+          clearTimeout(changeTimeout);
+          changeTimeout = setTimeout(onNameBlur.bind(this), 1000);
+        }
+
+        function onNameBlur() {
+          clearTimeout(changeTimeout);
+
+          var variables = names();
+          var index = variables.indexOf(variable);
+          var name = this.value;
+          if (name && index > -1) {
+            var seen = seenVariables(variables.slice(0, index));
+            var stageSeen = {};
+            if (!sprite._isStage) {
+              stageSeen = seenVariables(App.project()[kind + 's']());
+            }
+            name = Language.cleanName(kind, name, seen, stageSeen);
+          }
+          variable._name.assign(name);
+          this.value = name;
         }
 
         var input = el('input', {
@@ -514,7 +542,10 @@ var NamesEditor = function(sprite, kind) {
           placeholder: "my "+kind,
 
           on_focus: function() { variable._isEditing.assign(true); },
-          on_blur:  function() { variable._isEditing.assign(false); },
+          on_blur:  function() {
+            variable._isEditing.assign(false);
+            onNameBlur.apply(this);
+          },
 
           // TODO clean up
           on_keydown: function(e) {
@@ -694,7 +725,7 @@ var ScriptsEditor = function(sprite, project) {
     });
   });
 
-  // compile after new scripts editor is opened 
+  // compile after new scripts editor is opened
   App.needsCompile.assign(true);
   this.compile();
   App.needsPreview.assign(true);
@@ -1014,7 +1045,7 @@ App.loadProject = function(project) {
 
 App.save = function() {
   // refresh CM editors
-  if (App.compile()) return;
+  if (App.compile()) return; // TODO alert compile error
 
   // make project format
   var zip = Project.save(App.project());
@@ -1110,7 +1141,7 @@ App.preview = function(start) {
     stage._tosh = project;
     assert(stage._tosh);
 
-    // sync() needs references to original scriptable 
+    // sync() needs references to original scriptable
     var children = project.children();
     // phosphorus doesn't support list watchers
     children = children.filter(function(obj) {

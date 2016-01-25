@@ -586,10 +586,108 @@ var Compiler = (function() {
 
   /***************************************************************************/
 
+  /* rename a variable */
+
+  // TODO can we abstract out the AST-recursing stuff from generate()?
+
+  function renameInScript(mappingForScript, script) {
+    var x = script[0], y = script[1], blocks = script[2];
+    mapping = mappingForScript(blocks[0]);
+    return [x, y, renameInList(mapping, blocks)];
+  }
+
+  function renameInList(mapping, blocks) {
+    return blocks.map(renameInBlock.bind(this, mapping));
+  }
+
+  function renameInBlock(mapping, block) {
+    var args = block.slice();
+    var selector = args.shift();
+    var proc = selector === 'call' ? args.shift() : null;
+
+    var info = Scratch.blocksBySelector[selector];
+    var lists = [];
+    if (info && /if-block/.test(info.shape)) {
+      lists = args.splice(1);
+    } else if (info && /c-block/.test(info.shape)) {
+      lists = args.splice(args.length === 1 ? 0 : 1);
+    }
+
+    args = args.map(renameInArg.bind(this, mapping));
+    lists = lists.map(renameInList.bind(this, mapping));
+
+    var newArgs = renameInBlockArgs(mapping, selector, args[0], args[1], args[2]);
+    if (newArgs) {
+      assert(newArgs.length === args.length);
+      args = newArgs;
+    }
+
+    args = args.concat(lists);
+
+    if (proc) args.splice(0, 0, proc);
+    return [selector].concat(args);
+  }
+
+  function renameInArg(mapping, value) {
+    if (value.constructor === Array) {
+      value = renameInBlock(mapping, value);
+    }
+    return value;
+  }
+
+  function renameInBlockArgs(mapping, selector, a, b, c) {
+    var renameVar = mapping.bind(this, 'variable');
+    var renameList = mapping.bind(this, 'list');
+    var renameParameter = mapping.bind(this, 'parameter');
+
+    switch (selector) {
+      // variables
+      case 'readVariable':
+      case 'showVariable:':
+      case 'hideVariable:':
+        return [renameVar(a)];
+      case 'setVar:to:':
+      case 'changeVar:by:':
+        return [renameVar(a), b];
+
+      // variable on other sprite
+      case 'getAttribute:of:':
+        if (b instanceof Array) return [a, b];
+        return [renameVar(a, b), b];
+
+      // lists
+      case 'contentsOfList:':
+      case 'showList:':
+      case 'hideList:':
+      case 'lineCountOfList:':
+        return [renameList(a)];
+      case 'append:toList:':
+      case 'deleteLine:ofList:':
+      case 'getLine:ofList:':
+        return [a, renameList(b)];
+      case 'insert:at:ofList:':
+        return [a, b, renameList(c)];
+      case 'setLine:ofList:to:':
+        return [a, renameList(b), c];
+      case 'list:contains:':
+        return [renameList(a), b];
+
+      // parameters
+      case 'getParam':
+        // Assume parameter renaming is deterministic
+        // TODO
+      case 'procDef':
+        // TODO
+    }
+  }
+
+  /***************************************************************************/
+
 
   return {
     generate: generate, // AST -> tosh
     compile: compile,   // tosh -> AST
+    renameInScript: renameInScript, // used by format's automatic renaming
     _measure: measureList, // internal to compile()
   };
 
