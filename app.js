@@ -727,6 +727,9 @@ var cmOptions = {
 
   keyMap: removeUndoKeys(CodeMirror.keyMap.default),
   extraKeys: extraKeys,
+
+  autoCloseBrackets: "()<>[]''\"\"",
+  matchBrackets: "()<>[]''\"\"",
 };
 
 var ScriptsEditor = function(sprite, project) {
