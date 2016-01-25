@@ -813,6 +813,8 @@ var Language = (function(Earley) {
     '+', '-',
 
     'doIf', // doIf and doIfElse have the same grammar rule!
+
+    'touchingColor:', 'color:sees:',
   ];
 
   var doneSpecs = {};
