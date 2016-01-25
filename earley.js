@@ -438,19 +438,19 @@ var Earley = (function() {
       return (typeof symbol === "string" ? symbol : stringify(symbol));
     }
 
-    console.log("Completions table:");
-    console.table(completions.map(function(s) {
-      var info = s.rule.process._info;
-      return {
-        start: s.start,
-        pre: s.pre.map(pretty).join(" "),
-        completion: s.completion.map(pretty).join(" "),
-        post: s.post.map(pretty).join(" "),
-        end: s.end,
-        selector: info ? info.selector : null,
-        name: s.rule.name,
-      };
-    }));
+    // console.log("Completions table:");
+    // console.table(completions.map(function(s) {
+    //   var info = s.rule.process._info;
+    //   return {
+    //     start: s.start,
+    //     pre: s.pre.map(pretty).join(" "),
+    //     completion: s.completion.map(pretty).join(" "),
+    //     post: s.post.map(pretty).join(" "),
+    //     end: s.end,
+    //     selector: info ? info.selector : null,
+    //     name: s.rule.name,
+    //   };
+    // }));
 
     return completions;
   };
