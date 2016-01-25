@@ -9,7 +9,9 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     this.lineTokens = [];
     this.indent = 0;
 
-    cfg.scratchVariables = cfg.scratchVariables || [];
+    // TODO use modeCfg instead of cfg
+
+    cfg.scratchVariables = cfg.scratchVariables || modeCfg.variables || [];
     cfg.scratchLists = cfg.scratchLists || [];
     cfg.scratchDefinitions = cfg.scratchDefinitions || [];
 
