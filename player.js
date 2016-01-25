@@ -143,27 +143,10 @@ Player = (function() {
 
   window.addEventListener('resize', updateFullScreen);
 
-  if (P.hasTouchEvents) {
-    flag.addEventListener('touchstart', flagTouchStart);
-    flag.addEventListener('touchend', flagClick);
-    pause.addEventListener('touchend', pauseClick);
-    stop.addEventListener('touchend', stopClick);
-    fullScreen.addEventListener('touchend', fullScreenClick);
-
-    flag.addEventListener('touchstart', preventDefault);
-    pause.addEventListener('touchstart', preventDefault);
-    stop.addEventListener('touchstart', preventDefault);
-    fullScreen.addEventListener('touchstart', preventDefault);
-
-    document.addEventListener('touchmove', function(e) {
-      if (isFullScreen) e.preventDefault();
-    });
-  } else {
-    flag.addEventListener('click', flagClick);
-    pause.addEventListener('click', pauseClick);
-    stop.addEventListener('click', stopClick);
-    fullScreen.addEventListener('click', fullScreenClick);
-  }
+  flag.addEventListener('click', flagClick);
+  pause.addEventListener('click', pauseClick);
+  stop.addEventListener('click', stopClick);
+  fullScreen.addEventListener('click', fullScreenClick);
 
   document.addEventListener("fullscreenchange", function () {
     if (isFullScreen !== document.fullscreen) fullScreenClick();
