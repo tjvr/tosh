@@ -622,6 +622,17 @@ body {
   /*min-width: 18px;*/
 }
 
+.CodeMirror-dialog {
+  font-family: Source Code Pro, monospace;
+  letter-spacing: -0.6px;
+  font-size: 14px;
+  word-spacing: -2px;
+}
+.CodeMirror-dialog input {
+  font-family: inherit;
+  font-weight: 600;
+}
+
 .CodeMirror-gutters {
   border-right: 1px solid #999;
 }
