@@ -1190,9 +1190,6 @@ function computeHint(cm) {
     x.length = x.via.end - x.via.start;
   });
 
-  expansions.sort(function(a, b) {
-    return a.length < b.length ? +1 : a.length > b.length ? -1 : 0;
-  });
   /*
   if (expansions.length) {
     var shortest = Math.min.apply(null, expansions.map(function(x) {
@@ -1225,6 +1222,16 @@ function computeHint(cm) {
       })
     }
   }
+
+  expansions.sort(function(a, b) {
+    var aInfo = a.via.rule.process._info;
+    var bInfo = b.via.rule.process._info;
+    if (aInfo && bInfo) {
+      if (aInfo.selector === 'say:duration:elapsed:from:' && bInfo.selector === 'say:') return 1;
+      if (aInfo.selector === 'think:duration:elapsed:from:' && bInfo.selector === 'think:') return 1;
+    }
+    return a.length < b.length ? +1 : a.length > b.length ? -1 : 0;
+  });
 
   var list = [];
   expansions.forEach(function(x) {
