@@ -465,6 +465,13 @@ var Compiler = (function() {
         args = block.slice(1),
         info = Scratch.blocksBySelector[selector];
 
+    if (selector === 'getParam') {
+      info = {
+        shape: args.pop() === 'b' ? 'predicate' : 'reporter',
+        parts: info.parts,
+      };
+    }
+
     var level = Language.precedence[selector] || 0;
 
     var result = generateParts(info, args, level);
