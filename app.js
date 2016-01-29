@@ -1137,8 +1137,8 @@ function computeHint(cm) {
     return false;
   }*/
 
-  var g = l.state.scopedGrammar || l.state.startGrammar;
-  var parser = new Earley.Parser(g);
+  var g = l.state.scopeGrammar || l.state.startGrammar;
+  var completer = new Earley.Completer(g);
 
   var tokens = l.tokens.slice();
   var cursor = l.cursor;
@@ -1150,14 +1150,13 @@ function computeHint(cm) {
     cursor--;
 
     try {
-      parser.parse(tokens); isValid = true;
+      completer.parse(tokens); isValid = true;
     } catch (e) {
       isValid = false;
       // console.log(e); // DEBUG
     }
   }
 
-  var completer = new Earley.Completer(g);
   var completions = completer.complete(tokens, cursor);
   if (!completions) {
     return false; // not a list--there was an error!
