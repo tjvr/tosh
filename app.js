@@ -799,9 +799,9 @@ ScriptsEditor.prototype.compile = function() {
   if (!this.needsCompile()) return this.hasErrors();
 
   // TODO do a separate compile, rather than re-highlighting
-  if (this.repaintTimeout) {
-    this.repaint();
-  }
+  // TODO only repaint if there's a repaintTimeout
+  // for now, we always repaint, because bugs and slowness
+  this.repaint();
 
   var finalState = this.cm.getStateAfter(this.cm.getDoc().size, true);
   function compileLine(b) {

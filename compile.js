@@ -186,7 +186,11 @@ var Compiler = (function() {
 
   function compileReporter(b) {
     if (b.info) {
-      return [b.info.selector].concat(b.args.map(compileReporter));
+      var out = b.args.map(compileReporter);
+      if (b.info.selector === 'getParam') {
+        out.push(b.info.shape === 'predicate' ? 'b' : 'r');
+      }
+      return [b.info.selector].concat(out);
     } else if (b.value) { // ie. a token
       return b.value;
     } else {
@@ -411,6 +415,7 @@ var Compiler = (function() {
         if (m) {
           var inputShape = Scratch.getInputShape(part);
           var name = names.shift();
+          name = name.replace(/ \?$/, "?");
           switch (inputShape) {
             case 'number':  return '(' + name + ')';
             case 'string':  return '[' + name + ']';
@@ -559,6 +564,9 @@ var Compiler = (function() {
     if (isStringMenu(menu, value)) {
       return generateStringLiteral(value);
     } else {
+      if (menu === 'param') {
+        value = value.replace(/ \?$/, "?");
+      }
       return value;
     }
   }

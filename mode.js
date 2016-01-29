@@ -90,7 +90,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
           switch (part.arg) {
             case 'n': defaults.push(0);     return '%n';
             case 'b': defaults.push(false); return '%b';
-            case 's': defaults.push("");    return '%s';
+            case 'sb': defaults.push("");   return '%s';
           }
         }
       });
