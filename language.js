@@ -653,7 +653,7 @@ var Language = (function(Earley) {
     Rule("@turnRight", [["cw"]], identity),
     Rule("@turnRight", [["right"]], identity),
 
-  ], ["VariableName", "ListName", "AttributeVariable", "BlockParam"]);
+  ], ["VariableName", "ListName", "AttributeVariable", "ReporterParam", "BooleanParam"]);
 
   var coreGrammar = g.copy();
 
@@ -820,7 +820,9 @@ var Language = (function(Earley) {
   var doneSpecs = {};
   Scratch.blocks.forEach(function(block) {
     if (alreadyDefined.indexOf(block.selector) > -1) return;
-    if (doneSpecs[block.spec]) return;
+    if (doneSpecs[block.spec] && block.selector !== 'getParam') {
+      return;
+    }
     doneSpecs[block.spec] = true;
 
     var symbols = [];
@@ -860,7 +862,7 @@ var Language = (function(Earley) {
     } else if (block.selector === "contentsOfList:") {
       symbols = ["ListName"];
     } else if (block.selector === "getParam") {
-      symbols = ["BlockParam"];
+      symbols = [block.shape === 'reporter' ? "ReporterParam" : "BooleanParam"];
     }
 
     assert(symbols.length);
@@ -932,8 +934,10 @@ var Language = (function(Earley) {
     var specParts = result.parts;
 
     specParts.forEach(function(x, index) {
+
       if (x.arg) {
-        grammar.addRule(new Rule("BlockParam", nameSymbols(x.name),
+        var name = x.arg === 'b' ? "BooleanParam" : "ReporterParam";
+        grammar.addRule(new Rule(name, nameSymbols(x.name),
                               paintLiteralWords("parameter")));
       }
     });

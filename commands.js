@@ -167,6 +167,7 @@ var Scratch = (function() {
   scratchCommands.push(["%m.var", "r", 9, "readVariable"]);
   scratchCommands.push(["%m.list", "r", 12, "contentsOfList:"]);
   scratchCommands.push(["%m.param", "r", 11, "getParam"]);
+  scratchCommands.push(["%m.param", "b", 11, "getParam"]);
   scratchCommands.push(["else", "else", 6, "else"]);
   scratchCommands.push(["end", "end", 6, "end"]);
   scratchCommands.push(["...", "ellipsis", 42, "ellipsis"]);
@@ -197,7 +198,7 @@ var Scratch = (function() {
     };
     block.inputs = block.parts.filter(function(p) { return inputPat.test(p); });
     blocks.push(block);
-    assert(!blocksBySelector[block.selector], block.selector);
+    if (block.selector !== 'getParam') assert(!blocksBySelector[block.selector], block.selector);
     blocksBySelector[block.selector] = block;
   });
 
