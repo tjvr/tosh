@@ -252,6 +252,13 @@ Player = (function() {
     flag.classList[needsPreview ? 'add' : 'remove']('needs-preview');
   });
 
+  // indicate compiling had an error
+
+  App.hasErrors.subscribe(function(hasErrors) {
+    flag.classList[hasErrors ? 'add' : 'remove']('has-errors');
+  });
+
+
 
   return {
     loadProject: loadProject,

@@ -238,11 +238,12 @@ body {
   position: relative;
 }
 
-.flag.needs-preview:after {
+.flag.needs-preview:after,
+.flag.has-errors:after {
   content: "▶";
   display: block;
   position: absolute;
-  color: #FF9300;
+  color: #ff9300;
   border-radius: 4px;
   bottom: 0px;
   right: 11px;
@@ -253,6 +254,12 @@ body {
   font-family: Noto Sans, sans-serif;
   font-size: 14px;
 }
+.flag.has-errors:after {
+  content: "!";
+  color: #e40046;
+  font-size: 16px;
+}
+
 
 .controls .small-stage {
   float: left;

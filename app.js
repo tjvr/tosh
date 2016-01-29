@@ -1488,6 +1488,7 @@ var App = new (function() {
 
   this.needsSave = ko(false);
   this.needsCompile = ko(false);
+  this.hasErrors = ko(false);
 
   this.stage = null;
   this.needsPreview = ko(false);
@@ -1550,10 +1551,12 @@ App.compile = function() {
   App.needsCompile.assign(false); // no longer dirty
 
   if (hasErrors) {
+    App.hasErrors.assign(true);
     return true;
   }
 
   // sync phosphorus data
+  App.hasErrors.assign(false);
   App.sync();
   return false;
 };
