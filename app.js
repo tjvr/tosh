@@ -1074,6 +1074,8 @@ function tokenizeAtCursor(cm, options) {
   }
 }
 
+var returnPressed = true;
+
 function requestHint(cm) {
   cm.showHint({
     hint: computeHint,
@@ -1084,7 +1086,7 @@ function requestHint(cm) {
       Down:     function(_, menu) { menu.moveFocus(1); },
       Home:     function(_, menu) { menu.setFocus(0);},
       End:      function(_, menu) { menu.setFocus(menu.length - 1); },
-      Enter:    function(_, menu) { menu.pick() }, // TODO decide
+      Enter:    function(_, menu) { returnPressed = true; menu.pick(); returnPressed = false }, // TODO decide
       Tab:      function(_, menu) { menu.pick(); },
       Esc:      function(_, menu) { menu.close() },
     },
@@ -1299,6 +1301,11 @@ function computeHint(cm) {
       });
     }
 
+    var newline = false;
+    if (c.rule.name === 'block' && !selection) {
+      newline = true;
+    }
+
     var completion = {
       displayText: displayText,
       text: text,
@@ -1306,6 +1313,8 @@ function computeHint(cm) {
       selection: selection,
       category: info.category,
       render: renderHint,
+      _name: c.rule.name, // DEBUG
+      newline: newline,
     };
 
     function renderHint(parentNode, self, data) {
@@ -1336,6 +1345,8 @@ function computeHint(cm) {
     list.push(completion);
   });
 
+  returnPressed = false;
+
   var result = {
     list: list,
     from: l.from,
@@ -1344,6 +1355,7 @@ function computeHint(cm) {
 
   function applyHint(cm, data, completion) {
     var text = completion.text;
+    if (completion.newline && returnPressed) text += '\n';
     cm.replaceRange(text, completion.from || data.from,
                           completion.to || data.to, "complete");
     if (completion.selection) {
@@ -1352,9 +1364,11 @@ function computeHint(cm) {
       var end = start + (completion.selection.size || 0);
       cm.setSelection({ line: line, ch: start }, { line: line, ch: end });
     }
+    /*
     if (completion.seekInput) {
       inputSeek(cm, +1);
     }
+    */
     cm.indentLine(l.start.line);
   }
 
