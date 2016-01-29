@@ -321,6 +321,8 @@ var Format = (function() {
       // look for & create undefined variables & lists
       s.scripts.forEach(Compiler.renameInScript.bind(this, function(defineSpec) {
         return function(kind, name, target) {
+          if (target) return;
+
           // we create them on this scriptable, because that's what scratch does
           if (kind === 'variable') {
             if (!oldVariables.hasOwnProperty(name) && !stageOldVariables.hasOwnProperty(name)) {
