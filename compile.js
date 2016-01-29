@@ -597,6 +597,7 @@ var Compiler = (function() {
   }
 
   function renameInList(mapping, blocks) {
+    if (!blocks) return [];
     return blocks.map(renameInBlock.bind(this, mapping));
   }
 
@@ -604,12 +605,13 @@ var Compiler = (function() {
     var args = block.slice();
     var selector = args.shift();
     var proc = selector === 'call' ? args.shift() : null;
-
     var info = Scratch.blocksBySelector[selector];
+    var shape = info ? info.shape : null;
+
     var lists = [];
-    if (info && /if-block/.test(info.shape)) {
+    if (/if-block/.test(shape) || selector === 'doIfElse') {
       lists = args.splice(1);
-    } else if (info && /c-block/.test(info.shape)) {
+    } else if (/c-block/.test(shape)) {
       lists = args.splice(args.length === 1 ? 0 : 1);
     }
 
