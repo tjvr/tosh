@@ -715,7 +715,6 @@ var cmOptions = {
   cursorScrollMargin: 80,
 
   lineNumbers: true,
-  gutters: ['errors', 'CodeMirror-linenumbers'],
 
   cursorHeight: 1,
 
@@ -742,6 +741,7 @@ var ScriptsEditor = function(sprite, project) {
   this.needsCompile = ko(true);
   this.hasErrors = sprite._hasErrors;
   assert(ko.isObservable(sprite._hasErrors));
+  this.widgets = [];
 
   this.cm.clearHistory();
   assert(this.cm.getHistory().done.length === 0);
@@ -810,16 +810,22 @@ ScriptsEditor.prototype.compile = function() {
     }
   }
 
-  this.cm.clearGutter('errors');
+  this.widgets.forEach(function(widget) {
+    widget.clear();
+  });
+  this.widgets = [];
+
   var stream = finalState.lines.slice(); // treat lines as a stream
   try {
     var scripts = Compiler.compile(stream);
   } catch (e) {
-    console.log(e);
     var line = finalState.lines.length - (stream.length - 1); // -1 because EOF
     line = Math.min(line, finalState.lines.length - 1);
-    var marker = el('.error-marker', { text: "•" });
-    this.cm.setGutterMarker(line, 'errors', marker);
+
+    var widgetOptions = {};
+    var widgetEl = el('.error-widget', e.message);
+    var widget = this.cm.addLineWidget(line, widgetEl, widgetOptions);
+    this.widgets.push(widget);
 
     this.needsCompile.assign(false);
     this.hasErrors.assign(true);

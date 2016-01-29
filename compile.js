@@ -1,5 +1,9 @@
 var Compiler = (function() {
 
+  function assert(value, message) {
+    if (!value) throw new Error(message || "There's a problem here");
+  }
+
   /* compile: tosh -> AST */
 
   function compile(lines) {
@@ -57,8 +61,11 @@ var Compiler = (function() {
               break;
             case 'eof':
               return scripts;
+            case 'error':
+              var info = stream.shift().info;
+              throw new Error(info.error);
             default:
-              assert(false);
+              assert(false, "Expected a blank line");
           }
       }
     }
@@ -66,7 +73,7 @@ var Compiler = (function() {
 
   function compileBlank(stream, isRequired) {
     if (isRequired) {
-      assert(stream.peek().info.shape === 'blank');
+      assert(stream.peek().info.shape === 'blank', "Expected a blank line");
       stream.shift();
     }
     while (true) {
@@ -127,8 +134,7 @@ var Compiler = (function() {
         args = block.args.map(compileReporter);
 
         args.push(compileBlocks(stream));
-        assert(stream.peek().info.shape === 'end',
-            'Expected "end", not ' + stream.peek().info.shape);
+        assert(stream.peek().info.shape === 'end', 'Expected "end"');
         stream.shift();
         break;
       case 'if-block':
@@ -147,12 +153,11 @@ var Compiler = (function() {
 
             // FALL-THRU
           case 'end':
-            assert(stream.peek().info.shape === 'end',
-                'Expected "end", not ' + stream.peek().info.shape);
+            assert(stream.peek().info.shape === 'end', 'Expected "end"');
             stream.shift();
             break;
           default:
-            assert(false, 'Expected "else" or "end", not ' + stream.peek().info.shape);
+            assert(false, 'Expected "else" or "end"');
         }
         break;
       case 'cap':

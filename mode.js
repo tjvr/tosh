@@ -111,7 +111,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
       results = p.parse(tokens);
     } catch (err) {
       // console.log(err); // DEBUG
-      this.lines.push({info: {shape: 'error'}});
+      this.lines.push({info: {shape: 'error', error: err.message}});
       results = err.partialResult;
     }
 

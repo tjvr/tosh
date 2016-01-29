@@ -56,7 +56,7 @@ body {
 
   background: #ececec;
 
-  overflow: auto;
+  overflow: hidden;
   height: 100%;
   max-height: 100%;
   position: absolute;
@@ -420,7 +420,7 @@ body {
   top: 0;
   font-size: 20px;
   text-align: center;
-  color: #822; /* cf .error-marker */
+  color: #e40046; /* cf .error-widget */
   line-height: 22px;
 }
 .has-errors .icon-error {
@@ -636,19 +636,38 @@ body {
 .CodeMirror-gutters {
   border-right: 1px solid #999;
 }
-.CodeMirror-gutter.errors {
-  width: 8px;
+
+.CodeMirror-overlayscroll-vertical div {
+  background: #7b7b7b;
 }
-.error-marker {
+.CodeMirror-simplescroll-vertical div {
+  background: #7b7b7b;
+  border: 1px solid #7b7b7b;
+}
+
+.error-widget {
+  max-height: 400px;
+  font-family: Source Code Pro, monospace;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+  word-spacing: -1px;
+  line-height: 20px;
+  background: #e8e8e8;
+  color: #e40046;
+  padding: 2px 5px 3px;
+  padding-left: 24px;
+}
+.error-widget:before {
+  content: "!";
   position: absolute;
   display: inline-block;
   width: 12px;
   left: 0;
   top: 2px;
-  color: #822;
-  font-size: 32px;
-  line-height: 16px;
-  vertical-align: middle;
+  font-size: 20px;
+  width: 24px;
+  text-align: center;
 }
 
 .CodeMirror-hints {
@@ -683,8 +702,6 @@ body {
 }
 li.CodeMirror-hint-active {
   background: #aad7ff;
-}
-.CodeMirror-hint-active > * {
 }
 
 /*****************************************************************************/

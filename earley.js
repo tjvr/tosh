@@ -192,8 +192,7 @@ var Earley = (function() {
         }
       }
       if (!newColumn.length) {
-        var err = this._makeError(
-            "Found " + JSON.stringify(token.value) + " at " + index + ".");
+        var err = this._makeError("Found " + token.value);
         err.index = index;
         err.found = tokens[resume];
         throw err;
@@ -245,8 +244,7 @@ var Earley = (function() {
 
       if (index < tokens.length) {
         if (!newColumn.length) {
-          var err = this._makeError(
-              "Found " + JSON.stringify(token.value) + " at " + index + ".");
+          var err = this._makeError("Found " + token.value);
           err.index = index;
           err.found = tokens[index];
           throw err;
@@ -260,7 +258,7 @@ var Earley = (function() {
       return (item.origin === 0 && item.isFinished && item.rule.name == this.grammar.toplevel);
     }, this);
     if (!results.length) {
-      throw this._makeError("Incomplete input.");
+      throw this._makeError("Incomplete line");
     }
     return results.map(function(item) {
       return new Result(item, tokens);
@@ -297,6 +295,8 @@ var Earley = (function() {
     }, this);
     expected = expected.concat(ruleNames);
 
+    /*
+    message += ". ";
     if (expected.length === 1) {
       message += " Expected: " + expected[0];
     } else if (expected.length) {
@@ -304,6 +304,7 @@ var Earley = (function() {
     } else {
       message += " Expected end of input.";
     }
+    */
     var err = new Error(message);
     err.expected = expected;
     err._table = this.table;
