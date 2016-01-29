@@ -176,7 +176,6 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
 
         var m = stream.match(Language.eolPat, false); // don't consume
         var line = m[0];
-        // console.log(JSON.stringify(line));
         var tokens = Language.tokenize(line);
         state.parseAndPaint(tokens);
 
@@ -201,6 +200,14 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
       stream.match(Language.whitespacePat);
       var className = "s-" + token.kind;
       if (token.category) className += " " + "s-" + token.category;
+
+      // fix closeBrackets
+      if (token.kind === 'string') {
+        className += " string";
+      } else if (token.kind === 'error' && /^['"]/.test(token.text)) {
+        return 'string';
+      }
+
       return className;
     },
 
@@ -231,6 +238,8 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
 
     lineComment: '//',
     electricInput: /( |else|end)$/,
+
+    closeBrackets: "()[]''\"\"",
 
   };
 });

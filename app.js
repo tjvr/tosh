@@ -726,7 +726,7 @@ var cmOptions = {
 
   extraKeys: extraKeys,
 
-  autoCloseBrackets: "()<>[]''\"\"",
+  autoCloseBrackets: true,
   matchBrackets: "()<>[]''\"\"",
   scrollbarStyle: 'overlay',
 };

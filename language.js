@@ -46,7 +46,7 @@ var Language = (function(Earley) {
     ['symbol',  /[-%#+*/=^,?]/],             // single character
 //  ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',]*/],   // words
     ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',.]*/],  // TODO ew
-    ['identifier',  /[^ \t]+/],  // argh
+    ['identifier',  /[^ \t"'()<>]+/],  // argh
   ];
 
   var backslashEscapeSingle = /(\\['\\])/g;
