@@ -289,17 +289,42 @@ var Format = (function() {
       });
 
       // koel-ify variables & lists
+      var variablesByName = {};
       s.variables().forEach(function(variable) {
         variable._name = variable.name = ko(variable.name);
         variable._isEditing = ko(false);
+
+        variablesByName[variable._name()] = variable;
       });
+
+      var listsByName = {};
       s.lists().forEach(function(list) {
         list._name = list.listName = ko(list.listName);
         list._isEditing = ko(false);
+
+        listsByName[list._name()] = list;
       });
 
-      // TODO create undefined variables & lists
-      // if they are referenced from a script somewhere
+      // look for & create undefined variables & lists
+      s.scripts.forEach(Compiler.renameInScript.bind(this, function(defineSpec) {
+        return function(kind, name, target) {
+          if (kind === 'variable') {
+            if (!variablesByName.hasOwnProperty(name)) {
+              var variable = Project.newVariable();
+              variable._name.assign(name);
+              s.variables.push(variable);
+              variablesByName[name] = variable;
+            }
+          } else if (kind === 'list') {
+            if (!listsByName.hasOwnProperty(name)) {
+              var list = Project.newList();
+              list._name.assign(name);
+              s.lists.push(list);
+              listsByName[name] = list;
+            }
+          }
+        }
+      }));
 
       // validate variable, list, and parameter names
       var details = {
