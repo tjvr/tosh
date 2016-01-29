@@ -265,7 +265,12 @@ var Format = (function() {
 
     var scriptableMappings = {};
 
+    // before renaming
+    var stageOldVariables = {};
+    var stageOldLists = {};
+    // after renaming
     var stageSeen = {};
+
     [p].concat(p.sprites()).forEach(function(s) {
       // ensure properties are present
       s.scripts = s.scripts || [];
@@ -289,38 +294,47 @@ var Format = (function() {
       });
 
       // koel-ify variables & lists
-      var variablesByName = {};
       s.variables().forEach(function(variable) {
         variable._name = variable.name = ko(variable.name);
         variable._isEditing = ko(false);
-
-        variablesByName[variable._name()] = variable;
       });
 
       var listsByName = {};
       s.lists().forEach(function(list) {
         list._name = list.listName = ko(list.listName);
         list._isEditing = ko(false);
+      });
 
-        listsByName[list._name()] = list;
+      var oldVariables = {};
+      var oldLists = {};
+      if (s === p) {
+        stageOldVariables = oldVariables;
+        stageOldLists = oldLists;
+      }
+      s.variables().forEach(function(variable) {
+        oldVariables[variable._name()] = true;
+      });
+      s.lists().forEach(function(list) {
+        oldLists[list._name()] = true;
       });
 
       // look for & create undefined variables & lists
       s.scripts.forEach(Compiler.renameInScript.bind(this, function(defineSpec) {
         return function(kind, name, target) {
+          // we create them on this scriptable, because that's what scratch does
           if (kind === 'variable') {
-            if (!variablesByName.hasOwnProperty(name)) {
+            if (!oldVariables.hasOwnProperty(name) && !stageOldVariables.hasOwnProperty(name)) {
               var variable = Project.newVariable();
               variable._name.assign(name);
               s.variables.push(variable);
-              variablesByName[name] = variable;
+              oldVariables[name] = variable;
             }
           } else if (kind === 'list') {
-            if (!listsByName.hasOwnProperty(name)) {
+            if (!oldLists.hasOwnProperty(name) && !stageOldLists.hasOwnProperty(name)) {
               var list = Project.newList();
               list._name.assign(name);
               s.lists.push(list);
-              listsByName[name] = list;
+              oldLists[name] = list;
             }
           }
         }
