@@ -170,25 +170,6 @@ body {
 }
 
 /*****************************************************************************/
-
-#shade {
-  background: #000;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 5;
-  opacity: 0;
-  transition: 150ms opacity ease-out;
-  pointer-events: none;
-}
-#shade.shady {
-  opacity: 0.5;
-  pointer-events: all;
-}
-
-/*****************************************************************************/
 /* phosphorus */
 
 #phosphorus {
@@ -805,3 +786,26 @@ li.CodeMirror-hint-active {
 .media-stats {
 }
 
+/*****************************************************************************/
+
+.shade {
+  width: 100vw;
+  height: 100vh;
+  z-index: 10;
+  background: rgba(0,0,0, 0.8);
+  position: absolute;
+  color: #fff;
+  transition: opacity 200ms ease-out;
+}
+.shade-fade {
+  pointer-events: none;
+  opacity: 0;
+}
+
+.massive {
+  font-size: 15vw;
+  line-height: 100vh;
+  font-family: Source Code Pro, monospace;
+  text-align: center;
+  letter-spacing: -1vw;
+}

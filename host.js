@@ -35,6 +35,9 @@ if (isSafari) {
 // load dropped in / opened file
 
 function loadFile(f) {
+  var loading = el('.shade', el('.massive', "Loading"));
+  document.body.appendChild(loading);
+
   var parts = f.name.split('.');
   var ext = parts.pop();
   var fileName = parts.join('.');
@@ -47,6 +50,11 @@ function loadFile(f) {
       project._fileName = fileName;
 
       App.loadProject(project);
+
+      loading.classList.add('shade-fade');
+      setTimeout(function() {
+        document.body.removeChild(loading);
+      }, 1000);
     };
     reader.readAsArrayBuffer(f);
     return true;
