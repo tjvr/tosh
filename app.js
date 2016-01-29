@@ -93,6 +93,7 @@ Scriptable.prototype.deactivated = function() {
 function costumeSize(costume) {
   var stats = ko("..x..");
   costume._size.subscribe(function(size) {
+    if (!size) return;
     var width = size.width / (costume.bitmapResolution || 1);
     var height = size.height / (costume.bitmapResolution || 1);
     var result = width + "x" + height;

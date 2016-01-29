@@ -192,7 +192,7 @@ var Earley = (function() {
         }
       }
       if (!newColumn.length) {
-        var err = this._makeError("Found " + token.value);
+        var err = this._makeError(token.value);
         err.index = index;
         err.found = tokens[resume];
         throw err;
@@ -244,7 +244,7 @@ var Earley = (function() {
 
       if (index < tokens.length) {
         if (!newColumn.length) {
-          var err = this._makeError("Found " + token.value);
+          var err = this._makeError(token.value);
           err.index = index;
           err.found = tokens[index];
           throw err;

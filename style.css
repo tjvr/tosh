@@ -663,8 +663,8 @@ body {
   letter-spacing: -0.6px;
   word-spacing: -1px;
   line-height: 20px;
-  background: #e8e8e8;
-  color: #e40046;
+  color: #fff;
+  background: #e40046;
   padding: 2px 5px 3px;
   padding-left: 24px;
 }
