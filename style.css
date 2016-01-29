@@ -673,12 +673,18 @@ body {
   top: 0;
   content: "Tab ⇥";
   text-align: right;
-  padding-left: 4px;
-  padding-right: 2px;
+  padding-left: 6px;
+  padding-right: 4px;
   font-size: 11px;
   background: rgba(255,255,255, 0.3);
   color: #fff;
+  background: #08f;
   border-radius: 2px;
+}
+li.CodeMirror-hint-active {
+  background: #aad7ff;
+}
+.CodeMirror-hint-active > * {
 }
 
 /*****************************************************************************/

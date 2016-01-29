@@ -428,6 +428,7 @@ var Earley = (function() {
               post: symbols.slice(ri),
               end: tokens.length - r.origin,
               rule: l.rule,
+              item: l,
             });
           });
         }

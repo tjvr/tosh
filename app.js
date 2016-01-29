@@ -1127,20 +1127,6 @@ function computeHint(cm) {
   var l = tokenizeAtCursor(cm, { splitSelection: true });
   if (!l) return false;
   if (l.cursor === 0) {
-    if (l.state.indent > 0) {
-      var result = {
-        list: [{
-          text: 'end',
-          hint: applyHint,
-        }, {
-          text: 'else',
-          hint: applyHint,
-        }],
-        from: l.from,
-        to:   l.to,
-      };
-      return result;
-    }
     return false;
   }
   /*
@@ -1289,12 +1275,29 @@ function computeHint(cm) {
 
     text += " ";
 
+    var info = {};
+    if (c.rule.process._info) {
+      info = c.rule.process._info;
+    } else {
+      c.item.predictedBy.forEach(function(item) {
+        info = item.rule.process._info || {};
+      });
+    }
+
     var completion = {
       displayText: displayText,
       text: text,
       hint: applyHint,
       selection: selection,
+      category: info.category,
+      render: renderHint,
     };
+
+    function renderHint(parentNode, self, data) {
+      var className = '';
+      if (data.category) className = '.cm-s-' + data.category;
+      parentNode.appendChild(el(className, data.displayText));
+    }
 
     /*
     if (l.isPartial) {
