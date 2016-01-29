@@ -1158,7 +1158,22 @@ function computeHint(cm) {
   var completer = new Earley.Completer(g);
   var completions = completer.complete(tokens, cursor);
   if (!completions) {
-    return false; // There was an error!
+    return false; // not a list--there was an error!
+  }
+
+  if (!tokens.length) {
+    // TODO move 'define' into main grammar
+    ['define', 'define-atomic'].forEach(function(keyword) {
+      completions.push({
+        start: 0,
+        end: 0,
+        pre: [],
+        post: [],
+        rule: { process: { _info: { category: 'custom' } } },
+        item: null,
+        completion: [{ kind: 'symbol', value: keyword }, "block"],
+      });
+    });
   }
 
   completions.filter(function(c) {
