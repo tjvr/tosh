@@ -651,6 +651,9 @@ body {
   background: #7b7b7b;
   border: 1px solid #7b7b7b;
 }
+.error-annotation {
+  background: #e40046;
+}
 
 .error-widget {
   max-height: 400px;

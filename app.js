@@ -728,6 +728,7 @@ var cmOptions = {
 
   autoCloseBrackets: "()<>[]''\"\"",
   matchBrackets: "()<>[]''\"\"",
+  scrollbarStyle: 'overlay',
 };
 
 var ScriptsEditor = function(sprite, project) {
@@ -751,6 +752,8 @@ var ScriptsEditor = function(sprite, project) {
   // send options to CM, so initial highlight is correct
   this.checkDefinitions();
   this.repaint();
+
+  this.annotate = this.cm.annotateScrollbar('error-annotation');
 
   // repaint when variable/list names change
   var _this = this;
@@ -809,23 +812,39 @@ ScriptsEditor.prototype.compile = function() {
       return b;
     }
   }
+  // treat lines as a stream
+  var stream = finalState.lines.slice();
 
+  // clear error indicators
   this.widgets.forEach(function(widget) {
     widget.clear();
   });
   this.widgets = [];
 
-  var stream = finalState.lines.slice(); // treat lines as a stream
+  // build 'em for each line with shape of "error"
+  var anns = [];
+  stream.forEach(function(block, index) {
+    if (block.info.shape === 'error') {
+      var line = index;
+      anns.push({ from: Pos(line, 0), to: Pos(line + 1, 0) });
+    }
+  });
+
   try {
     var scripts = Compiler.compile(stream);
-  } catch (e) {
+  } catch (err) {
     var line = finalState.lines.length - (stream.length - 1); // -1 because EOF
     line = Math.min(line, finalState.lines.length - 1);
 
+    var info = finalState.lines[line].info;
+    var message = info.shape === 'error' ? info.error : err.message;
+
     var widgetOptions = {};
-    var widgetEl = el('.error-widget', e.message);
+    var widgetEl = el('.error-widget', message);
     var widget = this.cm.addLineWidget(line, widgetEl, widgetOptions);
     this.widgets.push(widget);
+    anns.push({ from: Pos(line, 0), to: Pos(line, 0) });
+    this.annotate.update(anns);
 
     this.needsCompile.assign(false);
     this.hasErrors.assign(true);
@@ -954,6 +973,9 @@ ScriptsEditor.prototype.onChange = function(cm, change) {
 
   // trigger auto-complete!
   requestHint(this.cm);
+
+  // clear annotations
+  this.annotate.update([]);
 };
 
 ScriptsEditor.prototype.linesChanged = function(lines) {

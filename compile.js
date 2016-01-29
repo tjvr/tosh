@@ -62,7 +62,7 @@ var Compiler = (function() {
             case 'eof':
               return scripts;
             case 'error':
-              var info = stream.shift().info;
+              var info = stream.peek().info;
               throw new Error(info.error);
             default:
               assert(false, "Expected a blank line");
