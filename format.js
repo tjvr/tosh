@@ -319,8 +319,8 @@ var Format = (function() {
       });
 
       // look for & create undefined variables & lists
-      s.scripts.forEach(Compiler.renameInScript.bind(this, function(defineSpec) {
-        return function(kind, name, target) {
+      s.scripts.forEach(function(script) {
+        function mapping(kind, name, target) {
           if (target) return;
 
           // we create them on this scriptable, because that's what scratch does
@@ -340,7 +340,8 @@ var Format = (function() {
             }
           }
         }
-      }));
+        Compiler.renameInScript(mapping, script);
+      });
 
       // validate variable, list, and parameter names
       var details = {
@@ -427,8 +428,6 @@ var Format = (function() {
       var rename = function(defineSpec, kind, name, target) {
         var target = target || defaultTarget;
 
-        if (name instanceof Array) return name;
-
         var details = scriptableMappings[target];
         var mapping = details[kind];
         var result;
@@ -444,21 +443,25 @@ var Format = (function() {
           result = mapping[name];
         }
 
+        if (!result) return name;
         if (result !== name) {
           console.log(target + ": " + name + " -> " + result);
         }
         return result;
       };
 
-      var mappingForScript = function(firstBlock) {
+      s.scripts = s.scripts.map(function(script) {
+        var blocks = script[2];
+        var firstBlock = blocks[0];
         var spec = null;
         if (firstBlock[0] === 'procDef') {
           spec = firstBlock[1];
         }
-        return rename.bind(this, spec);
-      }
-
-      s.scripts = s.scripts.map(Compiler.renameInScript.bind(this, mappingForScript));
+        var mapping = function(kind, name, target) {
+          return rename(spec, kind, name, target);
+        };
+        return Compiler.renameInScript(mapping, script);
+      });
     });
 
 

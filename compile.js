@@ -610,9 +610,8 @@ var Compiler = (function() {
 
   // TODO can we abstract out the AST-recursing stuff from generate()?
 
-  function renameInScript(mappingForScript, script) {
+  function renameInScript(mapping, script) {
     var x = script[0], y = script[1], blocks = script[2];
-    mapping = mappingForScript(blocks[0]);
     return [x, y, renameInList(mapping, blocks)];
   }
 
@@ -657,49 +656,46 @@ var Compiler = (function() {
     return value;
   }
 
-  function renameInBlockArgs(mapping, selector, a, b, c) {
-    var renameVar = mapping.bind(this, 'variable');
-    var renameList = mapping.bind(this, 'list');
-    var renameParameter = mapping.bind(this, 'parameter');
-
+  function renameInBlockArgs(rename, selector, a, b, c) {
     switch (selector) {
       // variables
       case 'readVariable':
       case 'showVariable:':
       case 'hideVariable:':
-        return [renameVar(a)];
+        return [rename('variable', a)];
       case 'setVar:to:':
       case 'changeVar:by:':
-        return [renameVar(a), b];
+        return [rename('variable', a), b];
 
       // variable on other sprite
       case 'getAttribute:of:':
         if (b instanceof Array ||
+            a instanceof Array ||
             Language.menuOptions.attribute.indexOf(a) > -1) {
           return [a, b];
         }
-        return [renameVar(a, b), b];
+        return [rename('variable', a, b), b];
 
       // lists
       case 'contentsOfList:':
       case 'showList:':
       case 'hideList:':
       case 'lineCountOfList:':
-        return [renameList(a)];
+        return [rename('list', a)];
       case 'append:toList:':
       case 'deleteLine:ofList:':
       case 'getLine:ofList:':
-        return [a, renameList(b)];
+        return [a, rename('list', b)];
       case 'insert:at:ofList:':
-        return [a, b, renameList(c)];
+        return [a, b, rename('list', c)];
       case 'setLine:ofList:to:':
-        return [a, renameList(b), c];
+        return [a, rename('list', b), c];
       case 'list:contains:':
-        return [renameList(a), b];
+        return [rename('list', a), b];
 
       // parameters
       case 'getParam':
-        // Assume parameter renaming is deterministic
+        // Assume parameter renaming is deterministic?
         // TODO
       case 'procDef':
         // TODO
