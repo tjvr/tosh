@@ -444,9 +444,6 @@ var Format = (function() {
         }
 
         if (!result) return name;
-        if (result !== name) {
-          console.log(target + ": " + name + " -> " + result);
-        }
         return result;
       };
 
