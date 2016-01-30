@@ -621,32 +621,55 @@ var Compiler = (function() {
   }
 
   function renameInBlock(mapping, block) {
-    var args = block.slice();
-    var selector = args.shift();
-    var proc = selector === 'call' ? args.shift() : null;
+    // this is heavily optimised because reasons
+
+    var selector = block[0];
     var info = Scratch.blocksBySelector[selector];
     var shape = info ? info.shape : null;
 
     var lists = [];
     if (/if-block/.test(shape) || selector === 'doIfElse') {
-      lists = args.splice(1);
+      if (block.length > 3) {
+        return [selector,
+          renameInArg(mapping, block[1]),
+          renameInList(mapping, block[2]),
+          renameInList(mapping, block[3]),
+        ];
+      } else {
+        return [selector,
+          renameInArg(mapping, block[1]),
+          renameInList(mapping, block[2]),
+        ];
+      }
     } else if (/c-block/.test(shape)) {
-      lists = args.splice(args.length === 1 ? 0 : 1);
+      if (block.length === 3) {
+        return [selector,
+          renameInArg(mapping, block[1]),
+          renameInList(mapping, block[2]),
+        ];
+      } else {
+        return [selector,
+          renameInList(mapping, block[1]),
+        ];
+      }
     }
 
-    args = args.map(renameInArg.bind(this, mapping));
-    lists = lists.map(renameInList.bind(this, mapping));
+    var result = [selector];
+    var i = 1;
+    if (selector === 'call') {
+      result.push(block[1]);
+      i = 2;
+    }
+    for ( ; i<block.length; i++) {
+      result.push(renameInArg(mapping, block[i]));
+    }
 
-    var newArgs = renameInBlockArgs(mapping, selector, args[0], args[1], args[2]);
+    var newArgs = renameInBlockArgs(mapping, selector, result[1], result[2], result[3]);
     if (newArgs) {
-      assert(newArgs.length === args.length);
-      args = newArgs;
+      assert(newArgs.length === block.length - 1);
+      result = [selector].concat(newArgs);
     }
-
-    args = args.concat(lists);
-
-    if (proc) args.splice(0, 0, proc);
-    return [selector].concat(args);
+    return result;
   }
 
   function renameInArg(mapping, value) {
