@@ -558,7 +558,7 @@ var Compiler = (function() {
     switch (value) {
       case '_mouse_':  return 'mouse-pointer';
       case '_myself_': return 'myself';
-      case '_Stage_':  return 'Stage';
+      case '_stage_':  return 'Stage';
       case '_edge_':  return 'edge';
     }
     if (isStringMenu(menu, value)) {

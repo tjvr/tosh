@@ -721,7 +721,7 @@ var Language = (function(Earley) {
   menuValues = {
     'mouse-pointer': '_mouse_',
     'myself': '_myself_',
-    'Stage': '_Stage_',
+    'Stage': '_stage_',
     'edge': '_edge_',
     // 'stageOrThis' does not use this
   }
