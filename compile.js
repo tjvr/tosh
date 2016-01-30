@@ -674,7 +674,10 @@ var Compiler = (function() {
 
       // variable on other sprite
       case 'getAttribute:of:':
-        if (b instanceof Array) return [a, b];
+        if (b instanceof Array ||
+            Language.menuOptions.attribute.indexOf(a) > -1) {
+          return [a, b];
+        }
         return [renameVar(a, b), b];
 
       // lists
