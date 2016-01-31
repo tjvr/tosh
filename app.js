@@ -770,6 +770,7 @@ var ScriptsEditor = function(sprite, project) {
   });
 
   // compile after new scripts editor is opened
+  // TODO this makes initial load feel slow
   App.needsCompile.assign(true);
   this.compile();
   App.needsPreview.assign(true);
@@ -798,10 +799,10 @@ ScriptsEditor.prototype.fixLayout = function(offset) {
 ScriptsEditor.prototype.compile = function() {
   if (!this.needsCompile()) return this.hasErrors();
 
-  // TODO do a separate compile, rather than re-highlighting
-  // TODO only repaint if there's a repaintTimeout
-  // for now, we always repaint, because bugs and slowness
-  this.repaint();
+  // TODO do a separate compile, rather than abusing the syntax highlighter
+  if (this.repaintTimeout) {
+    this.repaint();
+  }
 
   var finalState = this.cm.getStateAfter(this.cm.getDoc().size, true);
   function compileLine(b) {
@@ -874,6 +875,7 @@ ScriptsEditor.prototype.repaint = function() {
   this.cm.setOption('scratchDefinitions', this.definitions);
 
   // force re-highlight --slow!
+  // TODO use setOption('mode', { name: 'tosh', })  --this sends modeCfg afaict
   this.cm.setOption('mode', 'tosh');
 
   clearTimeout(this.repaintTimeout);
