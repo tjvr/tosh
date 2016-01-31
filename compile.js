@@ -492,6 +492,7 @@ var Compiler = (function() {
                         ['-', '/', '%'].indexOf(selector) > -1 &&
                         argIndex === 1)
                     || /menu/.test(inputShape)
+                    || (level === -1 && outerLevel > 0)
                       );
     if (needsParens) {
       switch (info.shape) {
@@ -540,7 +541,9 @@ var Compiler = (function() {
         return generateMenuLiteral(value, menu);
       case 'string':
         // Does it look like a number?
-        if (/^-?[0-9]+\.?[0-9]*$/.test(value)) {
+        if (/^-?[0-9]+\.?[0-9]*$/.test(value)
+            && level !== -1 // arguments to join must be quoted
+            ) {
           return '' + value;
         }
         return generateStringLiteral(value);
