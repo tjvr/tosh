@@ -7,7 +7,14 @@ Host.isMac = /Mac/i.test(navigator.userAgent);
 // save button uses FileSaver.js
 
 Host.save = function() {
-  var zip = App.save();
+  try {
+    var zip = App.save();
+    if (!zip) throw new Error("Couldn't compile project");
+  } catch (e) {
+    alert("Error saving project: " + e.message || e);
+    return;
+  }
+
   // TODO show alert if zip is null
   var blob = zip.generate({ type: 'blob' });
   var fileName = (App.project()._fileName || "tosh") + ".sb2";
@@ -15,11 +22,12 @@ Host.save = function() {
   if (!isSafari) {
     saveAs(blob, fileName, true);
   } else {
-    var url = "data:application/zip;base64," + zip.generate({ type:"base64" });
+    var url = "data:application/zip;base64," + zip.generate({ type: 'base64' });
     location.href = url;
   }
 };
 document.querySelector('#button-save').addEventListener('click', Host.save);
+
 
 // doesn't seem to work in Safari!
 
