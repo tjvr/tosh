@@ -788,24 +788,31 @@ li.CodeMirror-hint-active {
 
 /*****************************************************************************/
 
+.shaded {
+  filter: blur(2px);
+  -webkit-filter: blur(2px);
+}
+
 .shade {
   width: 100vw;
   height: 100vh;
   z-index: 10;
-  background: rgba(0,0,0, 0.8);
+  background: rgba(127,127,127, 0.4);
   position: absolute;
   color: #fff;
-  transition: opacity 200ms ease-out;
+  transition: opacity 150ms ease-out;
 }
 .shade-fade {
   pointer-events: none;
   opacity: 0;
 }
 
+
 .massive {
-  font-size: 15vw;
+  font-size: 64px;
   line-height: 100vh;
   font-family: Source Code Pro, monospace;
   text-align: center;
-  letter-spacing: -1vw;
+  letter-spacing: -4px;
 }
+

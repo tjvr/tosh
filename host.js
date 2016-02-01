@@ -4,14 +4,40 @@ var Host = {};
 Host.isMac = /Mac/i.test(navigator.userAgent);
 
 
+// progress indicators
+// TODO actual progress bars/framework
+
+var Indicator = function() {
+  var loading = el('.shade', el('.massive', "Loading"));
+  document.body.appendChild(loading);
+
+  document.querySelector('#menu').classList.add('shaded');
+  document.querySelector('#wrap').classList.add('shaded');
+
+  return {
+    clear: function() {
+      document.querySelector('#menu').classList.remove('shaded');
+      document.querySelector('#wrap').classList.remove('shaded');
+
+      loading.classList.add('shade-fade');
+      setTimeout(function() {
+        document.body.removeChild(loading);
+      }, 1000);
+    },
+  }
+};
+
+
 // save button uses FileSaver.js
 
 Host.save = function() {
+  var indicator = Indicator('Saving');
   try {
     var zip = App.save();
     if (!zip) throw new Error("Couldn't compile project");
   } catch (e) {
     alert("Error saving project: " + e.message || e);
+    indicator.clear();
     return;
   }
 
@@ -25,6 +51,7 @@ Host.save = function() {
     var url = "data:application/zip;base64," + zip.generate({ type: 'base64' });
     location.href = url;
   }
+  indicator.clear();
 };
 document.querySelector('#button-save').addEventListener('click', Host.save);
 
@@ -43,8 +70,7 @@ if (isSafari) {
 // load dropped in / opened file
 
 function loadFile(f) {
-  var loading = el('.shade', el('.massive', "Loading"));
-  document.body.appendChild(loading);
+  var indicator = Indicator('Loading');
 
   var parts = f.name.split('.');
   var ext = parts.pop();
@@ -59,10 +85,7 @@ function loadFile(f) {
 
       App.loadProject(project);
 
-      loading.classList.add('shade-fade');
-      setTimeout(function() {
-        document.body.removeChild(loading);
-      }, 1000);
+      indicator.clear();
     };
     reader.readAsArrayBuffer(f);
     return true;
