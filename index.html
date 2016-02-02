@@ -1,0 +1,102 @@
+<!doctype html>
+<meta charset=utf-8>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+<meta name=apple-mobile-web-app-capable content=yes>
+
+<title>tosh [source]</title>
+
+<link rel="shortcut icon" href=website/favicon.png>
+
+<!-- css -->
+
+<link rel=stylesheet href=vendor/codemirror/lib/codemirror.css>
+<link rel=stylesheet href=vendor/codemirror/addon/hint/show-hint.css>
+<link rel=stylesheet href=vendor/codemirror/addon/scroll/simplescrollbars.css>
+<link rel=stylesheet href=vendor/codemirror/addon/search/matchesonscrollbar.css>
+<link rel=stylesheet href=vendor/codemirror/addon/dialog/dialog.css>
+
+<link rel=stylesheet href=vendor/phosphorus/player.css>
+<link rel=stylesheet href=shared.css>
+<link rel=stylesheet href=style.css>
+
+<!-- body -->
+
+<body class="wrap app">
+
+<div id="shade"></div>
+
+<div id="menu">
+  <a class=logo href="http://tosh.tjvr.org/">tosh</a><button class=menu-button id=button-load>Open</button><button class=menu-button id=button-save>Save</button>
+  <a class="menu-button right" href="http://tosh.tjvr.org/help/" target="_blank">Help</a>
+</div>
+
+<div id="wrap" class="has-menu">
+  <div id="tab-bar"></div>
+  <div id="sidebar"></div>
+
+  <div id="editor"></div>
+
+  <div id="phosphorus">
+    <div class=controls>
+      <div class=progress-bar></div>
+      <span class=stop></span>
+      <span class=pause></span>
+      <span class=flag title="Shift+click to enable turbo mode."></span>
+      <div class=turbo>Turbo Mode</div>
+      <span class=small-stage></span>
+      <span class=full-screen></span>
+    </div>
+    <div class=player></div>
+  </div>
+
+  <noscript>
+    <p class=big>Whoops, you disabled Javascript.
+  </noscript>
+</div>
+
+<!-- js -->
+
+<script>
+function assert(x, message) {
+  if (!x) throw new Error("Assertion failed: " + (message || ''));
+}
+</script>
+
+<script src=vendor/codemirror/lib/codemirror.js></script>
+<script src=vendor/codemirror/addon/hint/show-hint.js></script>
+<script src=vendor/codemirror/keymap/vim.js></script>
+<script src=vendor/codemirror/addon/runmode/runmode.js></script>
+<script src=vendor/codemirror/keymap/vim.js></script>
+<script src=vendor/codemirror/addon/scroll/simplescrollbars.js></script>
+<script src=vendor/codemirror/addon/scroll/annotatescrollbar.js></script>
+<script src=vendor/codemirror/addon/search/matchesonscrollbar.js></script>
+<script src=vendor/codemirror/addon/edit/closebrackets.js></script>
+<script src=vendor/codemirror/addon/edit/matchbrackets.js></script>
+<script src=vendor/codemirror/addon/search/search.js></script>
+<script src=vendor/codemirror/addon/search/searchcursor.js></script>
+<script src=vendor/codemirror/addon/dialog/dialog.js></script>
+
+<script src=vendor/filesaver/FileSaver.min.js></script>
+
+<script src=vendor/koel/koel.js></script>
+
+<script src=//cdnjs.cloudflare.com/ajax/libs/jszip/2.4.0/jszip.min.js></script>
+<script src=//canvg.googlecode.com/svn/trunk/rgbcolor.js></script>
+<script src=//canvg.googlecode.com/svn/trunk/StackBlur.js></script>
+<script src=//canvg.googlecode.com/svn/trunk/canvg.js></script>
+<script src=//crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/md5.js></script>
+
+<script src=oops.js></script>
+<script src=commands.js></script>
+<script src=earley.js></script>
+<script src=language.js></script>
+<script src=mode.js></script>
+<script src=compile.js></script>
+<script src=format.js></script>
+
+<script src=vendor/phosphorus/phosphorus.js></script>
+<script src=player.js></script>
+
+<script src=host.js></script>
+<script src=app.js></script>
+

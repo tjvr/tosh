@@ -1,0 +1,12 @@
+[submodule "vendor/phosphorus"]
+	path = vendor/phosphorus
+	url = git@github.com:nathan/phosphorus
+[submodule "vendor/codemirror"]
+	path = vendor/codemirror
+	url = git@github.com:codemirror/codemirror
+[submodule "vendor/koel"]
+	path = vendor/koel
+	url = git@github.com:tjvr/koel
+[submodule "vendor/filesaver"]
+	path = vendor/filesaver
+	url = https://github.com/eligrey/FileSaver.js/
