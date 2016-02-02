@@ -217,6 +217,7 @@ body {
 .controls span {
   opacity: 1;
   position: relative;
+  background-image: url(icons.svg);
 }
 
 .flag.needs-preview:after,

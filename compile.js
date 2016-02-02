@@ -4,6 +4,11 @@ var Compiler = (function() {
     if (!value) throw new Error(message || "There's a problem here");
   }
 
+  function sum(seq) {
+    return seq.reduce(function(a, b) { return a + b; }, 0);
+  }
+
+
   /* compile: tosh -> AST */
 
   function compile(lines) {

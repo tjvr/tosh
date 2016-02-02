@@ -1,5 +1,9 @@
 var Format = (function() {
 
+  function sum(seq) {
+    return seq.reduce(function(a, b) { return a + b; }, 0);
+  }
+
   function arrayBufferToBinary(ab) {
     var binary = '';
     var bytes = new Uint8Array(ab);
