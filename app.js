@@ -704,7 +704,7 @@ function removeUndoKeys(keyMap) {
 
 var cmOptions = {
   value: "",
-  mode: 'tosh',
+  mode: '',
 
   indentUnit: 3,
   smartIndent: true,
@@ -720,10 +720,6 @@ var cmOptions = {
   cursorHeight: 1,
 
   undoDepth: NaN,
-
-  scratchVariables: [],
-  scratchLists: [],
-  scratchDefinitions: [],
 
   extraKeys: extraKeys,
 
@@ -870,13 +866,13 @@ ScriptsEditor.prototype.repaint = function() {
     return names;
   }
 
-  this.cm.setOption('scratchVariables', getNames('variables'));
-  this.cm.setOption('scratchLists', getNames('lists'));
-  this.cm.setOption('scratchDefinitions', this.definitions);
-
   // force re-highlight --slow!
-  // TODO use setOption('mode', { name: 'tosh', })  --this sends modeCfg afaict
-  this.cm.setOption('mode', 'tosh');
+  this.cm.setOption('mode', {
+    name: 'tosh',
+    variables: getNames('variables'),
+    lists: getNames('lists'),
+    definitions: this.definitions,
+  });
 
   clearTimeout(this.repaintTimeout);
   this.repaintTimeout = null;

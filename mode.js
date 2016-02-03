@@ -9,24 +9,18 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     this.lineTokens = [];
     this.indent = 0;
 
-    // TODO use modeCfg instead of cfg
-
-    cfg.scratchVariables = cfg.scratchVariables || modeCfg.variables || [];
-    cfg.scratchLists = cfg.scratchLists || [];
-    cfg.scratchDefinitions = cfg.scratchDefinitions || [];
-
     var grammar = Language.grammar.copy();
-    cfg.scratchVariables.forEach(function(variable) {
+    modeCfg.variables.forEach(function(variable) {
       var name = variable._name();
       if (!name) return;
       Language.addDefinition(grammar, { name: name, });
     });
-    cfg.scratchLists.forEach(function(list) {
+    modeCfg.lists.forEach(function(list) {
       var name = list._name();
       if (!name) return;
       Language.addDefinition(grammar, { name: name, value: [] });
     });
-    cfg.scratchDefinitions.forEach(function(result) {
+    modeCfg.definitions.forEach(function(result) {
       Language.addCustomBlock(grammar, result);
     });
 
