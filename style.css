@@ -93,20 +93,20 @@ body {
   vertical-align: bottom;
   padding: 0 8px;
   z-index: 3;
-  border-bottom: 1px solid transparent;
+  border-bottom: 2px solid transparent;
   background: #fffcc9;
+  height: 24px;
+  line-height: 22px;
 }
 .logo:hover,
 .menu-button:hover {
-  background: #fffeef;
+  background: inherit;
 }
 
 .logo {
-  font-size: 22px;
+  font-size: 20px;
   letter-spacing: -1px;
   font-weight: 600;
-  padding-bottom: 1px;
-  margin-top: -1px;
   font-family: Source Code Pro, monospace;
 }
 
@@ -117,8 +117,6 @@ body {
 .menu-button {
   font-size: 14px;
   cursor: default; /* Sadly my file input doesn't like cursor: pointer */
-  position: relative;
-  top: -1px;
 }
 #menu > .menu-button:hover {
   border-bottom-color: #000;
