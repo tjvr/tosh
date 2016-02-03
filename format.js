@@ -326,6 +326,7 @@ var Format = (function() {
       s.scripts.forEach(function(script) {
         function mapping(kind, name, target) {
           if (target) return;
+          if (name.constructor === Array) return;
 
           // we create them on this scriptable, because that's what scratch does
           if (kind === 'variable') {
