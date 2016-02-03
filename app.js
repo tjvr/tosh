@@ -1118,6 +1118,9 @@ function requestHint(cm) {
 
 function expandCompletions(completions, g) {
   function expand(symbol) {
+    // don't suggest names twice
+    if (['VariableName', 'ListName', 'ReporterParam'].indexOf(symbol) > -1) return [];
+
     if (typeof symbol !== 'string') {
       return [[symbol]];
     }
