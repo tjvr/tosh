@@ -69,8 +69,8 @@ if (isSafari) {
 
 // load dropped in / opened file
 
-function loadFile(f) {
-  var indicator = Indicator('Loading');
+function loadFile(f, indicator) {
+  var indicator = indicator || Indicator('Loading');
 
   var parts = f.name.split('.');
   var ext = parts.pop();
@@ -92,13 +92,14 @@ function loadFile(f) {
   }
 }
 
-function loadFiles(files) {
+function loadFiles(files, indicator) {
   // if single file, try to load project
   if (files.length === 1) {
     var f = files[0];
     if (!f) return;
-    if (loadFile(f)) return;
+    if (loadFile(f, indicator)) return;
   }
+  indicator.clear(); // don't need that
 
   // drag in assets
   App.filesDropped(files);
@@ -112,8 +113,10 @@ var fileInput = el('input', { type: 'file', });
 loadBtn.appendChild(fileInput);
 
 function handleFileSelect(e) {
-  loadFiles(e.target.files);
-
+  var indicator = Indicator('Loading');
+  setTimeout(function() {
+    loadFiles(e.target.files, indicator);
+  }, 200);
 }
 fileInput.addEventListener('change', handleFileSelect, false);
 

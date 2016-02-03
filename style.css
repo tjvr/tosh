@@ -97,6 +97,7 @@ body {
   background: #fffcc9;
   height: 24px;
   line-height: 22px;
+  position: relative;
 }
 .logo:hover,
 .menu-button:hover {
@@ -116,13 +117,13 @@ body {
 }
 .menu-button {
   font-size: 14px;
-  cursor: default; /* Sadly my file input doesn't like cursor: pointer */
+  cursor: pointer;
 }
 #menu > .menu-button:hover {
   border-bottom-color: #000;
 }
 .menu-button:active {
-  top: 0;
+  top: 1px;
 }
 
 .menu-title {
@@ -144,11 +145,12 @@ body {
   position: absolute;
   bottom: 0;
   right: 0;
-  left: 0;
-  height: 32px;
-  font-size: 30px;
+  width: 1000px;
+  height: 1000px;
+  font-size: 100px;
   opacity: 0;
   z-index: 0;
+  cursor: pointer;
 }
 
 #button-help {

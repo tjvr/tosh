@@ -420,7 +420,6 @@ var ListEditor = function(obj, kind, active) {
   }
   window.addEventListener('mousemove', function(e) {
     pointerMove(e);
-    e.preventDefault();
   });
   doNext(function() {
     ul.parentNode.addEventListener('wheel', pointerMove);
