@@ -218,6 +218,17 @@ var Scratch = (function() {
     return inputShapes[s];
   };
 
+  /* alternative info for stop block */
+
+  var osisInfo = {
+    category: "control",
+    defaults: ["all"],
+    inputs: ["%m.stop"],
+    parts: ["stop", "%m.stop", ""],
+    selector: "stopScripts",
+    shape: "stack",
+    spec: "stop %m.stop",
+  };
 
 
   return {
@@ -225,6 +236,8 @@ var Scratch = (function() {
     blocksBySelector: blocksBySelector,
     inputPat: inputPat,
     getInputShape: getInputShape,
+
+    stopOtherScripts: osisInfo,
   };
 
 }());

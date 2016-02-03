@@ -1,5 +1,3 @@
-// TODO stop other scripts in stage
-
 var Language = (function(Earley) {
 
   /* Tokenizer */
@@ -426,12 +424,21 @@ var Language = (function(Earley) {
         }
       });
 
+      // stop other scripts in sprite
+      var outInfo = info;
+      if (info.selector === 'stopScripts') {
+        var option = args[0];
+        if (['all', 'this script'].indexOf(option) === -1) {
+          outInfo = Scratch.stopOtherScripts;
+        }
+      }
+
       // Coerce all the arguments to match their slots!
       for (var i=0; i<args.length; i++) {
         args[i] = convertArg(args[i], info.inputs[i]);
       }
 
-      return new Block(info, args, tokens);
+      return new Block(outInfo, args, tokens);
     };
     func._info = info;
     return func;
@@ -1093,8 +1100,6 @@ var Language = (function(Earley) {
 
 
   /* for c-blocks and `end`s */
-
-  // TODO: shape of "stop" block for "other scripts in sprite"?
 
   var LineSpec = function(obj) {
     this.obj = obj;
