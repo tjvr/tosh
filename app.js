@@ -887,14 +887,13 @@ ScriptsEditor.prototype.debounceRepaint = function() {
 };
 
 ScriptsEditor.prototype.checkDefinitions = function() {
-  var contents = this.cm.getValue();
-  var lines = contents.split('\n');
-
   var defineParser = new Earley.Parser(Language.defineGrammar);
 
   var definitions = [];
-  lines.forEach(function(line) {
+  this.cm.doc.iter(function(line) {
+    var line = line.text;
     if (!/^define(-atomic)? /.test(line)) return;
+
     var tokens = Language.tokenize(line);
     var results;
     try {
