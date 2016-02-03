@@ -166,12 +166,13 @@ Player = (function() {
       stage.pause();
     }
     while (player.firstChild) player.removeChild(player.lastChild);
-    turbo.style.display = 'none';
     pause.className = 'pause';
     
     request.onload = function(s) {
+      var isTurbo = stage ? stage.isTurbo : false;
       window.stage = stage = s;
       stage.start();
+      stage.isTurbo = isTurbo;
       updateFullScreen();
 
       stage.root.addEventListener('keydown', exitFullScreen);
