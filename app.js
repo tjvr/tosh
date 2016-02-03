@@ -1101,8 +1101,6 @@ function tokenizeAtCursor(cm, options) {
   }
 }
 
-var returnPressed = true;
-
 function requestHint(cm) {
   cm.showHint({
     hint: computeHint,
@@ -1113,7 +1111,6 @@ function requestHint(cm) {
       Down:     function(_, menu) { menu.moveFocus(1); },
       Home:     function(_, menu) { menu.setFocus(0);},
       End:      function(_, menu) { menu.setFocus(menu.length - 1); },
-      Enter:    function(_, menu) { returnPressed = true; menu.pick(); returnPressed = false }, // TODO decide
       Tab:      function(_, menu) { menu.pick(); },
       Esc:      function(_, menu) { menu.close() },
     },
@@ -1378,8 +1375,6 @@ function computeHint(cm) {
     list.push(completion);
   });
 
-  returnPressed = false;
-
   var result = {
     list: list,
     from: l.from,
@@ -1388,7 +1383,6 @@ function computeHint(cm) {
 
   function applyHint(cm, data, completion) {
     var text = completion.text;
-    if (completion.newline && returnPressed) text += '\n';
     cm.replaceRange(text, completion.from || data.from,
                           completion.to || data.to, "complete");
     if (completion.selection) {
