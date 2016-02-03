@@ -84,7 +84,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     result = result.process();
 
     // if definition, add parameters to scope
-    if (result.info.selector === 'procDef') {
+    if (result && result.info.selector === 'procDef') {
       this.scopeGrammar = this.scopeGrammar.copy();
       Language.addParameters(this.scopeGrammar, result);
       this.lines.push(result);
