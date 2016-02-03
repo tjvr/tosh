@@ -114,9 +114,7 @@ loadBtn.appendChild(fileInput);
 
 function handleFileSelect(e) {
   var indicator = Indicator('Loading');
-  setTimeout(function() {
-    loadFiles(e.target.files, indicator);
-  }, 200);
+  loadFiles(e.target.files, indicator);
 }
 fileInput.addEventListener('change', handleFileSelect, false);
 
