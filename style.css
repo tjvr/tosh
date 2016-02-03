@@ -86,7 +86,8 @@ body {
   top: 0; left: 0; right: 0;
   line-height: 24px;
   height: 24px;
-  background: #fffcc9;
+  background: #9d86c1;
+  color: #fff;
 }
 #menu > * {
   display: inline-block;
@@ -94,7 +95,7 @@ body {
   padding: 0 8px;
   z-index: 3;
   border-bottom: 2px solid transparent;
-  background: #fffcc9;
+  background: inherit;
   height: 24px;
   line-height: 22px;
   position: relative;
@@ -120,7 +121,7 @@ body {
   cursor: pointer;
 }
 #menu > .menu-button:hover {
-  border-bottom-color: #000;
+  border-bottom-color: #fff;
 }
 .menu-button:active {
   top: 1px;
@@ -600,7 +601,7 @@ body {
 
 .CodeMirror {
   font-family: Noto Sans, sans-serif;
-  letter-spacing: +0.5px;
+  letter-spacing: +0.33px;
   font-size: 14px;
   line-height: 20px;
 }
