@@ -789,6 +789,11 @@ var ScriptsEditor = function(sprite, project) {
 
 ScriptsEditor.prototype.fixLayout = function(offset) {
   this.cm.setSize(NaN, this.el.clientHeight);
+
+  // make sure scrollbar has width (cm.display.barWidth)
+  // otherwise annotations won't appear!
+  this.cm.setOption('scrollbarStyle', 'native');
+  this.cm.setOption('scrollbarStyle', 'overlay');
 };
 
 ScriptsEditor.prototype.compile = function() {
