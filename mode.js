@@ -58,53 +58,12 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     }
     this.scopeGrammar = this.scopeGrammar || this.startGrammar;
 
-    var defineParser = new Earley.Parser(Language.defineGrammar);
-
-    function isDefineToken(t) {
-      return t.kind === "symbol" && t.value === "define";
-    }
-
-    var define = null;
-    try {
-      var results = defineParser.parse(tokens);
-      define = results[0].process();
-    } catch (err) {}
-    if (define) {
-      // make the definition block
-
-      var isAtomic = define.isAtomic;
-
-      var inputNames = [];
-      var defaults = [];
-      var specParts = define.parts.map(function(part) {
-        if (typeof part === 'string') {
-          return part;
-        } else {
-          inputNames.push(part.name);
-          switch (part.arg) {
-            case 'n': defaults.push(0);     return '%n';
-            case 'b': defaults.push(false); return '%b';
-            case 'sb': defaults.push("");   return '%s';
-          }
-        }
-      });
-
-      this.scopeGrammar = this.scopeGrammar.copy();
-      Language.addParameters(this.scopeGrammar, define);
-
-      var spec = specParts.join(' ');
-      var args = [spec, inputNames, defaults, isAtomic];
-      this.lines.push({info: {shape: 'hat', selector: 'procDef'}, args: args});
-      return;
-    }
-
     var p = new Earley.Parser(this.scopeGrammar);
 
     var result;
     try {
       results = p.parse(tokens);
     } catch (err) {
-      // console.log(err); // DEBUG
       this.lines.push({info: {shape: 'error', error: err.message}});
       results = err.partialResult;
     }
@@ -123,6 +82,15 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     }
     var result = results[0];
     result = result.process();
+
+    // if definition, add parameters to scope
+    if (result.info.selector === 'procDef') {
+      this.scopeGrammar = this.scopeGrammar.copy();
+      Language.addParameters(this.scopeGrammar, result);
+      this.lines.push(result);
+      return;
+    }
+
     paintBlocks(result);
     if (result) {
       this.lines.push(result);

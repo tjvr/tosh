@@ -1230,7 +1230,7 @@ function computeHint(cm) {
     expansions = expansions.filter(function(x) {
       var first = x.completion[0];
       return (first.kind === 'symbol' && partial.kind === 'symbol' &&
-              first.value.indexOf(partial.value) === 0
+              first.value && first.value.indexOf(partial.value) === 0
         ); // || (typeof first === 'string' && x.via.pre.length);
     });
   } else {

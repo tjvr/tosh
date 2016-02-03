@@ -331,11 +331,33 @@ var Language = (function(Earley) {
     return b;
   }
 
-  function definition(a, b) {
-    return {
-      isAtomic: a === 'define-atomic',
-      parts: b,
-    }
+  function definition(a, parts) {
+    var isAtomic = a === 'define-atomic';
+
+    var inputNames = [];
+    var defaults = [];
+    var specParts = parts.map(function(part) {
+      if (typeof part === 'string') {
+        return part;
+      } else {
+        inputNames.push(part.name);
+        switch (part.arg) {
+          case 'n': defaults.push(0);     return '%n';
+          case 'b': defaults.push(false); return '%b';
+          case 'sb': defaults.push("");   return '%s';
+        }
+      }
+    });
+
+    var spec = specParts.join(' ');
+    var args = [spec, inputNames, defaults, isAtomic];
+
+    var definition = {
+      info: {shape: 'hat', selector: 'procDef'},
+      args: args,
+      _parts: parts,
+    };
+    return definition;
   }
 
   var defineGrammar = new Grammar([
@@ -356,6 +378,7 @@ var Language = (function(Earley) {
       Rule("word-seq", ["word-seq", "word"], push),
       Rule("word-seq", ["word"], box),
       Rule("word", [{kind: 'symbol'}], identity),
+      //Rule("word", [{kind: 'identifier'}], identity),
   ]);
 
 
@@ -874,6 +897,12 @@ var Language = (function(Earley) {
   });
 
 
+  /* Add rules for definitions */
+
+  defineGrammar.rules.forEach(g.addRule.bind(g));
+
+
+
   /* for parsing `define`s */
 
   function paintSymbols(category) {
@@ -894,8 +923,8 @@ var Language = (function(Earley) {
   }
 
   function addCustomBlock(grammar, result) {
-    var isAtomic = result.isAtomic;
-    var specParts = result.parts;
+    var isAtomic = result.args[3];
+    var specParts = result._parts;
 
     var symbols = [];
     var parts = [];
@@ -930,11 +959,10 @@ var Language = (function(Earley) {
   }
 
   function addParameters(grammar, result) {
-    var isAtomic = result.isAtomic;
-    var specParts = result.parts;
+    var isAtomic = result.args[3];
+    var specParts = result._parts;
 
     specParts.forEach(function(x, index) {
-
       if (x.arg) {
         var name = x.arg === 'b' ? "BooleanParam" : "ReporterParam";
         grammar.addRule(new Rule(name, nameSymbols(x.name),
@@ -1098,6 +1126,7 @@ var Language = (function(Earley) {
     return b;
   }
 
+  // TODO remove or use
   blockGrammar = new Grammar([
       Rule("script-list", ["script"], box),
       Rule("script-list", ["script-list", "blank-line", "script"], push2),
