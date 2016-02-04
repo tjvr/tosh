@@ -41,10 +41,9 @@ var Language = (function(Earley) {
     ['langle',  /\</],   ['rangle',  /\>/],
     ['lsquare', /\[/],   ['rsquare', /\]/],
     ['cloud',  /[☁]/],
-    ['symbol',  /[-%#+*/=^,?]/],             // single character
-//  ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',]*/],   // words
-    ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',.]*/],  // TODO ew
-    ['identifier',  /[^ \t"'()<>]+/],  // argh
+    ['symbol',  /[-%#+*/=^,?]/],                // single character
+    ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',.]*/], // word, as in a block
+    ['identifier',  /[^ \t"'()<>=*\/+-]+/],     // user-defined names
   ];
 
   var backslashEscapeSingle = /(\\['\\])/g;
@@ -1084,7 +1083,7 @@ var Language = (function(Earley) {
     }
     tokens = tokens.filter(function(token, index) {
       return (
-        token.kind === 'symbol' ||
+        (token.kind === 'symbol' && !/^[=*\/+-]$/.test(token.value)) ||
         token.kind === 'identifier' ||
         token.kind === 'number' ||
         (token.kind === 'cloud' && index === 0)
