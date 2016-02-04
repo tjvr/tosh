@@ -800,6 +800,8 @@ ScriptsEditor.prototype.compile = function() {
   if (!this.needsCompile()) return this.hasErrors();
 
   // TODO do a separate compile, rather than abusing the syntax highlighter
+
+  // re-highlight now, if we're waiting to debounce changes
   if (this.repaintTimeout) {
     this.repaint();
   }

@@ -326,6 +326,7 @@ var Format = (function() {
       s.scripts.forEach(function(script) {
         function mapping(kind, name, target) {
           if (target) return;
+          if (kind === 'parameter') return;
           if (name.constructor === Array) return;
 
           // we create them on this scriptable, because that's what scratch does
@@ -356,6 +357,7 @@ var Format = (function() {
       };
       var target = s.objName();
       var seen = {};
+      s._seen = seen;
       if (s === p) {
         target = "_stage_";
         stageSeen = seen;
@@ -429,6 +431,7 @@ var Format = (function() {
 
     [p].concat(p.sprites()).forEach(function(s) {
       var defaultTarget = s === p ? "_stage_" : s.objName();
+      var seen = s._seen;
 
       var rename = function(defineSpec, kind, name, target) {
         var target = target || defaultTarget;
@@ -455,11 +458,23 @@ var Format = (function() {
       s.scripts = s.scripts.map(function(script) {
         var blocks = script[2];
         var firstBlock = blocks[0];
+
         var spec = null;
+        var parameters = {};
         if (firstBlock[0] === 'procDef') {
           spec = firstBlock[1];
+          var names = firstBlock[2];
+          names.forEach(function(name) {
+            var newName = Language.cleanName('parameter', name, seen, stageSeen);
+            parameters[name] = newName;
+          });
         }
+
         var mapping = function(kind, name, target) {
+          if (kind === 'parameter') {
+            return parameters[name] || name;
+          }
+
           return rename(spec, kind, name, target);
         };
         return Compiler.renameInScript(mapping, script);

@@ -672,7 +672,7 @@ var Compiler = (function() {
       result.push(renameInArg(mapping, block[i]));
     }
 
-    var newArgs = renameInBlockArgs(mapping, selector, result[1], result[2], result[3]);
+    var newArgs = renameInBlockArgs(mapping, selector, result);
     if (newArgs) {
       assert(newArgs.length === block.length - 1);
       result = [selector].concat(newArgs);
@@ -687,7 +687,9 @@ var Compiler = (function() {
     return value;
   }
 
-  function renameInBlockArgs(rename, selector, a, b, c) {
+  function renameInBlockArgs(rename, selector, block) {
+    var a = block[1], b = block[2], c = block[3];
+    // rename(kind, name, target)
     switch (selector) {
       // variables
       case 'readVariable':
@@ -726,10 +728,18 @@ var Compiler = (function() {
 
       // parameters
       case 'getParam':
-        // Assume parameter renaming is deterministic?
-        // TODO
+        return [rename('parameter', a), b];
+
       case 'procDef':
-        // TODO
+        // TODO rename procDefs
+        var spec = a,
+            names = b,
+            defaults = c.slice(),
+            isAtomic = block[4];
+        names = names.map(function(param) {
+          return rename('parameter', param);
+        });
+        return [spec, names, defaults, isAtomic];
     }
   }
 

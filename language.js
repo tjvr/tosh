@@ -1094,7 +1094,8 @@ var Language = (function(Earley) {
     // don't put space before question mark
     name = name.replace(/ \?( |$)/g, "?");
 
-    var shortKind = kind === 'variable' ? "var" : kind;
+    var shortKind = kind === 'variable' ? "var"
+                  : kind === 'parameter' ? "param" : kind;
     if (!name) name = shortKind;
 
     nameSymbols(name); // Check this doesn't crash
