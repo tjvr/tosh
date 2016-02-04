@@ -1259,8 +1259,15 @@ function computeHint(cm) {
     var aInfo = a.via.rule.process._info;
     var bInfo = b.via.rule.process._info;
     if (aInfo && bInfo) {
+      // TODO actually sort these based on an array
       if (aInfo.selector === 'say:duration:elapsed:from:' && bInfo.selector === 'say:') return 1;
       if (aInfo.selector === 'think:duration:elapsed:from:' && bInfo.selector === 'think:') return 1;
+
+      if (aInfo.selector === 'getAttribute:of:' && bInfo.selector === 'heading') return 1;
+      if (aInfo.selector === 'distanceTo:' && bInfo.selector === 'heading') return 1;
+
+      if (aInfo.selector === 'stopAllSounds' && bInfo.selector === 'stopScripts') return 1;
+      if (aInfo.selector === 'stampCostume' && bInfo.selector === 'stopScripts') return 1;
     }
     return a.length < b.length ? +1 : a.length > b.length ? -1 : 0;
   });
