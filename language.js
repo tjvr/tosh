@@ -105,6 +105,18 @@ var Language = (function(Earley) {
         text += m[0];
       }
 
+      // 'identifier' adds onto the preceding 'symbol'
+      if (kind === 'identifier' && tokens.length) {
+        var lastToken = tokens[tokens.length - 1];
+        if (lastToken.kind === 'symbol' && !/[ \t]$/.test(lastToken.text)) {
+          lastToken.text += text;
+          lastToken.value += value;
+          lastToken.kind = 'identifier';
+          expectedWhitespace = true;
+          continue;
+        }
+      }
+
       // the first token gets the leading whitespace
       if (tokens.length === 0) {
         text = leadingWhitespace + text;
@@ -368,15 +380,19 @@ var Language = (function(Earley) {
       Rule("spec-seq", ["spec"], box),
 
       Rule("spec", [{kind: 'symbol'}], paintLiteral("custom")),
+      Rule("spec", [{kind: 'identifier'}], paintLiteral("custom")),
+
       Rule("spec", [{kind: 'lparen'}, "arg-words", {kind: 'rparen'}], param),
       Rule("spec", [{kind: 'langle'}, "arg-words", {kind: 'rangle'}], param),
       Rule("spec", [{kind: 'lsquare'}, "arg-words", {kind: 'rsquare'}], param),
 
       Rule("arg-words", ["word-seq"], paintList("parameter")),
+
       Rule("word-seq", ["word-seq", "word"], push),
       Rule("word-seq", ["word"], box),
+
       Rule("word", [{kind: 'symbol'}], identity),
-      //Rule("word", [{kind: 'identifier'}], identity),
+      Rule("word", [{kind: 'identifier'}], identity),
   ]);
 
 
@@ -943,8 +959,11 @@ var Language = (function(Earley) {
         symbols.push(x.arg);
         parts.push("%" + x.arg);
       } else {
-        symbols.push([x]);
-        parts.push(x);
+        var words = tokenize(cleanName('procedure', x, {}, {}));
+        words.forEach(function(token) {
+          symbols.push(new SymbolSpec(token.kind, token.value));
+          parts.push(token.text);
+        });
       }
     });
     var spec = parts.join(" ");
