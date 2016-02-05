@@ -40,7 +40,8 @@ var Language = (function(Earley) {
     ['lparen',  /\(/],   ['rparen',  /\)/],
     ['langle',  /\</],   ['rangle',  /\>/],
     ['lsquare', /\[/],   ['rsquare', /\]/],
-    ['cloud',  /[☁]/],
+    ['cloud',   /[☁]/],
+    ['input',   /%[a-z](?:\.[a-zA-Z]+)?/],
     ['symbol',  /[-%#+*/=^,?]/],                // single character
     ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',.]*/], // word, as in a block
     ['identifier',  /[^ \t"'()<>=*\/+-]+/],     // user-defined names
@@ -331,9 +332,16 @@ var Language = (function(Earley) {
     switch (a.kind) {
       case "lparen": return {arg: "n", name: b};
       case "langle": return {arg: "b", name: b};
-      case "lsquare": return {arg: "sb", name: b};
+      case "lsquare": return {arg: "s", name: b};
     }
   };
+
+  function hackedParam(i, a, b, c) {
+    // warning: mutates arguments
+    i.category = a.category = c.category = "parameter";
+    return {arg: i.value.slice(1), name: b};
+  };
+
 
   function listItems(a, b, c) {
     // warning: mutates arguments
@@ -354,7 +362,8 @@ var Language = (function(Earley) {
         switch (part.arg) {
           case 'n': defaults.push(0);     return '%n';
           case 'b': defaults.push(false); return '%b';
-          case 'sb': defaults.push("");   return '%s';
+          case 's': defaults.push("");   return '%s';
+          default: defaults.push(""); return '%' + part.arg;
         }
       }
     });
@@ -385,6 +394,7 @@ var Language = (function(Earley) {
       Rule("spec", [{kind: 'lparen'}, "arg-words", {kind: 'rparen'}], param),
       Rule("spec", [{kind: 'langle'}, "arg-words", {kind: 'rangle'}], param),
       Rule("spec", [{kind: 'lsquare'}, "arg-words", {kind: 'rsquare'}], param),
+      Rule("spec", [{kind: 'input'}, {kind: 'lsquare'}, "arg-words", {kind: 'rsquare'}], hackedParam),
 
       Rule("arg-words", ["word-seq"], paintList("parameter")),
 
@@ -956,7 +966,9 @@ var Language = (function(Earley) {
     specParts.forEach(function(x, index) {
       if (x.arg) {
         argIndexes.push(symbols.length);
-        symbols.push(x.arg);
+        var arg = x.arg.replace(".", "_");
+        if (arg === 's') arg = 'sb';
+        symbols.push(arg);
         parts.push("%" + x.arg);
       } else {
         var words = tokenize(cleanName('procedure', x, {}, {}));
@@ -1087,7 +1099,8 @@ var Language = (function(Earley) {
         (token.kind === 'symbol' && !/^[=*\/+-]$/.test(token.value)) ||
         token.kind === 'identifier' ||
         token.kind === 'number' ||
-        (token.kind === 'cloud' && index === 0)
+        (token.kind === 'cloud' && index === 0) ||
+        (token.kind === 'input' && kind === 'custom')
       ) && reservedWords.indexOf(token.value) === -1;
     });
     name = tokens.map(getValue).join(" ");

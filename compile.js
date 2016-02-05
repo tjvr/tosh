@@ -425,7 +425,7 @@ var Compiler = (function() {
             case 'number':  return '(' + name + ')';
             case 'string':  return '[' + name + ']';
             case 'boolean': return '<' + name + '>';
-            default: return part;
+            default: return part + '[' + name + ']';
           }
         } else {
           return part.split(/ +/g).map(function(word) {
