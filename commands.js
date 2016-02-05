@@ -170,7 +170,7 @@ var Scratch = (function() {
   scratchCommands.push(["%m.param", "b", 11, "getParam"]);
   scratchCommands.push(["else", "else", 6, "else"]);
   scratchCommands.push(["end", "end", 6, "end"]);
-  scratchCommands.push(["...", "ellipsis", 42, "ellipsis"]);
+  scratchCommands.push(["...", "ellips", 42, "ellips"]);
 
   var typeShapes = {
     ' ': 'stack',
@@ -184,7 +184,7 @@ var Scratch = (function() {
 
     'else': 'else',
     'end': 'end',
-    'ellipsis': 'ellipsis',
+    'ellips': 'ellips',
   };
 
   scratchCommands.forEach(function(command) {

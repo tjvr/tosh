@@ -323,6 +323,7 @@ var Format = (function() {
       });
 
       // look for & create undefined variables & lists
+      var customBlocks = s._customBlocks = {};
       s.scripts.forEach(function(script) {
         function mapping(kind, name, target) {
           if (target) return;
@@ -344,6 +345,9 @@ var Format = (function() {
               s.lists.push(list);
               oldLists[name] = list;
             }
+          } else if (kind === 'custom') {
+            // cleans *spec*, not parameter names. those come later
+            customBlocks[name] = Language.cleanName('custom', name, {}, {});
           }
         }
         Compiler.renameInScript(mapping, script);
@@ -432,6 +436,7 @@ var Format = (function() {
     [p].concat(p.sprites()).forEach(function(s) {
       var defaultTarget = s === p ? "_stage_" : s.objName();
       var seen = s._seen;
+      var customBlocks = s._customBlocks;
 
       var rename = function(defineSpec, kind, name, target) {
         var target = target || defaultTarget;
@@ -443,6 +448,8 @@ var Format = (function() {
           mapping = mapping[defineSpec];
           if (!mapping) return;
           result = mapping[name];
+        } else if (kind === 'custom') {
+          return customBlocks[name];
         } else {
           if (!mapping[name]) {
             details = scriptableMappings["_stage_"];
@@ -479,6 +486,9 @@ var Format = (function() {
         };
         return Compiler.renameInScript(mapping, script);
       });
+
+      delete s._seen;
+      delete s._customBlocks;
     });
 
 

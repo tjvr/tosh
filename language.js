@@ -25,7 +25,7 @@ var Language = (function(Earley) {
   // TODO should we allow () as an empty number input slot?
 
   var TOKENS = [
-    ['ellipsis', /\.{3}/],
+    ['ellips',  /\.{3}/],
     ['comment', /\/{2}(.*)$/],
     ['false',   /\<\>/],
     ['zero',    /\(\)/],
@@ -35,8 +35,8 @@ var Language = (function(Earley) {
     ['number',  /([0-9]*\.[0-9]+)/],
     ['number',  /([0-9]+)/],
     ['color',   /#([A-Fa-f0-9]{3}(?:[A-Fa-f0-9]{3})?)/],
-    ['string',   /"((\\["\\]|[^"\\])*)"/], // strings are backslash-escaped
-    ['string',   /'((\\['\\]|[^'\\])*)'/],
+    ['string',  /"((\\["\\]|[^"\\])*)"/], // strings are backslash-escaped
+    ['string',  /'((\\['\\]|[^'\\])*)'/],
     ['lparen',  /\(/],   ['rparen',  /\)/],
     ['langle',  /\</],   ['rangle',  /\>/],
     ['lsquare', /\[/],   ['rsquare', /\]/],
@@ -44,7 +44,7 @@ var Language = (function(Earley) {
     ['input',   /%[a-z](?:\.[a-zA-Z]+)?/],
     ['symbol',  /[-%#+*/=^,?]/],                // single character
     ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',.]*/], // word, as in a block
-    ['identifier',  /[^ \t"'()<>=*\/+-]+/],     // user-defined names
+    ['iden',    /[^ \t"'()<>=*\/+-]+/],     // user-defined names
   ];
 
   var backslashEscapeSingle = /(\\['\\])/g;
@@ -106,13 +106,13 @@ var Language = (function(Earley) {
       }
       if (kind === 'empty') sawWhitespace = true;
 
-      // 'identifier' adds onto the preceding 'symbol'
-      if (kind === 'identifier' && tokens.length) {
+      // 'iden' adds onto the preceding 'symbol'
+      if (kind === 'iden' && tokens.length) {
         var lastToken = tokens[tokens.length - 1];
         if (lastToken.kind === 'symbol' && !/[ \t]$/.test(lastToken.text)) {
           lastToken.text += text;
           lastToken.value += value;
-          lastToken.kind = 'identifier';
+          lastToken.kind = 'iden';
           expectedWhitespace = true;
           continue;
         }
@@ -389,7 +389,7 @@ var Language = (function(Earley) {
       Rule("spec-seq", ["spec"], box),
 
       Rule("spec", [{kind: 'symbol'}], paintLiteral("custom")),
-      Rule("spec", [{kind: 'identifier'}], paintLiteral("custom")),
+      Rule("spec", [{kind: 'iden'}], paintLiteral("custom")),
 
       Rule("spec", [{kind: 'lparen'}, "arg-words", {kind: 'rparen'}], param),
       Rule("spec", [{kind: 'langle'}, "arg-words", {kind: 'rangle'}], param),
@@ -402,7 +402,7 @@ var Language = (function(Earley) {
       Rule("word-seq", ["word"], box),
 
       Rule("word", [{kind: 'symbol'}], identity),
-      Rule("word", [{kind: 'identifier'}], identity),
+      Rule("word", [{kind: 'iden'}], identity),
   ]);
 
 
@@ -1104,10 +1104,26 @@ var Language = (function(Earley) {
       }
       if (lastToken.kind !== 'error') break;
     }
+    tokens.forEach(function(token, index) {
+      if (token.kind === 'lparen' || token.kind === 'langle') {
+        var next = tokens[index + 1];
+        if (next && (next.kind === 'iden' || next.kind === 'symbol')) {
+          next.value = '_' + next.value;
+          next.kind = 'iden';
+        }
+      }
+      if (token.kind === 'rparen' || token.kind === 'rangle') {
+        var next = tokens[index - 1];
+        if (next && (next.kind === 'iden' || next.kind === 'symbol')) {
+          next.value = next.value + '_';
+          next.kind = 'iden';
+        }
+      }
+    });
     tokens = tokens.filter(function(token, index) {
       return (
         (token.kind === 'symbol' && !/^[=*\/+-]$/.test(token.value)) ||
-        token.kind === 'identifier' ||
+        token.kind === 'iden' ||
         token.kind === 'number' ||
         (token.kind === 'cloud' && index === 0) ||
         (token.kind === 'input' && kind === 'custom')

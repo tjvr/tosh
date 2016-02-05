@@ -106,7 +106,7 @@ var Compiler = (function() {
 
   function compileBlocks(stream) {
     var result = [];
-    if (stream.peek().info.shape === 'ellipsis') {
+    if (stream.peek().info.shape === 'ellips') {
       stream.shift();
       return [];
     }
@@ -497,7 +497,7 @@ var Compiler = (function() {
                         ['-', '/', '%'].indexOf(selector) > -1 &&
                         argIndex === 1)
                     || inputShape === 'readonly-menu'
-                    || (level === -1 && outerLevel > 0)
+                    || (level === -1 && outerLevel > 0) // join
                       );
     if (needsParens) {
       switch (info.shape) {
@@ -731,15 +731,16 @@ var Compiler = (function() {
         return [rename('parameter', a), b];
 
       case 'procDef':
-        // TODO rename procDefs
         var spec = a,
             names = b,
             defaults = c.slice(),
             isAtomic = block[4];
-        names = names.map(function(param) {
+        var newNames = names.map(function(param) {
           return rename('parameter', param);
         });
-        return [spec, names, defaults, isAtomic];
+        return [rename('custom', spec), newNames, defaults, isAtomic];
+      case 'call':
+        return [rename('custom', a)].concat(block.slice(2));
     }
   }
 
