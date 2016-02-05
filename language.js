@@ -971,7 +971,7 @@ var Language = (function(Earley) {
         symbols.push(arg);
         parts.push("%" + x.arg);
       } else {
-        var words = tokenize(cleanName('procedure', x, {}, {}));
+        var words = tokenize(cleanName('custom', x, {}, {}));
         words.forEach(function(token) {
           symbols.push(new SymbolSpec(token.kind, token.value));
           parts.push(token.text);
@@ -1083,7 +1083,6 @@ var Language = (function(Earley) {
     'of',
     'for',
     'with',
-    'y:',
   ];
 
   function cleanName(kind, name, seen, stageSeen) {
@@ -1127,7 +1126,8 @@ var Language = (function(Earley) {
         token.kind === 'number' ||
         (token.kind === 'cloud' && index === 0) ||
         (token.kind === 'input' && kind === 'custom')
-      ) && reservedWords.indexOf(token.value) === -1;
+      ) && reservedWords.indexOf(token.value) === -1
+        && (token.value !== 'y:' || kind === 'custom');
     });
     name = tokens.map(getValue).join(" ");
 
