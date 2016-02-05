@@ -29,7 +29,7 @@ var Language = (function(Earley) {
     ['comment', /\/{2}(.*)$/],
     ['false',   /\<\>/],
     ['zero',    /\(\)/],
-    ['empty',   /_/],
+    ['empty',   /_ /],
     ['number',  /([0-9]+e[0-9]+)/],
     ['number',  /([0-9]+\.[0-9]*)/],
     ['number',  /([0-9]*\.[0-9]+)/],
@@ -103,6 +103,7 @@ var Language = (function(Earley) {
         remain = remain.slice(m[0].length);
         text += m[0];
       }
+      if (kind === 'empty') sawWhitespace = true;
 
       // 'identifier' adds onto the preceding 'symbol'
       if (kind === 'identifier' && tokens.length) {
