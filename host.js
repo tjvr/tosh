@@ -252,6 +252,17 @@ document.addEventListener('keydown', function(e) {
   e.preventDefault();
 }, true);
 
+document.addEventListener('keydown', function(e) {
+  if (Host.isMac ? e.metaKey : e.ctrlKey) {
+    switch (e.keyCode) {
+      case 70:
+      case 71:
+        e.preventDefault(); // don't accidentally trigger cmd+F
+        return;
+    }
+  }
+}, false);
+
 
 // project keybindings
 

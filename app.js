@@ -688,8 +688,8 @@ var extraKeys = {
     // dedent
     cm.indentSelection('subtract');
   },
-  'Alt-F': "findPersistent",
 };
+extraKeys[Host.isMac ? 'Cmd-F' : 'Ctrl-F'] = 'findPersistent';
 
 function removeUndoKeys(keyMap) {
   var keyMap = copyKeyMap(keyMap);
