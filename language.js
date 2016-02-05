@@ -1065,6 +1065,16 @@ var Language = (function(Earley) {
     'current second',
     'days since 2000',
     'username',
+
+    // menusThatAcceptReporters
+    'mouse-pointer',
+    'Stage',
+    'edge',
+
+    // d_-style number-menus
+    'all',
+    'last',
+    'random',
   ];
 
   var reservedWords = [

@@ -496,7 +496,7 @@ var Compiler = (function() {
                     || (level === outerLevel &&
                         ['-', '/', '%'].indexOf(selector) > -1 &&
                         argIndex === 1)
-                    || /menu/.test(inputShape)
+                    || inputShape === 'readonly-menu'
                     || (level === -1 && outerLevel > 0)
                       );
     if (needsParens) {
