@@ -688,6 +688,7 @@ var extraKeys = {
     // dedent
     cm.indentSelection('subtract');
   },
+  'Alt-F': "findPersistent",
 };
 
 function removeUndoKeys(keyMap) {
