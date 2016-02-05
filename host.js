@@ -7,8 +7,8 @@ Host.isMac = /Mac/i.test(navigator.userAgent);
 // progress indicators
 // TODO actual progress bars/framework
 
-var Indicator = function() {
-  var loading = el('.shade', el('.massive', "Loading"));
+var Indicator = function(text) {
+  var loading = el('.shade', el('.massive', text));
   document.body.appendChild(loading);
 
   document.querySelector('#menu').classList.add('shaded');
@@ -80,7 +80,14 @@ function loadFile(f, indicator) {
     reader.onloadend = function() {
       var ab = reader.result;
       var zip = new JSZip(ab);
-      var project = Project.load(zip);
+
+      try {
+        var project = Project.load(zip);
+      } catch (e) {
+        alert("Problem loading file: " + (e.message || e));
+        indicator.clear();
+        return;
+      }
       project._fileName = fileName;
 
       App.loadProject(project);
