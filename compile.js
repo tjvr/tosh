@@ -406,10 +406,10 @@ var Compiler = (function() {
         category: 'custom',
         selector: null,
         defaults: [], // don't need these
+        _isCustom: true,
       };
       info.inputs = info.parts.filter(function(p) { return Scratch.inputPat.test(p); });
     } else if (selector === 'procDef') {
-      // TODO fix
       var spec = block[1],
           names = block[2].slice(),
           defaults = block[3].slice(), // ignore these
@@ -429,7 +429,7 @@ var Compiler = (function() {
           }
         } else {
           return part.split(/ +/g).map(function(word) {
-            if (word === '%%') return '%';
+            if (word === '\\%') return '%';
             return word;
           }).join(' ');
         }
@@ -441,7 +441,9 @@ var Compiler = (function() {
       return generateReporter(block, null, -Infinity);
     }
 
-    var result = generateParts(info, args, +Infinity);
+    var level = +Infinity;
+    if (info._isCustom) level = -1;
+    var result = generateParts(info, args, level);
 
     switch (info.shape) {
       case 'if-block': // if/else?
