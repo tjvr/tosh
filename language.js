@@ -1089,22 +1089,24 @@ var Language = (function(Earley) {
   ];
 
   function cleanName(kind, name, seen, stageSeen) {
+    var original = name;
     var lastToken;
     while (true) {
       var tokens = Language.tokenize(name);
-      if (!tokens.length) throw "ahhh";
+      if (!tokens.length) break;
+
       var lastToken = tokens[tokens.length - 1];
-      if (lastToken.kind === 'error') {
-        if (lastToken.value !== "Expected whitespace") {
-          throw new Error(lastToken.value);
-        }
-        tokens.pop();
-      }
-      var name = tokens.map(getValue).join(" ");
-      if (lastToken.kind === 'error') {
-        name += " " + lastToken.text;
-      }
+      var suffix = "";
       if (lastToken.kind !== 'error') break;
+
+      if (lastToken.value === "Expected whitespace") {
+        suffix = " " + lastToken.text;
+      } else {
+        suffix = lastToken.text.slice(1);
+      }
+      tokens.pop();
+      var name = tokens.map(getValue).join(" ");
+      name += suffix;
     }
     tokens.forEach(function(token, index) {
       if (token.kind === 'lparen' || token.kind === 'langle') {
@@ -1129,6 +1131,7 @@ var Language = (function(Earley) {
         token.kind === 'number' ||
         (token.kind === 'cloud' && index === 0) ||
         (token.kind === 'input' && kind === 'custom')
+        // reserved words
       ) && reservedWords.indexOf(token.value) === -1
         && (token.value !== 'y:' || kind === 'custom');
     });
@@ -1139,21 +1142,32 @@ var Language = (function(Earley) {
 
     var shortKind = kind === 'variable' ? "var"
                   : kind === 'parameter' ? "arg" : kind;
-    if (!name) name = shortKind;
+    if (!name) {
+      name = /^[^a-zA-Z]$/.test(original) ? "_" : shortKind;
+    }
 
     nameSymbols(name); // Check this doesn't crash
 
+    var isInvalid = (
+      // reserved names
+      reservedNames.indexOf(name) > -1 ||
+      // name can't be a number token
+      /^[0-9]+(\.[0-9]+)?$/.test(name)
+    );
+
     // if ambiguous or non-unique, add shortKind
-    var isInvalid = (reservedNames.indexOf(name) > -1);
-    if (isInvalid ||
-        (stageSeen.hasOwnProperty(name) || seen.hasOwnProperty(name))) {
-      name += " " + shortKind;
+    if (name !== "_" && (
+          isInvalid ||
+          (stageSeen.hasOwnProperty(name) || seen.hasOwnProperty(name))
+        )) {
+      if (name) name += " ";
+      name += shortKind;
     }
 
     // if still not unique, add a number
     var offset = 1;
     var prefix = name;
-    while (stageSeen.hasOwnProperty(name) || seen.hasOwnProperty(name)) {
+    while (name === "_" || name === shortKind || stageSeen.hasOwnProperty(name) || seen.hasOwnProperty(name)) {
       name = prefix + offset;
       offset++;
     }
