@@ -1669,7 +1669,7 @@ App.preview = function(start) {
       var s = stage.children[i];
       if (s.isSprite) {
         s._tosh = children[i];
-        assert(s._tosh === project.sprites()[s.indexInLibrary]);
+        assert(s._tosh === project.sprites()[s.indexInLibrary - 1]);
       }
     }
 

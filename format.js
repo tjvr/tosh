@@ -534,7 +534,7 @@ var Format = (function() {
   Project.save = function(p) {
     // refresh stale things
     p.sprites().forEach(function(s, index) {
-      s.indexInLibrary = index;
+      s.indexInLibrary = index + 1;
     });
 
     // count sprites & scripts
