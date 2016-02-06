@@ -453,7 +453,9 @@ var Format = (function() {
         var target = target || defaultTarget;
 
         var details = scriptableMappings[target];
+        if (!details) return name;
         var mapping = details[kind];
+
         var result;
         if (kind === 'parameter') {
           mapping = mapping[defineSpec];

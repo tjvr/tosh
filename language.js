@@ -390,6 +390,7 @@ var Language = (function(Earley) {
 
       Rule("spec", [{kind: 'symbol'}], paintLiteral("custom")),
       Rule("spec", [{kind: 'iden'}], paintLiteral("custom")),
+      Rule("spec", [{kind: 'number'}], paintLiteral("custom")),
 
       Rule("spec", [{kind: 'lparen'}, "arg-words", {kind: 'rparen'}], param),
       Rule("spec", [{kind: 'langle'}, "arg-words", {kind: 'rangle'}], param),
@@ -403,6 +404,7 @@ var Language = (function(Earley) {
 
       Rule("word", [{kind: 'symbol'}], identity),
       Rule("word", [{kind: 'iden'}], identity),
+      Rule("word", [{kind: 'number'}], identity),
   ]);
 
 
@@ -962,31 +964,41 @@ var Language = (function(Earley) {
     var isAtomic = result.args[3];
     var specParts = result._parts;
 
-    var symbols = [];
     var parts = [];
-    var argIndexes = [];
 
     specParts.forEach(function(x, index) {
       if (x.arg) {
-        argIndexes.push(symbols.length);
-        var arg = x.arg.replace(".", "_");
-        if (arg === 's') arg = 'sb';
-        symbols.push(arg);
         parts.push("%" + x.arg);
       } else {
-        var words = tokenize(cleanName('custom', x, {}, {}));
-        words.forEach(function(token) {
-          symbols.push(new SymbolSpec(token.kind, token.value));
-          parts.push(token.text);
-        });
+        parts.push(x);
       }
     });
     var spec = parts.join(" ");
 
+    // spec = cleanName('custom', spec, {}, {});
+
+    var symbols = [];
+    var parts = spec.split(Scratch.inputPat);
+    var argIndexes = [];
+    parts.forEach(function(part) {
+      if (!part) return;
+      if (Scratch.inputPat.test(part)) {
+        var arg = part.slice(1).replace(".", "_");
+        if (arg === 's') arg = 'sb';
+        argIndexes.push(symbols.length);
+        symbols.push(arg);
+      } else {
+        var words = tokenize(part);
+        words.forEach(function(token) {
+          symbols.push(new SymbolSpec(token.kind, token.value));
+        });
+      }
+    });
+
     var info = {
       isCustom: true,
       spec: spec,
-      parts: spec.split(Scratch.inputPat),
+      parts: parts,
       category: "custom",
       shape: 'stack',
     };
