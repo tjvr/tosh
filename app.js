@@ -1469,7 +1469,7 @@ Settings.prototype.update = function(data) {
 
 
 var Container = function(project, active) {
-  active.assign(project.sprites()[0]);
+  active.assign(project.sprites()[0] || project);
 
   this.project = project;
   this.active = active;
