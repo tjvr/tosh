@@ -402,6 +402,18 @@ var Format = (function() {
         costume._src = details.src;
         costume._size = details.size;
 
+        // remove text attributes
+        delete costume.text;
+        delete costume.textRect;
+        delete costume.textColor;
+        delete costume.fontName;
+        delete costume.fontSize;
+
+        // TODO stamp textLayer on top of image!
+        // for now, delete text.
+        delete costume.textLayerID;
+        delete costume.textLayerMD5;
+
         // fixup `name` property
         costume.name = ko(costume.costumeName);
         delete costume.baseLayerID;
