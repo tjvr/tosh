@@ -375,13 +375,36 @@ var Compiler = (function() {
   };
 
   function generate(scripts) {
-    var result = scripts.map(function(x) {
-      var blocks = x[2]; // x, y, blocks
-      return generateList(blocks).join('\n');
-    }).join('\n\n');
+    var scriptText = [];
+    for (var i=0; i<scripts.length; i++) {
+      var blocks = scripts[i][2];
+
+      // standalone reporter?
+      if (blocks.length === 1) {
+        // TODO preference to skip all standalone reporters
+
+        // if it contains a parameter -> not valid!
+        if (containsParameter(blocks[0])) continue;
+      }
+
+      scriptText.push(generateList(blocks).join('\n'));
+    }
+    var result = scriptText.join('\n\n');
+
     // enforce trailing blank line
     if (result && result[result.length - 1] !== '\n') result += '\n';
     return result;
+  }
+
+  function containsParameter(reporter) {
+    if (reporter[0] === 'getParam') return true;
+    for (var i=1; i<reporter.length; i++) {
+      var arg = reporter[i];
+      if (arg.constructor === Array && containsParameter(arg)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   function generateList(list) {
