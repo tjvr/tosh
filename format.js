@@ -394,30 +394,29 @@ var Format = (function() {
         if (!f) { ext = 'png'; f = zip.file(root + ext); }
         if (!f) { ext = 'jpg'; f = zip.file(root + ext); }
         if (!f) { ext = 'svg'; f = zip.file(root + ext); }
+        assert(f, "Couldn't find image: " + root + ext);
         costume.file = f.asArrayBuffer();
         costume.ext = ext;
+        delete costume.baseLayerID;
 
         // make <image> element
         var details = loadImage(ext, f.asBinary());
         costume._src = details.src;
         costume._size = details.size;
 
-        // remove text attributes
-        delete costume.text;
-        delete costume.textRect;
-        delete costume.textColor;
-        delete costume.fontName;
-        delete costume.fontSize;
-
-        // TODO stamp textLayer on top of image!
-        // for now, delete text.
-        delete costume.textLayerID;
-        delete costume.textLayerMD5;
+        // load textLayer file
+        if (costume.textLayerID) {
+          root = costume.textLayerID + '.';
+          f = zip.file(root + ext);
+          if (!f) { ext = 'png'; f = zip.file(root + ext); }
+          assert(f, "Couldn't find text layer: " + root + ext);
+          costume.textFile = f.asArrayBuffer();
+          costume.textExt = ext;
+          delete costume.textLayerID;
+        }
 
         // fixup `name` property
         costume.name = ko(costume.costumeName);
-        delete costume.baseLayerID;
-        delete costume.baseLayerMD5;
         delete costume.costumeName;
       });
 
@@ -565,11 +564,20 @@ var Format = (function() {
 
         // store file
         costume.baseLayerID = highestCostumeId++;
-        costume.baseLayerMD5 = '';
+        costume.baseLayerMD5 = costume.baseLayerMD5 || '';
         var filename = costume.baseLayerID + '.' + costume.ext;
         zip.file(filename, costume.file);
         delete costume.ext;
         delete costume.file;
+
+        // store textLayer too
+        if (costume.textFile) {
+          costume.textLayerID = highestCostumeId++;
+          var filename = costume.textLayerID + '.' + costume.textExt;
+          zip.file(filename, costume.textFile);
+          delete costume.textFile;
+          delete costume.textExt;
+        }
       });
 
       // save costumes
