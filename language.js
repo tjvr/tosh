@@ -595,6 +595,7 @@ var Language = (function(Earley) {
 
     Rule("r-value", ["join"], identity),
     Rule("r-value", ["n4"], identity),
+      //  r-value -> ListName
 
     Rule("b-parens", [{kind: 'langle'}, "b8", {kind: 'rangle'}], brackets),
 
@@ -913,18 +914,20 @@ var Language = (function(Earley) {
       }
     });
 
+    var type = (block.shape === "reporter" ? "simple-reporter" :
+                block.shape === "predicate" ? "simple-predicate" : "block");
+
     if (block.selector === "readVariable") {
       symbols = ["VariableName"];
     } else if (block.selector === "contentsOfList:") {
       symbols = ["ListName"];
+      type = 'r-value';
     } else if (block.selector === "getParam") {
       symbols = [block.shape === 'reporter' ? "ReporterParam" : "BooleanParam"];
     }
 
     assert(symbols.length);
 
-    var type = (block.shape === "reporter" ? "simple-reporter" :
-                block.shape === "predicate" ? "simple-predicate" : "block");
     g.addRule(Rule(type, symbols,
                        blockArgs.apply(null, [block].concat(argIndexes))));
   });

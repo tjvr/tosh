@@ -499,6 +499,7 @@ var Compiler = (function() {
                         ['-', '/', '%'].indexOf(selector) > -1 &&
                         argIndex === 1)
                     || inputShape === 'readonly-menu'
+                    || selector === 'contentsOfList:'
                     || (level === -1 && outerLevel > 0) // join
                       );
     if (needsParens) {
