@@ -1,6 +1,6 @@
 [submodule "vendor/phosphorus"]
 	path = vendor/phosphorus
-	url = git@github.com:nathan/phosphorus
+	url = git@github.com:tjvr/phosphorus
 [submodule "vendor/codemirror"]
 	path = vendor/codemirror
 	url = git@github.com:codemirror/codemirror
