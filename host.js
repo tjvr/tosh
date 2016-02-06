@@ -70,7 +70,7 @@ if (isSafari) {
 // load dropped in / opened file
 
 function loadFile(f, indicator) {
-  var indicator = indicator || Indicator('Loading');
+  assert(indicator);
 
   var parts = f.name.split('.');
   var ext = parts.pop();
@@ -97,9 +97,16 @@ function loadFile(f, indicator) {
     reader.readAsArrayBuffer(f);
     return true;
   }
+  if (ext === 'sb') {
+    indicator.clear();
+    alert("Scratch 1.4 files can't be opened. Use the Scratch website to convert it.");
+    return true;
+  }
 }
 
 function loadFiles(files, indicator) {
+  var indicator = indicator || new Indicator("Loading");
+
   // if single file, try to load project
   if (files.length === 1) {
     var f = files[0];
