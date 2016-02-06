@@ -1143,16 +1143,18 @@ var Language = (function(Earley) {
 
     nameSymbols(name); // Check this doesn't crash
 
-    // ambiguity check
+    // if ambiguous or non-unique, add shortKind
     var isInvalid = (reservedNames.indexOf(name) > -1);
-    if (isInvalid) {
+    if (isInvalid ||
+        (stageSeen.hasOwnProperty(name) || seen.hasOwnProperty(name))) {
       name += " " + shortKind;
     }
 
-    // unique check
+    // if still not unique, add a number
     var offset = 1;
+    var prefix = name;
     while (stageSeen.hasOwnProperty(name) || seen.hasOwnProperty(name)) {
-      name = name + offset;
+      name = prefix + offset;
       offset++;
     }
 
