@@ -346,6 +346,8 @@ var Earley = (function() {
 
     function pretty(item) {
       var children = [item.rule.name];
+      var info = item.rule.process._info;
+      if (info) children.push(JSON.stringify(info.selector));
       for (var i=0; i<item.node.length; i++) {
         var child = item.node[i];
         if (child.node) { // Item

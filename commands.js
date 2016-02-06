@@ -188,9 +188,13 @@ var Scratch = (function() {
   };
 
   scratchCommands.forEach(function(command) {
+    var spec = command[0];
+    if (spec === 'set pen color to %n') {
+      spec = 'set pen hue to %n';
+    }
     var block = {
-      spec: command[0],
-      parts: command[0].split(inputPat),
+      spec: spec,
+      parts: spec.split(inputPat),
       shape: typeShapes[command[1]], // /[ bcefhr]|cf/
       category: categoriesById[command[2] % 100],
       selector: command[3],
