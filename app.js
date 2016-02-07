@@ -492,10 +492,19 @@ var ListEditor = function(obj, kind, active) {
 
 /* NamesEditor */
 
-function seenVariables(variables) {
+function allVariables(p) {
+  var result = [];
+  [p].concat(p.sprites()).forEach(function(s) {
+    result = result.concat(s.variables());
+    result = result.concat(s.lists());
+  });
+  return result;
+}
+
+function seenNames(objects) {
   var seen = {};
-  variables.forEach(function(variable) {
-    var name = variable._name();
+  objects.forEach(function(obj) {
+    var name = obj._name();
     seen[name] = true;
   });
   return seen;
@@ -520,16 +529,16 @@ var NamesEditor = function(sprite, kind) {
         function onNameBlur() {
           clearTimeout(changeTimeout);
 
-          var variables = names();
-          var index = variables.indexOf(variable);
           var name = this.value;
+
+          var project = App.project();
+          var objects = allVariables(project);
+          var index = objects.indexOf(variable);
+
           if (name && index > -1) {
-            var seen = seenVariables(variables.slice(0, index));
-            var stageSeen = {};
-            if (!sprite._isStage) {
-              stageSeen = seenVariables(App.project()[kind + 's']());
-            }
-            name = Language.cleanName(kind, name, seen, stageSeen);
+            objects.splice(index, 1); // remove ourself
+            var seen = seenNames(objects);
+            name = Language.cleanName(kind, name, seen, {});
           }
           variable._name.assign(name);
           this.value = name;
