@@ -160,17 +160,15 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
       var token = state.lineTokens.shift();
       assert(stream.match(token.text), "Does not match stream: " + token);
       stream.match(Language.whitespacePat);
-      var className = "s-" + token.kind;
-      if (token.category) className += " " + "s-" + token.category;
-
-      // fix closeBrackets
-      if (token.kind === 'string') {
-        className += " string";
+      if (token.category) {
+        return "s-" + token.category;
+      } else if (token.kind === 'string') {
+        return 'string';
+      } else if (['number', 'color', 'empty', 'zero', 'false', 'comment', 'ellips'].indexOf(token.kind) !== -1) {
+        return "s-" + token.kind;
       } else if (token.kind === 'error' && /^['"]/.test(token.text)) {
         return 'string';
       }
-
-      return className;
     },
 
     blankLine: function(state) {

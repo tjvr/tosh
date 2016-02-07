@@ -1,6 +1,6 @@
 
 .cm-s-number { color: #4548af; }
-.cm-s-string, .cm-s-menu { color: #904949; }
+.cm-string, .cm-s-menu { color: #904949; }
 .cm-s-escape { color: #ffadd1; }
 .cm-s-color { color: #b09542; }
 .cm-s-comment {
@@ -10,13 +10,6 @@
 
 .cm-s-false { color: #000; } /* TODO */
 .cm-s-empty { color: #000; } /* TODO */
-
-/*
-.identifier { color: #000; }
-.number { color: #00b; }
-.string { color: #906721; }
-.color { color: #050; }
-*/
 
 .cm-s-green { color: #488d00; }
 
