@@ -504,6 +504,25 @@ var Format = (function() {
       delete s._customBlocks;
     });
 
+    // rename watchers too
+
+    p.children().forEach(function(obj) {
+      if (obj.objName) return; // that's a sprite
+      var target = obj.target;
+      if (!target) return; // that's not a watcher
+      target = target === "Stage" ? "_stage_" : target;
+
+      if (obj.cmd === 'getVar:') {
+        var details = scriptableMappings[target];
+        if (!details) return;
+        var mapping = details.variable;
+
+        var name = obj.param;
+        name = mapping[name] || name;
+        obj.param = name;
+        obj.label = target === "_stage_" ? name : target + ": " + name;
+      }
+    });
 
     return p;
   };
