@@ -406,12 +406,14 @@ var Format = (function() {
 
         // load textLayer file
         if (costume.textLayerID) {
-          root = costume.textLayerID + '.';
-          f = zip.file(root + ext);
-          if (!f) { ext = 'png'; f = zip.file(root + ext); }
-          assert(f, "Couldn't find text layer: " + root + ext);
-          costume.textFile = f.asArrayBuffer();
-          costume.textExt = ext;
+          if (costume.textLayerID !== -1) {
+            root = costume.textLayerID + '.';
+            f = zip.file(root + ext);
+            if (!f) { ext = 'png'; f = zip.file(root + ext); }
+            assert(f, "Couldn't find text layer: " + root + ext);
+            costume.textFile = f.asArrayBuffer();
+            costume.textExt = ext;
+          }
           delete costume.textLayerID;
         }
 
