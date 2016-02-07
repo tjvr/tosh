@@ -1170,7 +1170,7 @@ var Language = (function(Earley) {
     // if ambiguous or non-unique, add shortKind
     if (name !== "_" && (
           isInvalid ||
-          (stageSeen.hasOwnProperty(name) || seen.hasOwnProperty(name))
+          ((stageSeen.hasOwnProperty(name) || seen.hasOwnProperty(name)) && kind === 'parameter')
         )) {
       if (name) name += " ";
       name += shortKind;
