@@ -529,7 +529,6 @@ body {
 
 .reporters li p {
   display: inline-block;
-  color: #fff;
 
   font-weight: 400;
   line-height: 10px;
@@ -541,14 +540,6 @@ body {
   padding: 4px 6px;
   min-width: 16px;
   min-height: 20px;
-}
-.variable.reporters li p {
-  color: #ee7d16;
-  border-color: #f08d33;
-}
-.list.reporters li p {
-  color: #cc5b22;
-  border-color: #d26f3d;
 }
 
 .reporters li p.edit {

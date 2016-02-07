@@ -508,7 +508,7 @@ var NamesEditor = function(sprite, kind) {
   var names = sprite[kind + 's'];
 
   var variableList = names.map(function(variable) {
-    return el('li', el('p', ko(function() {
+    return el('li', el('p.cm-s-' + kind, ko(function() {
 
         var changeTimeout;
 
