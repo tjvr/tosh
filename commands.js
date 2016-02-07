@@ -191,6 +191,8 @@ var Scratch = (function() {
     var spec = command[0];
     if (spec === 'set pen color to %n') {
       spec = 'set pen hue to %n';
+    } else if (spec === 'change pen color by %n') {
+      spec = 'change pen hue by %n';
     }
     var block = {
       spec: spec,
