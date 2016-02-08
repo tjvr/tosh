@@ -166,7 +166,7 @@ var Earley = (function() {
     }
     this.tokens = tokens;
 
-    //if (resume !== null) console.log("Resuming from " + resume);
+    if (resume !== null) console.log("resuming from " + resume);
 
     var grammar = this.grammar;
     var column;

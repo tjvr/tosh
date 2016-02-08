@@ -13,9 +13,9 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
 
     // store original grammar, for clearing scope correctly
     this.startGrammar = grammar;
-    // custom block parameters are added to scopeGrammar
-    this.scopeGrammar = this.startGrammar.copy()
-    // TODO make a Completer and store it
+    this.startCompleter = new Earley.Completer(grammar);
+    // custom block parameters are added to a new Completer with a fresh grammar
+    this.completer = this.startCompleter;
   };
 
   State.prototype.copy = function() {
@@ -24,15 +24,9 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     s.indent = this.indent;
 
     // don't copy these. when they change, app will refresh the entire mode.
-    // TODO instead copy across Completer object ref
-    // for definition lines--create a fresh Completer
-    // for blank lines --reset to the initial one
     s.startGrammar = this.startGrammar;
-    if (this.isBlankLine) {
-      s.scopeGrammar = null;
-    } else {
-      s.scopeGrammar = this.scopeGrammar;
-    }
+    s.startCompleter = this.startCompleter;
+    s.completer = this.completer;
     return s;
   };
 
@@ -40,21 +34,14 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     this.lastLine = null;
 
     if (!tokens.length) {
-      this.isBlankLine = true;
+      this.completer = this.startCompleter;
       return;
     }
-    this.scopeGrammar = this.scopeGrammar || this.startGrammar;
-
-    var p = new Earley.Parser(this.scopeGrammar);
 
     var result;
     try {
-      results = p.parse(tokens);
+      results = this.completer.parse(tokens);
     } catch (err) {
-      results = err.partialResult;
-    }
-
-    if (!results) {
       // can't parse; mark line red
       tokens.forEach(function(t) { t.category = "error"; });
       return;
@@ -71,8 +58,9 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
 
     // if definition, add parameters to scope
     if (result && result.info.selector === 'procDef') {
-      this.scopeGrammar = this.startGrammar.copy();
-      Language.addParameters(this.scopeGrammar, result);
+      var scopeGrammar = this.startGrammar.copy();
+      Language.addParameters(scopeGrammar, result);
+      this.completer = new Earley.Completer(scopeGrammar);
       return;
     }
 

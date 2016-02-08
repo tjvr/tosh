@@ -1192,8 +1192,8 @@ function computeHint(cm) {
     return false;
   }*/
 
-  var g = l.state.scopeGrammar || l.state.startGrammar;
-  var completer = new Earley.Completer(g);
+  var completer = l.state.completer;
+  var grammar = completer.leftParser.grammar;
 
   var tokens = l.tokens.slice();
   var cursor = l.cursor;
@@ -1240,7 +1240,7 @@ function computeHint(cm) {
     return true;
   });
 
-  var expansions = expandCompletions(completions, g);
+  var expansions = expandCompletions(completions, grammar);
   expansions.forEach(function(x) {
     x.length = x.via.end - x.via.start;
   });
@@ -1317,7 +1317,7 @@ function computeHint(cm) {
       if (typeof part === "string") {
         var name = symbols[i];
         if (name[0] === "@") {
-          part = g.rulesByName[name][0].symbols[0].value;
+          part = grammar.rulesByName[name][0].symbols[0].value;
         } else {
           if (/^b[0-9]?$/.test(name)) {
             part = "<>";
