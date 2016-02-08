@@ -734,7 +734,7 @@ var cmOptions = {
 
   autoCloseBrackets: true,
   matchBrackets: "()<>[]''\"\"",
-  scrollbarStyle: 'overlay',
+  scrollbarStyle: 'simple',
 };
 
 var ScriptsEditor = function(sprite, project) {
@@ -803,7 +803,7 @@ ScriptsEditor.prototype.fixLayout = function(offset) {
   // make sure scrollbar has width (cm.display.barWidth)
   // otherwise annotations won't appear!
   this.cm.setOption('scrollbarStyle', 'native');
-  this.cm.setOption('scrollbarStyle', 'overlay');
+  this.cm.setOption('scrollbarStyle', cmOptions.scrollbarStyle);
 };
 
 ScriptsEditor.prototype.compile = function() {
