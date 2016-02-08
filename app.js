@@ -524,12 +524,15 @@ var NamesEditor = function(sprite, kind) {
         function onNameChange(e) {
           clearTimeout(changeTimeout);
           changeTimeout = setTimeout(onNameBlur.bind(this), 500);
+
+          // mark code editor dirty
+          sprite._scriptable.scriptsEditor.makeDirty();
         }
 
         function onNameBlur() {
           clearTimeout(changeTimeout);
 
-          var name = this.value;
+          var name = input.value;
 
           var project = App.project();
           var objects = allVariables(project);
@@ -540,9 +543,13 @@ var NamesEditor = function(sprite, kind) {
             var seen = seenNames(objects);
             name = Language.cleanName(kind, name, seen, {});
           }
-          variable._name.assign(name);
+          Oops(function() {
+            variable._name.assign(name);
+          });
           this.value = name;
         }
+
+        variable._flush = onNameBlur;
 
         var input = el('input', {
           value: variable._name,
@@ -809,17 +816,25 @@ ScriptsEditor.prototype.fixLayout = function(offset) {
 ScriptsEditor.prototype.compile = function() {
   if (!this.needsCompile()) return this.hasErrors();
 
-  // parse lines
-  var options = this.getModeCfg();
-  var iter = this.cm.doc.iter.bind(this.cm.doc);
-  var lines = Compiler.parseLines(iter, options);
-  var stream = lines.slice();
-
   // clear error indicators
   this.widgets.forEach(function(widget) {
     widget.clear();
   });
   this.widgets = [];
+
+  // flush variables (in case we cmd+return inside a variable)
+  var objects = this.sprite.variables().concat(this.sprite.lists());
+  objects.forEach(function(obj) {
+    if (obj._isEditing()) {
+      obj._flush();
+    }
+  });
+
+  // parse lines
+  var options = this.getModeCfg();
+  var iter = this.cm.doc.iter.bind(this.cm.doc);
+  var lines = Compiler.parseLines(iter, options);
+  var stream = lines.slice();
 
   // build 'em for each line with shape of "error"
   var anns = [];
@@ -857,6 +872,13 @@ ScriptsEditor.prototype.compile = function() {
   return false;
 };
 
+ScriptsEditor.prototype.makeDirty = function() {
+  this.needsCompile.assign(true);
+  App.needsCompile.assign(true);
+  App.needsPreview.assign(true);
+  App.needsSave.assign(true);
+}
+
 ScriptsEditor.prototype.getModeCfg = function() {
   var _this = this;
   function getNames(kind) {
@@ -888,7 +910,7 @@ ScriptsEditor.prototype.repaint = function() {
 };
 
 ScriptsEditor.prototype.debounceRepaint = function() {
-  this.needsCompile.assign(true);
+  this.makeDirty();
   if (this.repaintTimeout) {
     clearTimeout(this.repaintTimeout);
   }
@@ -949,9 +971,7 @@ ScriptsEditor.prototype.redo = function() {
 };
 
 ScriptsEditor.prototype.onChange = function(cm, change) {
-  // set dirty
-  this.needsCompile.assign(true);
-  App.needsCompile.assign(true);
+  this.makeDirty();
 
   // analyse affected lines
   var lines = [];
