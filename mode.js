@@ -5,24 +5,11 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
   }
 
   var State = function() {
-    this.lines = [];
     this.lineTokens = [];
     this.indent = 0;
+    this.lastLine = null; // for indenting
 
-    var grammar = Language.grammar.copy();
-    modeCfg.variables.forEach(function(variable) {
-      var name = variable._name();
-      if (!name) return;
-      Language.addDefinition(grammar, { name: name, });
-    });
-    modeCfg.lists.forEach(function(list) {
-      var name = list._name();
-      if (!name) return;
-      Language.addDefinition(grammar, { name: name, value: [] });
-    });
-    modeCfg.definitions.forEach(function(result) {
-      Language.addCustomBlock(grammar, result);
-    });
+    var grammar = Language.modeGrammar(modeCfg);
 
     // store original grammar, for clearing scope correctly
     this.startGrammar = grammar;
@@ -33,7 +20,6 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
 
   State.prototype.copy = function() {
     var s = new State();
-    s.lines = this.lines.slice();
     s.lineTokens = this.lineTokens.slice();
     s.indent = this.indent;
 
@@ -51,8 +37,9 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
   };
 
   State.prototype.parseAndPaint = function(tokens) {
+    this.lastLine = null;
+
     if (!tokens.length) {
-      this.lines.push({info: {shape: 'blank'}});
       this.isBlankLine = true;
       return;
     }
@@ -64,7 +51,6 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     try {
       results = p.parse(tokens);
     } catch (err) {
-      this.lines.push({info: {shape: 'error', error: err.message}});
       results = err.partialResult;
     }
 
@@ -87,14 +73,11 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     if (result && result.info.selector === 'procDef') {
       this.scopeGrammar = this.startGrammar.copy();
       Language.addParameters(this.scopeGrammar, result);
-      this.lines.push(result);
       return;
     }
 
     paintBlocks(result);
-    if (result) {
-      this.lines.push(result);
-    }
+    this.lastLine = result;
     return result;
   }
 
@@ -177,8 +160,8 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
 
     indent: function(state, textAfter) {
       var indent = parseInt(state.indent / cfg.indentUnit);
-      var block = state.lines[state.lines.length - 1];
-      if (block) {
+      var block = state.lastLine;
+      if (block && block.info) {
         switch (block.info.shape) {
           case 'c-block':
           case 'c-block cap':
@@ -187,6 +170,8 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
             indent++; break;
         }
       }
+
+      // TODO real auto-indent
 
       // if this line is an `end`, dedent it.
       if (/^end$/.test(textAfter.trim())) indent--;

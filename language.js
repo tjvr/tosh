@@ -1242,6 +1242,31 @@ var Language = (function(Earley) {
   ]);
 
 
+  /* for parseLines */
+
+  function isDefinitionLine(line) {
+    return /^define(-atomic)? /.test(line);
+  }
+
+  function modeGrammar(modeCfg) {
+    var grammar = g.copy();
+    modeCfg.variables.forEach(function(variable) {
+      var name = variable._name();
+      if (!name) return;
+      Language.addDefinition(grammar, { name: name, });
+    });
+    modeCfg.lists.forEach(function(list) {
+      var name = list._name();
+      if (!name) return;
+      Language.addDefinition(grammar, { name: name, value: [] });
+    });
+    modeCfg.definitions.forEach(function(result) {
+      Language.addCustomBlock(grammar, result);
+    });
+    return grammar;
+  }
+
+
   return {
     tokenize: tokenize,
     defineGrammar: defineGrammar,
@@ -1262,6 +1287,10 @@ var Language = (function(Earley) {
 
     // for automatic variable renaming
     cleanName: cleanName,
+
+    // for parseLines
+    isDefinitionLine: isDefinitionLine,
+    modeGrammar: modeGrammar,
   };
 
 }(Earley));

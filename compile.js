@@ -9,6 +9,57 @@ var Compiler = (function() {
   }
 
 
+  /* parse lines */
+
+  function parseLines(iter, options) {
+    var Parser = Earley.Parser;
+    var startGrammar = Language.modeGrammar(options);
+    var grammar = startGrammar;
+    var parser = new Parser(grammar);
+
+    var stream = [];
+    iter(function(line) {
+      var line = line.text;
+
+      var result = parseLine(line, parser);
+      stream.push(result);
+
+      // if definition, add parameters to scope
+      if (result.info.selector === 'procDef') {
+        grammar = startGrammar.copy();
+        Language.addParameters(grammar, result);
+        parser = new Parser(grammar);
+      }
+
+      // if blank line, pop parameters from scope
+      if (result.info.shape === 'blank') {
+        grammar = startGrammar;
+        parser = new Parser(grammar);
+      }
+    });
+    return stream;
+  }
+
+  function parseLine(line, parser) {
+    var tokens = Language.tokenize(line);
+    if (!tokens.length) {
+      return {info: {shape: 'blank'}};
+    }
+
+    try {
+      results = parser.parse(tokens);
+    } catch (err) {
+      return {info: {shape: 'error', error: err.message}};
+    }
+
+    var result = results[0];
+    result = result.process();
+    return result;
+  }
+
+
+  /***************************************************************************/
+
   /* compile: tosh -> AST */
 
   function compile(lines) {
@@ -775,6 +826,7 @@ var Compiler = (function() {
 
   return {
     generate: generate, // AST -> tosh
+    parseLines: parseLines,
     compile: compile,   // tosh -> AST
     renameInScript: renameInScript, // used by format's automatic renaming
     _measure: measureList, // internal to compile()

@@ -809,25 +809,11 @@ ScriptsEditor.prototype.fixLayout = function(offset) {
 ScriptsEditor.prototype.compile = function() {
   if (!this.needsCompile()) return this.hasErrors();
 
-  // TODO do a separate compile, rather than abusing the syntax highlighter
-
-  // re-highlight now, if we're waiting to debounce changes
-  if (this.repaintTimeout) {
-    this.repaint();
-  }
-
-  var finalState = this.cm.getStateAfter(this.cm.getDoc().size, true);
-  function compileLine(b) {
-    if (!b) return b;
-    if (b.info) {
-      return [b.info.selector].concat((b.args || []).map(compileLine));
-    } else {
-      if (b.value) return b.value;
-      return b;
-    }
-  }
-  // treat lines as a stream
-  var stream = finalState.lines.slice();
+  // parse lines
+  var options = this.getModeCfg();
+  var iter = this.cm.doc.iter.bind(this.cm.doc);
+  var lines = Compiler.parseLines(iter, options);
+  var stream = lines.slice();
 
   // clear error indicators
   this.widgets.forEach(function(widget) {
@@ -847,10 +833,10 @@ ScriptsEditor.prototype.compile = function() {
   try {
     var scripts = Compiler.compile(stream);
   } catch (err) {
-    var line = finalState.lines.length - (stream.length - 1); // -1 because EOF
-    line = Math.min(line, finalState.lines.length - 1);
+    var line = lines.length - (stream.length - 1); // -1 because EOF
+    line = Math.min(line, lines.length - 1);
 
-    var info = finalState.lines[line].info;
+    var info = lines[line].info;
     var message = info.shape === 'error' ? info.error : err.message;
 
     var widgetOptions = {};
@@ -871,7 +857,7 @@ ScriptsEditor.prototype.compile = function() {
   return false;
 };
 
-ScriptsEditor.prototype.repaint = function() {
+ScriptsEditor.prototype.getModeCfg = function() {
   var _this = this;
   function getNames(kind) {
     var names = _this.sprite[kind]();
@@ -883,12 +869,19 @@ ScriptsEditor.prototype.repaint = function() {
   }
 
   // force re-highlight --slow!
-  this.cm.setOption('mode', {
+  return {
     name: 'tosh',
     variables: getNames('variables'),
     lists: getNames('lists'),
     definitions: this.definitions,
-  });
+  };
+};
+
+ScriptsEditor.prototype.repaint = function() {
+  var modeCfg = this.getModeCfg();
+
+  // force re-highlight --slow!
+  this.cm.setOption('mode', modeCfg);
 
   clearTimeout(this.repaintTimeout);
   this.repaintTimeout = null;
@@ -908,7 +901,7 @@ ScriptsEditor.prototype.checkDefinitions = function() {
   var definitions = [];
   this.cm.doc.iter(function(line) {
     var line = line.text;
-    if (!/^define(-atomic)? /.test(line)) return;
+    if (!Language.isDefinitionLine(line)) return;
 
     var tokens = Language.tokenize(line);
     var results;
@@ -995,7 +988,7 @@ ScriptsEditor.prototype.onChange = function(cm, change) {
 ScriptsEditor.prototype.linesChanged = function(lines) {
   for (var i=0; i<lines.length; i++) {
     var line = lines[i];
-    if (/^define(-atomic)? /.test(line)) {
+    if (Language.isDefinitionLine(line)) {
       if (this.checkDefinitions()) {
         this.debounceRepaint();
       }
