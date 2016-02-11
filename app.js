@@ -492,9 +492,9 @@ var ListEditor = function(obj, kind, active) {
 
 /* NamesEditor */
 
-function allVariables(p) {
+function allVariables(sprites) {
   var result = [];
-  [p].concat(p.sprites()).forEach(function(s) {
+  sprites.forEach(function(s) {
     result = result.concat(s.variables());
     result = result.concat(s.lists());
   });
@@ -535,7 +535,8 @@ var NamesEditor = function(sprite, kind) {
           var name = input.value;
 
           var project = App.project();
-          var objects = allVariables(project);
+          var targets = sprite._isStage ? [project] : [project, sprite];
+          var objects = allVariables(targets);
           var index = objects.indexOf(variable);
 
           if (name && index > -1) {
