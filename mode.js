@@ -170,7 +170,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     },
 
     lineComment: '//',
-    electricInput: /( |else|end)$/,
+    electricInput: /([ \t]|else|end)$/,
 
     closeBrackets: "()[]''\"\"",
 
