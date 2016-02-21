@@ -1,6 +1,8 @@
 
 var Host = {};
 
+// might be standalone
+Host.isApp = !!document.querySelector('#wrap');
 Host.isMac = /Mac/i.test(navigator.userAgent);
 
 
@@ -145,30 +147,32 @@ Host.onOops = function() {
 };
 
 var menu = document.querySelector('#menu');
-var undoBtn = el('.menu-button', {
-  class: ko(function() { return canUndo() ? "" : "hidden" }),
-  on_click: Oops.undo,
-  text: "↺",
-});
-var redoBtn = el('.menu-button', {
-  class: ko(function() { return canRedo() ? "" : "hidden" }),
-  on_click: Oops.redo,
-  text: "↻",
-});
+if (menu) {
+  var undoBtn = el('.menu-button', {
+    class: ko(function() { return canUndo() ? "" : "hidden" }),
+    on_click: Oops.undo,
+    text: "↺",
+  });
+  var redoBtn = el('.menu-button', {
+    class: ko(function() { return canRedo() ? "" : "hidden" }),
+    on_click: Oops.redo,
+    text: "↻",
+  });
 
-var helpBtn = document.querySelector('#button-help');
-menu.insertBefore(undoBtn, helpBtn);
-menu.insertBefore(redoBtn, helpBtn);
+  var helpBtn = document.querySelector('#button-help');
+  menu.insertBefore(undoBtn, helpBtn);
+  menu.insertBefore(redoBtn, helpBtn);
 
 
-// show project name in menu bar
+  // show project name in menu bar
 
-Host.onAppLoad = function() {
-  var projectName = el('.menu-title',
-    ko(function() { return App.project()._fileName })
-  );
-  menu.insertBefore(projectName, helpBtn);
-};
+  Host.onAppLoad = function() {
+    var projectName = el('.menu-title',
+      ko(function() { return App.project()._fileName })
+    );
+    menu.insertBefore(projectName, helpBtn);
+  };
+}
 
 
 // drop file to open
@@ -182,6 +186,7 @@ document.body.addEventListener('dragover', cancel);
 document.body.addEventListener('dragenter', cancel);
 
 document.body.addEventListener('drop', function(e) {
+  if (!Host.isApp) return;
   e.preventDefault();
   loadFiles(e.dataTransfer.files);
 });
@@ -190,6 +195,7 @@ document.body.addEventListener('drop', function(e) {
 // don't leave if we haven't saved to disk
 
 window.onbeforeunload = function(e) {
+  if (!Host.isApp) return;
   if (App.needsSave()) {
     return "You have unsaved changes!";
   }
@@ -200,6 +206,7 @@ window.onbeforeunload = function(e) {
 // TODO is this really correct?
 
 Host.handleUndoKeys = function(e) {
+  if (!Host.isApp) return;
   if (e.metaKey && e.ctrlKey) return;
   if (e.altKey) return;
 
@@ -232,6 +239,7 @@ Host.handleUndoKeys = function(e) {
 // TODO fix
 
 document.addEventListener('keydown', function(e) {
+  if (!Host.isApp) return;
   // ctrl + cmd not allowed
   if (e.metaKey && e.ctrlKey) return;
   // alt not allowed
@@ -267,6 +275,7 @@ document.addEventListener('keydown', function(e) {
 }, true);
 
 document.addEventListener('keydown', function(e) {
+  if (!Host.isApp) return;
   if (Host.isMac ? e.metaKey : e.ctrlKey) {
     switch (e.keyCode) {
       case 70:
@@ -281,6 +290,7 @@ document.addEventListener('keydown', function(e) {
 // project keybindings
 
 document.querySelector('.player').addEventListener('keydown', function(e) {
+  if (!Host.isApp) return;
   if (!App.stage) return;
   if (/INPUT/i.test(e.target.tagName)) return;
   switch (e.keyCode) {
