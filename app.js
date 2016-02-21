@@ -675,21 +675,10 @@ var extraKeys = {
     if (cm.somethingSelected()) {
       cm.replaceSelection(''); // TODO complete on a selection
     }
-    requestHint(cm);
+    requestHint(cm, true);
   },
   'Tab': function(cm) {
-    // TODO if there's no error with the input, just do an inputSeek.
-    // TODO tab at beginning of line
-    // TODO I think indentation breaks completion
-
-    if (!cm.somethingSelected()) {
-      var results = computeHint(cm);
-      // TODO: cache hints, so this doesn't suck
-      if (results && results.list && results.list.length) {
-        requestHint(cm);
-        return;
-      }
-    }
+    // seek next input
     if (inputSeek(cm, +1)) return;
 
     // auto-indent
@@ -698,10 +687,8 @@ var extraKeys = {
     }
   },
   'Shift-Tab': function(cm) {
+    // seek prev input
     if (inputSeek(cm, -1)) return;
-
-    // dedent
-    cm.indentSelection('subtract');
   },
 };
 extraKeys[Host.isMac ? 'Cmd-F' : 'Ctrl-F'] = 'findPersistent';
@@ -1086,6 +1073,7 @@ function tokenizeAtCursor(cm, options) {
   var suffix = text.slice(cursor.ch);
 
   var isPartial = !/ $/.test(prefix);
+  var hasPadding = /^[ ?]/.test(suffix);
 
   var tokens,
       cursorIndex;
@@ -1126,12 +1114,13 @@ function tokenizeAtCursor(cm, options) {
     cursor: cursorIndex,
     tokens: tokens,
     isPartial: isPartial,
+    hasPadding: hasPadding,
   }
 }
 
-function requestHint(cm) {
+function requestHint(cm, please) {
   cm.showHint({
-    hint: computeHint,
+    hint: please ? computeHintPlease : computeHintMaybe,
     completeSingle: false,
     alignWithWord: true,
     customKeys: {
@@ -1180,7 +1169,10 @@ function expandCompletions(completions, g) {
   return choices;
 }
 
-function computeHint(cm) {
+function computeHintPlease(cm) { return computeHint(cm, true); }
+function computeHintMaybe(cm) {  return computeHint(cm, false); }
+
+function computeHint(cm, please) {
   var l = tokenizeAtCursor(cm, { splitSelection: true });
   if (!l) return false;
   if (l.cursor === 0) {
@@ -1198,19 +1190,24 @@ function computeHint(cm) {
 
   var tokens = l.tokens.slice();
   var cursor = l.cursor;
-  var partial;
+
   var isValid;
+  try {
+    completer.parse(tokens); isValid = true;
+  } catch (e) {
+    isValid = false;
+    // console.log(e); // DEBUG
+  }
+
+  var partial;
   if (l.isPartial) {
     partial = tokens[cursor - 1];
     tokens.splice(cursor - 1, 1);
     cursor--;
 
-    try {
-      completer.parse(tokens); isValid = true;
-    } catch (e) {
-      isValid = false;
-      // console.log(e); // DEBUG
-    }
+    // don't offer completions if we don't need to
+    // eg. "stop all|" should *not* suggest "sounds"
+    if (isValid && !l.selection && !please) return;
   }
 
   var completions = completer.complete(tokens, cursor);
@@ -1293,7 +1290,13 @@ function computeHint(cm) {
       if (aInfo.selector === 'stopAllSounds' && bInfo.selector === 'stopScripts') return 1;
       if (aInfo.selector === 'stampCostume' && bInfo.selector === 'stopScripts') return 1;
 
+      if (aInfo.selector === 'touchingColor:' && bInfo.selector === 'touching:') return 1;
+
+      if (aInfo.selector === 'getAttribute:of:') return 1;
+
       if (aInfo.selector === 'else' && bInfo.selector === 'end') return 1;
+
+      //console.log(aInfo.selector, bInfo.selector);
     }
     return a.length < b.length ? +1 : a.length > b.length ? -1 : 0;
   });
@@ -1365,7 +1368,13 @@ function computeHint(cm) {
     if (text === "else" && indent.slice().pop() !== 'if') return;
     if (text === "end" && !indent.length) return;
 
-    text += " ";
+    // no space before trailing `?`
+    text = text.replace(/ \?$/, "?");
+
+    // add padding, but only very rarely
+    if (!l.hasPadding && !isValid && partial && partial.text === text) {
+      text += " ";
+    }
 
     var info = {};
     if (c.rule.process._info) {
@@ -1445,11 +1454,6 @@ function computeHint(cm) {
       var end = start + (completion.selection.size || 0);
       cm.setSelection({ line: line, ch: start }, { line: line, ch: end });
     }
-    /*
-    if (completion.seekInput) {
-      inputSeek(cm, +1);
-    }
-    */
     cm.indentLine(l.start.line);
   }
 

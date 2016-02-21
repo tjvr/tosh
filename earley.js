@@ -155,7 +155,7 @@ var Earley = (function() {
     var table = this.table;
     var resume = null;
     if (table.length) {
-      assert(this.table.length <= this.tokens.length + 1);
+      assert(this.table.length <= this.tokens.length + 1, "argh");
       var maxIndex = Math.min(tokens.length, this.table.length - 1);
       for (resume=0; resume < maxIndex; resume++) {
         if (!this.tokens[resume].isEqual(tokens[resume])) {
@@ -164,7 +164,7 @@ var Earley = (function() {
       }
       this.table.splice(resume + 1);
     }
-    this.tokens = tokens;
+    this.tokens = tokens.slice();
 
     // if (resume !== null) console.log("resuming from " + resume);
 
@@ -270,7 +270,7 @@ var Earley = (function() {
 
     var expected = [];
     var ruleNames = [];
-    column.forEach(function(item) {
+    (column || []).forEach(function(item) {
       if (item.isFinished) return;
       if (!(typeof item.expect === "string")) {
         expected.push(stringify(item.expect));
