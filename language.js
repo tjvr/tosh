@@ -563,8 +563,8 @@ var Language = (function(Earley) {
 
   var g = new Grammar([
     Rule("line", ["thing"], identity),
-    Rule("line", ["thing", {kind: 'comment'}], first),
-    Rule("line", [{kind: 'comment'}], constant(undefined)),
+    // Rule("line", ["thing", {kind: 'comment'}], first),
+    // Rule("line", [{kind: 'comment'}], constant(undefined)),
 
     Rule("thing", ["block"], identity),
     Rule("thing", ["r-parens"], identity),
