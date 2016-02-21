@@ -6,7 +6,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
 
   var State = function() {
     this.lineTokens = [];
-    this.indent = 0;
+    this.indent = [];
     this.lastLine = null; // for indenting
 
     var grammar = Language.modeGrammar(modeCfg);
@@ -21,7 +21,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
   State.prototype.copy = function() {
     var s = new State();
     s.lineTokens = this.lineTokens.slice();
-    s.indent = this.indent;
+    s.indent = this.indent.slice();
 
     // don't copy these. when they change, app will refresh the entire mode.
     s.startGrammar = this.startGrammar;
@@ -35,7 +35,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
 
     if (!tokens.length) { // blank line
       this.completer = this.startCompleter;
-      this.indent = 0;
+      this.indent = [];
       return;
     }
 
@@ -60,13 +60,16 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     switch (result ? result.info.shape : null) {
       case 'c-block':
       case 'c-block cap':
+        this.indent.push('c')
+        break;
       case 'if-block':
-        this.indent++;
+        this.indent.push('if')
         break;
       case 'end':
-        this.indent--;
+        this.indent.pop();
         break;
       case 'else':
+        this.indent[this.indent.length - 1] = 'else';
         break;
     }
 
@@ -156,7 +159,7 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     },
 
     indent: function(state, textAfter) {
-      var indent = state.indent; // indentation of previous line
+      var indent = state.indent.length; // indentation of previous line
 
       // look ahead to get this line's indentation
       switch (textAfter.trim()) {

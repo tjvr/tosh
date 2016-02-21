@@ -1191,7 +1191,8 @@ function computeHint(cm) {
     return false;
   }*/
 
-  var completer = l.state.completer;
+  var state = l.state;
+  var completer = state.completer;
   var grammar = completer.leftParser.grammar;
 
   var tokens = l.tokens.slice();
@@ -1356,6 +1357,10 @@ function computeHint(cm) {
     if (displayText === "<>" || displayText === "_") return;
 
     assert(text);
+
+    var indent = state.indent;
+    if (text === "else" && indent.slice().pop() !== 'if') return;
+    if (text === "end" && !indent.length) return;
 
     text += " ";
 
