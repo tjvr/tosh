@@ -1291,6 +1291,8 @@ function computeHint(cm) {
 
       if (aInfo.selector === 'stopAllSounds' && bInfo.selector === 'stopScripts') return 1;
       if (aInfo.selector === 'stampCostume' && bInfo.selector === 'stopScripts') return 1;
+
+      if (aInfo.selector === 'else' && bInfo.selector === 'end') return 1;
     }
     return a.length < b.length ? +1 : a.length > b.length ? -1 : 0;
   });
