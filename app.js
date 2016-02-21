@@ -692,11 +692,9 @@ var extraKeys = {
     }
     if (inputSeek(cm, +1)) return;
 
-    // indent
+    // auto-indent
     if (cm.somethingSelected()) {
-      cm.indentSelection('add');
-    } else {
-      cm.replaceSelection("\t", 'end', '+input');
+      cm.indentSelection('smart');
     }
   },
   'Shift-Tab': function(cm) {

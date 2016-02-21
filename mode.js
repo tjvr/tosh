@@ -33,8 +33,9 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
   State.prototype.parseAndPaint = function(tokens) {
     this.lastLine = null;
 
-    if (!tokens.length) {
+    if (!tokens.length) { // blank line
       this.completer = this.startCompleter;
+      this.indent = 0;
       return;
     }
 
@@ -55,6 +56,19 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     }
     var result = results[0];
     result = result.process();
+
+    switch (result ? result.info.shape : null) {
+      case 'c-block':
+      case 'c-block cap':
+      case 'if-block':
+        this.indent++;
+        break;
+      case 'end':
+        this.indent--;
+        break;
+      case 'else':
+        break;
+    }
 
     // if definition, add parameters to scope
     if (result && result.info.selector === 'procDef') {
@@ -99,11 +113,6 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     startState: function() { return new State(); },
     copyState:  function(state) { return state.copy(); },
     token: function(stream, state) {
-      state.indent = stream.indentation();
-      // TODO: context.
-      // - are we in the first part of an `if` block?
-      // - what about parameter scope?
-
       if (state.lineTokens.length === 0) {
         stream.match(Language.whitespacePat);
 
@@ -147,26 +156,17 @@ CodeMirror.defineMode("tosh", function(cfg, modeCfg) {
     },
 
     indent: function(state, textAfter) {
-      var indent = parseInt(state.indent / cfg.indentUnit);
-      var block = state.lastLine;
-      if (block && block.info) {
-        switch (block.info.shape) {
-          case 'c-block':
-          case 'c-block cap':
-          case 'if-block':
-          case 'else':
-            indent++; break;
-        }
+      var indent = state.indent; // indentation of previous line
+
+      // look ahead to get this line's indentation
+      switch (textAfter.trim()) {
+        case 'end':
+        case 'else':
+          indent--;
       }
 
-      // TODO real auto-indent
-
-      // if this line is an `end`, dedent it.
-      if (/^end$/.test(textAfter.trim())) indent--;
-      if (/^else$/.test(textAfter.trim())) indent--;
-
       // return number of spaces to indent, taking indentUnit into account
-      return cfg.indentUnit * indent;
+      return indent * cfg.indentUnit;
     },
 
     lineComment: '//',
