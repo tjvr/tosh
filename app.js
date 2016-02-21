@@ -1391,10 +1391,9 @@ function computeHint(cm, please) {
       case 'c-block cap':
       case 'if-block':
         var after = "\nend";
-        if (!selection) {
-          var after = "\n\t\nend";
-          // put cursor on next line
-          selection = { ch: (indent.length + 1) * cmOptions.indentUnit, size: 0, offset: 1 };
+        if (!selection) { // no inputs
+          // put cursor at EOL
+          selection = { ch: text.length, size: 0 };
         }
         text += tabify(after, indent.length);
         break;
@@ -1449,7 +1448,7 @@ function computeHint(cm, please) {
     cm.replaceRange(text, completion.from || data.from,
                           completion.to || data.to, "complete");
     if (completion.selection) {
-      var line = result.from.line + (completion.selection.offset || 0);
+      var line = result.from.line;
       var start = result.from.ch + completion.selection.ch;
       var end = start + (completion.selection.size || 0);
       cm.setSelection({ line: line, ch: start }, { line: line, ch: end });
