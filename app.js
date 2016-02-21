@@ -1056,10 +1056,11 @@ function inputSeek(cm, dir) {
   return true;
 }
 
-function indentify(text) {
-  text = text || '';
+function tabify(text, indent) {
+  var tab = '\t';
+  var text = text || '';
   var indentation = '';
-  for (var i=0; i<indent; i++) indentation += '\t';
+  for (var i=0; i<indent; i++) indentation += tab;
   var lines = text.split('\n');
   for (var j=1; j<lines.length; j++) {
     lines[j] = indentation + lines[j];
@@ -1375,9 +1376,19 @@ function computeHint(cm) {
       });
     }
 
-    var newline = false;
-    if (c.rule.name === 'block' && !selection) {
-      newline = true;
+    // add "end" after c-blocks
+    switch (info.shape) {
+      case 'c-block':
+      case 'c-block cap':
+      case 'if-block':
+        var after = "\nend";
+        if (!selection) {
+          var after = "\n\t\nend";
+          // put cursor on next line
+          selection = { ch: (indent.length + 1) * cmOptions.indentUnit, size: 0, offset: 1 };
+        }
+        text += tabify(after, indent.length);
+        break;
     }
 
     var completion = {
@@ -1388,7 +1399,6 @@ function computeHint(cm) {
       category: info.category,
       render: renderHint,
       _name: c.rule.name, // DEBUG
-      newline: newline,
     };
 
     function renderHint(parentNode, self, data) {
@@ -1430,7 +1440,7 @@ function computeHint(cm) {
     cm.replaceRange(text, completion.from || data.from,
                           completion.to || data.to, "complete");
     if (completion.selection) {
-      var line = result.from.line;
+      var line = result.from.line + (completion.selection.offset || 0);
       var start = result.from.ch + completion.selection.ch;
       var end = start + (completion.selection.size || 0);
       cm.setSelection({ line: line, ch: start }, { line: line, ch: end });
