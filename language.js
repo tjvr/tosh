@@ -520,6 +520,7 @@ var Language = (function(Earley) {
     // warning: mutates arguments
     var color = colors[a.value];
     if (color !== '#fff') a.color = color;
+    a.kind = 'color';
     return color;
   }
 
