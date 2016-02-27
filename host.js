@@ -164,13 +164,19 @@ if (menu) {
   menu.insertBefore(redoBtn, helpBtn);
 
 
-  // show project name in menu bar
+  // show project name in menu bar & title bar
+  var originalTitle = document.title;
 
   Host.onAppLoad = function() {
     var projectName = el('.menu-title',
       ko(function() { return App.project()._fileName })
     );
     menu.insertBefore(projectName, helpBtn);
+
+    App.project.subscribe(function(p) {
+      var name = p._fileName || "tosh";
+      document.title = originalTitle.replace(/tosh/, name);
+    });
   };
 }
 
