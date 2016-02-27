@@ -526,7 +526,7 @@ var NamesEditor = function(sprite, kind) {
           changeTimeout = setTimeout(onNameBlur.bind(this), 500);
 
           // mark code editor dirty
-          sprite._scriptable.scriptsEditor.makeDirty();
+          sprite._scriptable.scriptsEditor.varsChanged();
         }
 
         function onNameBlur() {
@@ -737,6 +737,7 @@ var ScriptsEditor = function(sprite, project) {
   this.cm = CodeMirror(this.el, cmOptions);
 
   var code = Compiler.generate(sprite.scripts);
+  this.hasChangedEver = false;
   this.cm.setValue(code);
   this.needsCompile = ko(true);
   this.hasErrors = sprite._hasErrors;
@@ -759,12 +760,12 @@ var ScriptsEditor = function(sprite, project) {
   this.sprite.variables.map(function(variable) {
     variable._name.subscribe(function() {
       _this.debounceRepaint();
-    });
+    }, false);
   });
   this.sprite.lists.map(function(list) {
     list._name.subscribe(function() {
       _this.debounceRepaint();
-    });
+    }, false);
   });
 
   // compile after new scripts editor is opened
@@ -862,7 +863,7 @@ ScriptsEditor.prototype.makeDirty = function() {
   this.needsCompile.assign(true);
   App.needsCompile.assign(true);
   App.needsPreview.assign(true);
-  App.needsSave.assign(true);
+  if (this.hasChangedEver) App.needsSave.assign(true);
 }
 
 ScriptsEditor.prototype.getModeCfg = function() {
@@ -956,7 +957,13 @@ ScriptsEditor.prototype.redo = function() {
   App.active.assign(this.sprite);
 };
 
+ScriptsEditor.prototype.varsChanged = function() {
+  this.hasChangedEver = true;
+  this.makeDirty();
+};
+
 ScriptsEditor.prototype.onChange = function(cm, change) {
+  this.hasChangedEver = true;
   this.makeDirty();
 
   // analyse affected lines
