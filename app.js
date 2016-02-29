@@ -596,7 +596,7 @@ var NamesEditor = function(sprite, kind) {
                   }
                   break;
                 case 8: // Backspace
-                  if (variable._name()) {
+                  if (this.value) {
                     return;
                   }
                   var index = names().indexOf(variable);
@@ -607,7 +607,7 @@ var NamesEditor = function(sprite, kind) {
                   }
                   break;
                 case 46: // Delete
-                  if (variable._name()) {
+                  if (this.value) {
                     return;
                   }
                   var index = names().indexOf(variable);
