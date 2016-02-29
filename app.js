@@ -737,6 +737,7 @@ var ScriptsEditor = function(sprite, project) {
   this.cm = CodeMirror(this.el, cmOptions);
 
   var code = Compiler.generate(sprite.scripts);
+  // TODO handle errors in generate() 
   this.hasChangedEver = false;
   this.cm.setValue(code);
   this.needsCompile = ko(true);

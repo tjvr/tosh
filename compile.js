@@ -668,7 +668,7 @@ var Compiler = (function() {
   }
 
   function generateStringLiteral(value) {
-    value = value || "";
+    var value = value === undefined ? "" : "" + value;
     return '"' + value.replace(/\\/g, '\\\\')
                       .replace(/"/g, '\\"') + '"';
   }
