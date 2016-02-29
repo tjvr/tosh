@@ -94,3 +94,16 @@ document.body.addEventListener('drop', function(e) {
 
 Host.onAppLoad = function() {};
 
+
+// disable context menu
+
+document.addEventListener("contextmenu", function(e) {
+  var node = e.target;
+  while (node && node !== document.body) {
+    if (node.classList.contains('editor')) return;
+    node = node.parentNode;
+  }
+  e.preventDefault();
+}, false);
+
+
