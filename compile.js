@@ -516,7 +516,7 @@ var Compiler = (function() {
     }
 
     var level = +Infinity;
-    if (info._isCustom) level = -1;
+    if (info._isCustom) level = -2;
     var result = generateParts(info, args, level);
 
     switch (info.shape) {

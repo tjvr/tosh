@@ -837,6 +837,8 @@ var Language = (function(Earley) {
   /* For Compiler.generate() */
 
   var precedenceLevels = [
+    // custom block args = -2
+    // join = -1
     [], // zero
     ['*', '/', '%'],
     ['+', '-'],
@@ -854,7 +856,7 @@ var Language = (function(Earley) {
     });
   });
 
-  // speccial-case "join"
+  // special-case "join"
   precedence['concatenate:with:'] = -1;
 
 
