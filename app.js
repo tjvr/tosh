@@ -968,13 +968,25 @@ ScriptsEditor.prototype.onChange = function(cm, change) {
   this.makeDirty();
 
   // analyse affected lines
+  var lineNos = [];
   var lines = [];
   for (var i=change.from.line; i<=change.to.line; i++) {
+    lineNos.push(i);
     lines.push(this.cm.getLine(i));
   }
   lines = lines.concat(change.removed);
   lines = lines.concat(change.text);
   this.linesChanged(lines);
+
+  // clear error widget
+  for (var i=0; i<this.widgets.length; i++) {
+    var widget = this.widgets[i];
+    if (lineNos.indexOf(widget.line.lineNo()) > -1) {
+      widget.clear();
+      this.widgets.splice(i, 1);
+      break; // this will only remove the first one
+    }
+  }
 
   // check undo state
   if (!this.undoing) {
