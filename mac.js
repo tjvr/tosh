@@ -125,9 +125,11 @@ document.addEventListener("contextmenu", function(e) {
 }, false);
 
 
-// wipe localStorage preferences
+// persistent settings using UserDefaults
 
 delete window.localStorage['toshSettings'];
 
-// TODO: persistent settings using UserDefaults
+Host.updateSettings = function(settings) {
+  App.settings.update(settings);
+};
 
