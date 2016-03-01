@@ -11,17 +11,35 @@ Host._call = function(obj) {
 
 // load & save
 
+function withShade(func) {
+  var shade = el('.shade');
+  document.querySelector('#wrap').classList.add('shaded');
+  document.body.appendChild(shade);
+  setTimeout(function() {
+    try {
+      func();
+    } finally {
+      setTimeout(function() {
+        document.querySelector('#wrap').classList.remove('shaded');
+        document.body.removeChild(shade);
+      }, 1);
+    }
+  }, 1);
+}
+
 Host.load = function(assetList) {
   if (!assetList) return;
 
-  var zip = new JSZip();
-  assetList.forEach(function(asset) {
-    var ab = Format.binaryToArrayBuffer(atob(asset.base64));
-    zip.file(asset.name, ab);
-  });
+  withShade(function() {
+    var zip = new JSZip();
+    assetList.forEach(function(asset) {
+      var ab = Format.binaryToArrayBuffer(atob(asset.base64));
+      zip.file(asset.name, ab);
+    });
 
-  var project = Project.load(zip);
-  App.loadProject(project);
+    var project = Project.load(zip);
+    App.loadProject(project);
+  });
 };
 
 Host.save = function() {
