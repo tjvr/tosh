@@ -107,3 +107,9 @@ document.addEventListener("contextmenu", function(e) {
 }, false);
 
 
+// wipe localStorage preferences
+
+delete window.localStorage['toshSettings'];
+
+// TODO: persistent settings using UserDefaults
+
