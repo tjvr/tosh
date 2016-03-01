@@ -177,6 +177,11 @@ if (menu) {
       var name = p._fileName || "tosh";
       document.title = originalTitle.replace(/tosh/, name);
     });
+
+    // focus CM
+    doNext(function() {
+      App.active()._scriptable.scriptsEditor.cm.focus();
+    });
   };
 }
 

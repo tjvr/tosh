@@ -1735,6 +1735,7 @@ App.preview = function(start) {
     }
 
     if (start) {
+      stage.focus();
       stage.triggerGreenFlag();
     }
   });

@@ -178,7 +178,6 @@ Player = (function() {
       stage.root.addEventListener('keydown', exitFullScreen);
 
       player.appendChild(stage.root);
-      stage.focus();
       if (loadCallback) {
         loadCallback(stage);
         loadCallback = null;

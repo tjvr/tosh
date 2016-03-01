@@ -131,5 +131,8 @@ delete window.localStorage['toshSettings'];
 
 Host.updateSettings = function(settings) {
   App.settings.update(settings);
+
+  // focus CM (since WebView just added)
+  App.active()._scriptable.scriptsEditor.cm.focus();
 };
 
