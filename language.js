@@ -30,10 +30,10 @@ var Language = (function(Earley) {
     ['false',   /\<\>/],
     ['zero',    /\(\)/],
     ['empty',   /_( |$)/],
-    ['number',  /([0-9]+(\.[0-9]+)?e-?[0-9]+)/],
-    ['number',  /([0-9]+\.[0-9]*)/],
-    ['number',  /([0-9]*\.[0-9]+)/],
-    ['number',  /([0-9]+)/],
+    ['number',  /([0-9]+(\.[0-9]+)?e-?[0-9]+)/], // 123[.123]e[-]123
+    ['number',  /((0|[1-9][0-9]*)?\.[0-9]+)/],   // [123].123
+    ['number',  /((0|[1-9][0-9]*)\.[0-9]*)/],    // 123.[123]
+    ['number',  /(0|[1-9][0-9]*)/],              // 123
     ['color',   /#([A-Fa-f0-9]{3}(?:[A-Fa-f0-9]{3})?)/],
     ['string',  /"((\\["\\]|[^"\\])*)"/], // strings are backslash-escaped
     ['string',  /'((\\['\\]|[^'\\])*)'/],
@@ -778,7 +778,24 @@ var Language = (function(Earley) {
     'videoState': ['off', 'on', 'on-flipped'],
   };
 
-  menuValues = {
+  // only generate number literals for some blocks
+  var blocksWithNumberLiterals = [
+    'setVar:to:',
+    '<', '>', '=',
+  ];
+  // force string literals for:
+  //  'concatenate:with:',
+  //  'append:toList:',
+  //  'insert:at:ofList:',
+  //  say
+  //  think
+  //  ask
+  //  letter:of:
+  //  stringLength:
+  //  list:contains:
+  // ]
+
+  var menuValues = {
     'mouse-pointer': '_mouse_',
     'myself': '_myself_',
     'Stage': '_stage_',
@@ -1287,6 +1304,7 @@ var Language = (function(Earley) {
     precedence: precedence,
     menusThatAcceptReporters: menusThatAcceptReporters,
     menuOptions: menuOptions,
+    blocksWithNumberLiterals: blocksWithNumberLiterals,
 
     // for automatic variable renaming
     cleanName: cleanName,

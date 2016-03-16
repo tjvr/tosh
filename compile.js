@@ -597,6 +597,11 @@ var Compiler = (function() {
           var menu = part.split('.').pop();
           if (value instanceof Array) {
             part = generateReporter(value, inputShape, outerLevel, argIndex);
+          } else if (part === '%s' &&
+              Language.blocksWithNumberLiterals.indexOf(info.selector) > -1) {
+            // string input, that we might show as a number literal
+            var isNumber = /^-?(0|[1-9][0-9]*)(\.[0-9]*)?$/.test(value);
+            part = isNumber ? '' + value : generateStringLiteral(value);
           } else {
             part = generateLiteral(value, inputShape, menu, outerLevel);
           }
@@ -622,16 +627,11 @@ var Compiler = (function() {
       case 'readonly-menu':
         return generateMenuLiteral(value, menu);
       case 'string':
-        // Does it look like a number?
-        if (/^-?[0-9]+\.?[0-9]*$/.test(value)
-            && level !== -1 // arguments to join must be quoted
-            ) {
-          return '' + value;
-        }
         return generateStringLiteral(value);
       case 'number':
         // nb. Scratch saves empty number slots as 0
         // so it is always allowable to convert a number slot to zero
+        var number = Number(value);
         return Number(value) || 0;
       default:
         // TODO
