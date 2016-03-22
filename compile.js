@@ -645,6 +645,7 @@ var Compiler = (function() {
       case '_myself_': return 'myself';
       case '_stage_':  return 'Stage';
       case '_edge_':  return 'edge';
+      case '_random_':  return 'random position';
     }
     if (isStringMenu(menu, value)) {
       return generateStringLiteral(value);

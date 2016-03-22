@@ -730,16 +730,17 @@ var Language = (function(Earley) {
   /* Menu options */
 
   var menus = ['attribute', 'backdrop', 'broadcast', 'costume', 'effect',
-      'key', 'list', 'mathOp', 'rotationStyle', 'scene', 'sound', 'spriteOnly',
-      'spriteOrMouse', 'spriteOrStage', 'stageOrThis', 'stop', 'timeAndDate',
-      'touching', 'triggerSensor', 'var', 'varName', 'videoMotionType',
-      'videoState'];
+      'key', 'list', 'location', 'mathOp', 'rotationStyle', 'scene', 'sound',
+      'spriteOnly', 'spriteOrMouse', 'spriteOrStage', 'stageOrThis', 'stop',
+      'timeAndDate', 'touching', 'triggerSensor', 'var', 'varName',
+        'videoMotionType', 'videoState'];
 
   var numberMenus = ["direction", "drum", "instrument", "listDeleteItem",
       "listItem", "note"];
 
-  var menusThatAcceptReporters = ['broadcast', 'costume', 'backdrop', 'scene',
-      'sound', 'spriteOnly', 'spriteOrMouse', 'spriteOrStage', 'touching'];
+  var menusThatAcceptReporters = ['broadcast', 'costume', 'backdrop',
+      'location', 'scene', 'sound', 'spriteOnly', 'spriteOrMouse',
+      'spriteOrStage', 'touching'];
 
   var menuOptions = {
     'attribute': ['x position', 'y position', 'direction', 'costume #', 'costume name', 'backdrop #', 'backdrop name', 'size', 'volume'],
@@ -757,6 +758,7 @@ var Language = (function(Earley) {
     'list': [],
     'listDeleteItem': ['last', 'all'],
     'listItem': ['last', 'random'],
+    'location': ['mouse-pointer', 'random position'],
     'mathOp': ['abs', 'floor', 'ceiling', 'sqrt', 'sin', 'cos', 'tan',
     'asin', 'acos', 'atan', 'ln', 'log', 'e ^', '10 ^'],
     'motorDirection': ['this way', 'that way', 'reverse'],
@@ -800,6 +802,7 @@ var Language = (function(Earley) {
     'myself': '_myself_',
     'Stage': '_stage_',
     'edge': '_edge_',
+    'random position': '_random_',
     // 'stageOrThis' does not use this
   }
 
