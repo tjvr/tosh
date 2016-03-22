@@ -1299,6 +1299,12 @@ var Language = (function(Earley) {
     'think:',
     'think:duration:elapsed:from:',
 
+    'gotoX:y:',
+    'goToSpriteOrMouse:',
+    'comeToFront',
+    'goBackByLayers:',
+    'glideSecs:toX:y:elapsed:from:',
+
     'stopScripts',
     'stopAllSounds',
     'stamp',
