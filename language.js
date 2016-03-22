@@ -1294,21 +1294,39 @@ var Language = (function(Earley) {
 
   var preferSelectors = [
     /* reporters */
-    // 'readVariable', // TODO sort vars first
+    'VariableName',
 
     '+',
     '-',
     '*',
     '/',
+
+    '%',
+
+    'stringLength:',
+    'letter:of:',
+    'lineCountOfList:',
+    'timer',
+
     'computeFunction:of:',
 
     'heading',
     'distanceTo:',
+    'costumeIndex',
+    'backgroundIndex',
+    'sceneName',
 
     'timeAndDate',
-    'costumeIndex',
+
+    'mouseX',
+    'mouseY',
+    'tempo',
+    'volume',
+    'soundLevel',
 
     'getAttribute:of:',
+
+    'senseVideoMotion',
 
     /* predicates */
 
@@ -1360,7 +1378,7 @@ var Language = (function(Earley) {
     'hideList:',
 
     'doIf',
-    // 'doIfElse',
+    'doIfElse', // filtered later anyway
     'insert:at:ofList:',
     'bounceOffEdge',
 
@@ -1385,7 +1403,6 @@ var Language = (function(Earley) {
     'say:',
     'say:duration:elapsed:from:',
 
-    'VariableName',
     'setVar:to:',
     'xpos:',
     'ypos:',
