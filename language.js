@@ -1295,6 +1295,7 @@ var Language = (function(Earley) {
   var preferSelectors = [
     /* predicates */
 
+    'BooleanParam',
     'color:sees:',
     'touching:',
     'touchingColor:',
@@ -1304,6 +1305,7 @@ var Language = (function(Earley) {
     'not',
 
     /* reporters */
+    'ReporterParam',
     'VariableName',
 
     '+',
