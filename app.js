@@ -1237,8 +1237,8 @@ function computeHint(cm, please) {
 
   if (!tokens.length) {
     // TODO move 'define' into main grammar
-    ['define', 'define-atomic'].forEach(function(keyword) {
-      completions.push({
+    ['define-atomic', 'define'].forEach(function(keyword) {
+      completions.splice(0, 0, {
         start: 0,
         end: 0,
         pre: [],
