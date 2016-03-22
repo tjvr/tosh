@@ -1381,7 +1381,7 @@ var Language = (function(Earley) {
     'doForever',
 
     'gotoX:y:',
-    'goToSpriteOrMouse:',
+    'gotoSpriteOrMouse:',
     'comeToFront',
     'goBackByLayers:',
     'glideSecs:toX:y:elapsed:from:',
