@@ -1250,7 +1250,7 @@ function computeHint(cm, please) {
     });
   }
 
-  completions.filter(function(c) {
+  completions = completions.filter(function(c) {
     if (c.pre.length === 1 && typeof c.pre[0] === "string") return;
     if (c.pre[0] === "block") return;
     if (c.rule.process.name === 'unaryMinus') return;
