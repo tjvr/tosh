@@ -495,8 +495,7 @@ var ListEditor = function(obj, kind, active) {
 function allVariables(sprites) {
   var result = [];
   sprites.forEach(function(s) {
-    result = result.concat(s.variables());
-    result = result.concat(s.lists());
+    result = result.concat(s.variables()).concat(s.lists());
   });
   return result;
 }
@@ -535,7 +534,8 @@ var NamesEditor = function(sprite, kind) {
           var name = input.value;
 
           var project = App.project();
-          var targets = sprite._isStage ? [project] : [project, sprite];
+          var targets = sprite._isStage ? [project].concat(project.sprites())
+										: [sprite, project];
           var objects = allVariables(targets);
           var index = objects.indexOf(variable);
 
