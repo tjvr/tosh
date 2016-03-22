@@ -1293,6 +1293,16 @@ var Language = (function(Earley) {
   // selectors sorted for completion
 
   var preferSelectors = [
+    /* predicates */
+
+    'color:sees:',
+    'touching:',
+    'touchingColor:',
+    'mousePressed',
+    'keyPressed:',
+    'list:contains:',
+    'not',
+
     /* reporters */
     'VariableName',
 
@@ -1308,6 +1318,7 @@ var Language = (function(Earley) {
     'lineCountOfList:',
     'timer',
 
+    'rounded',
     'computeFunction:of:',
 
     'heading',
@@ -1316,24 +1327,21 @@ var Language = (function(Earley) {
     'backgroundIndex',
     'sceneName',
 
+    'randomFrom:to:',
+
     'timeAndDate',
 
     'mouseX',
     'mouseY',
+    'getUserName',
     'tempo',
     'volume',
     'soundLevel',
 
+    'getLine:ofList',
     'getAttribute:of:',
 
     'senseVideoMotion',
-
-    /* predicates */
-
-    'color:sees:',
-
-    'touching:',
-    'touchingColor:',
 
     /* blocks */
 

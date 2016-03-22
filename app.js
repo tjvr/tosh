@@ -1317,6 +1317,7 @@ function computeHint(cm, please) {
 
   var rule_categories = {
 	'VariableName': 'variable',
+	'ListName': 'list',
   };
 
   var list = [];
