@@ -1290,7 +1290,10 @@ var Language = (function(Earley) {
   }
 
 
-  // selectors sorted for completion
+  // selectors sorted for completion:
+  // - part based on block usage data
+  // - part based on usability guesswork (eg. blocks before their `and wait` versions)
+  // - part opinionated (eg. I use cloning a lot, and phosphorus doesn't support video) 
 
   var preferSelectors = [
     /* predicates */
@@ -1452,8 +1455,8 @@ var Language = (function(Earley) {
     'doWaitUntil',
 
     'whenKeyPressed',
-    'whenIReceive',
     'whenCloned',
+    'whenIReceive',
     'whenClicked',
     'keyPressed:',
     //'whenSensorGreaterThan', TODO completion for this
