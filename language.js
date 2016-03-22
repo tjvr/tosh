@@ -1295,7 +1295,6 @@ var Language = (function(Earley) {
   var preferSelectors = [
     /* reporters */
     // 'readVariable', // TODO sort vars first
-    'VariableName',
 
     '+',
     '-',
@@ -1361,6 +1360,7 @@ var Language = (function(Earley) {
     'hideList:',
 
     'doIf',
+    // 'doIfElse',
     'insert:at:ofList:',
     'bounceOffEdge',
 
@@ -1385,6 +1385,7 @@ var Language = (function(Earley) {
     'say:',
     'say:duration:elapsed:from:',
 
+    'VariableName',
     'setVar:to:',
     'xpos:',
     'ypos:',
@@ -1400,9 +1401,17 @@ var Language = (function(Earley) {
     'setTempoTo:',
     'setVideoTransparency',
 
+    'show',
+    'showVariable:',
+    'showList:',
+
     'stopScripts',
     'stopAllSounds',
     'stampCostume',
+
+    'lookLike:',
+    'startScene',
+    'startSceneAndWait',
 
     'turnRight:',
     'turnLeft:',
