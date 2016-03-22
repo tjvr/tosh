@@ -1297,20 +1297,27 @@ function computeHint(cm, please) {
   }
 
   expansions.sort(function(a, b) {
-    var aInfo = a.via.rule.process._info;
+    var aInfo = a.via.rule.process._info; 
     var bInfo = b.via.rule.process._info;
-    if (aInfo && bInfo) {
-      // TODO actually sort these based on an array
+	var aSelector = aInfo ? aInfo.selector : a.via.rule.name;
+	var bSelector = bInfo ? bInfo.selector : b.via.rule.name;
 
-	  var aIndex = Language.preferSelectors.indexOf(aInfo.selector);
-	  var bIndex = Language.preferSelectors.indexOf(bInfo.selector);
+	var aIndex = Language.preferSelectors.indexOf(aSelector);
+	var bIndex = Language.preferSelectors.indexOf(bSelector);
+	if (aIndex > -1 && bIndex > -1) {
+	  if (aIndex !== bIndex) return aIndex - bIndex;
+	} else if (aIndex > -1) {
+	  return +1;
+	}
 
-	  if (bIndex < aIndex) return 1;
-
-      //console.log(aInfo.selector, bInfo.selector);
-    }
-    return a.length < b.length ? +1 : a.length > b.length ? -1 : 0;
+	var aText = a.completion.join(" ");
+	var bText = b.completion.join(" ");
+	return aText < bText ? -1 : aText > bText ? +1 : 0;
   });
+
+  var rule_categories = {
+	'VariableName': 'variable',
+  };
 
   var list = [];
   expansions.forEach(function(x) {
@@ -1415,7 +1422,7 @@ function computeHint(cm, please) {
       text: text,
       hint: applyHint,
       selection: selection,
-      category: info.category,
+      category: info.category || rule_categories[c.rule.name],
       render: renderHint,
       _name: c.rule.name, // DEBUG
     };

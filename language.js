@@ -1293,11 +1293,62 @@ var Language = (function(Earley) {
   // selectors sorted for completion
 
   var preferSelectors = [
-    'say:',
-    'say:duration:elapsed:from:',
+    /* reporters */
+    // 'readVariable', // TODO sort vars first
+    'VariableName',
 
-    'think:',
-    'think:duration:elapsed:from:',
+    '+',
+    '-',
+    '*',
+    '/',
+    'computeFunction:of:',
+
+    'heading',
+    'distanceTo:',
+
+    'timeAndDate',
+    'costumeIndex',
+
+    'getAttribute:of:',
+
+    /* predicates */
+
+    'color:sees:',
+
+    'touching:',
+    'touchingColor:',
+
+    /* blocks */
+
+    // 'call', TODO sort calls first
+
+    'append:toList:',
+    'doAsk',
+
+    'broadcast:',
+    'doBroadcastAndWait',
+,
+    'changeXposBy:',
+    'changeYposBy:',
+    'changeGraphicEffect:by:',
+    'changeSizeBy:',
+    'changePenSizeBy:',
+    'changePenHueBy:',
+    'changePenShadeBy:',
+    'changeVolumeBy:',
+    'changeTempoBy:',
+    'changeVar:by:', // TODO sort vars first
+
+    'clearPenTrails',
+    'filterReset',
+
+    'createCloneOf',
+
+    // 'procDef'
+    'deleteClone',
+    'deleteLine:ofList:',
+
+    'doForever',
 
     'gotoX:y:',
     'goToSpriteOrMouse:',
@@ -1305,16 +1356,72 @@ var Language = (function(Earley) {
     'goBackByLayers:',
     'glideSecs:toX:y:elapsed:from:',
 
+    'hide',
+    'hideVariable:',
+    'hideList:',
+
+    'doIf',
+    'insert:at:ofList:',
+    'bounceOffEdge',
+
+    'nextCostume',
+    'nextScene',
+
+    'heading:',
+    'pointTowards:',
+    'putPenDown',
+    'putPenUp',
+    'playSound:',
+    'doPlaySoundAndWait',
+    'noteOn:duration:elapsed:from:',
+    'playDrum',
+
+    'doRepeat',
+    'doUntil',
+    'setLine:ofList:to:',
+    'timerReset',
+    'rest:elapsed:from:',
+
+    'say:',
+    'say:duration:elapsed:from:',
+
+    'setVar:to:',
+    'xpos:',
+    'ypos:',
+    'setGraphicEffect:to:',
+    'setSizeTo:',
+    'penSize:',
+    'penColor:',
+    'setPenHueTo:',
+    'setPenShadeTo:',
+    'setVolumeTo:',
+    'setRotationStyle',
+    'instrument:',
+    'setTempoTo:',
+    'setVideoTransparency',
+
     'stopScripts',
     'stopAllSounds',
-    'stamp',
+    'stampCostume',
 
-    'touching:',
-    'touchingColor:',
+    'turnRight:',
+    'turnLeft:',
+    'think:',
+    'think:duration:elapsed:from:',
+    'setVideoState',
 
-    'heading',
-    'distanceTo:',
-    'getAttribute:of:',
+    'whenGreenFlag',
+
+    'wait:elapsed:from:',
+    'doWaitUntil',
+
+    'whenKeyPressed',
+    'whenIReceive',
+    'whenCloned',
+    'whenClicked',
+    'keyPressed:',
+    //'whenSensorGreaterThan', TODO completion for this
+    'whenSceneStarts',
 
     'end',
     'else',
