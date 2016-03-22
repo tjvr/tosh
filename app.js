@@ -1301,20 +1301,11 @@ function computeHint(cm, please) {
     var bInfo = b.via.rule.process._info;
     if (aInfo && bInfo) {
       // TODO actually sort these based on an array
-      if (aInfo.selector === 'say:duration:elapsed:from:' && bInfo.selector === 'say:') return 1;
-      if (aInfo.selector === 'think:duration:elapsed:from:' && bInfo.selector === 'think:') return 1;
 
-      if (aInfo.selector === 'getAttribute:of:' && bInfo.selector === 'heading') return 1;
-      if (aInfo.selector === 'distanceTo:' && bInfo.selector === 'heading') return 1;
+	  var aIndex = Language.preferSelectors.indexOf(aInfo.selector);
+	  var bIndex = Language.preferSelectors.indexOf(bInfo.selector);
 
-      if (aInfo.selector === 'stopAllSounds' && bInfo.selector === 'stopScripts') return 1;
-      if (aInfo.selector === 'stampCostume' && bInfo.selector === 'stopScripts') return 1;
-
-      if (aInfo.selector === 'touchingColor:' && bInfo.selector === 'touching:') return 1;
-
-      if (aInfo.selector === 'getAttribute:of:') return 1;
-
-      if (aInfo.selector === 'else' && bInfo.selector === 'end') return 1;
+	  if (bIndex < aIndex) return 1;
 
       //console.log(aInfo.selector, bInfo.selector);
     }

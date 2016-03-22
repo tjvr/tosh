@@ -1290,6 +1290,31 @@ var Language = (function(Earley) {
   }
 
 
+  // selectors sorted for completion
+
+  var preferSelectors = [
+    'say:',
+    'say:duration:elapsed:from:',
+
+    'think:',
+    'think:duration:elapsed:from:',
+
+    'stopScripts',
+    'stopAllSounds',
+    'stamp',
+
+    'touching:',
+    'touchingColor:',
+
+    'heading',
+    'distanceTo:',
+    'getAttribute:of:',
+
+    'end',
+    'else',
+  ];
+
+
   return {
     tokenize: tokenize,
     defineGrammar: defineGrammar,
@@ -1315,6 +1340,9 @@ var Language = (function(Earley) {
     // for parseLines
     isDefinitionLine: isDefinitionLine,
     modeGrammar: modeGrammar,
+
+    // for completion
+    preferSelectors: preferSelectors,
   };
 
 }(Earley));
