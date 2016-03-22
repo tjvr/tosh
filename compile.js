@@ -677,7 +677,7 @@ var Compiler = (function() {
   function generateColorLiteral(number) {
     if (number < 0) number = 0xFFFFFFFF + number + 1;
     var hex = number.toString(16);
-    hex = hex.slice(hex.length - 6); // last 6 characters
+    hex = hex.slice(Math.max(0, hex.length - 6)); // last 6 characters
     while (hex.length < 6) hex = '0' + hex;
     if (hex[0] === hex[1] && hex[2] === hex[3] && hex[4] === hex[5]) {
       hex = hex[0] + hex[2] + hex[4];
