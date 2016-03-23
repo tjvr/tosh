@@ -497,6 +497,9 @@ var ListEditor = function(obj, kind, active) {
   items.subscribe({
     insert: function(index, item) {
       item._el.scrollIntoView();
+      doNext(function() {
+        item._el.scrollIntoView();
+      });
     },
   });
 
