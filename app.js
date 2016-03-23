@@ -1662,6 +1662,7 @@ App.sync = function() {
       if (s.isClone) return;
 
       var t = s._tosh;
+      if (!t) return; // TODO figure out how this can happen (CNR!)
 
       // variables could be created after we last sent the project to
       // phosphorus, so we have fallback values
