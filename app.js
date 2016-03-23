@@ -101,6 +101,17 @@ Scriptable.prototype.deactivated = function() {
 
 /* ListEditor */
 
+function uniqueName(name, items) {
+  var seen = seenNames(items);
+  var m = /^(.*)([0-9]+)$/.exec(name);
+  var suffix = m ? +m[2] : 2;
+  var original = (m ? m[1] : name) || 'costume';
+  while (seen.hasOwnProperty(name)) {
+    name = original + suffix++;
+  }
+  return name;
+}
+
 function costumeSize(costume) {
   var stats = ko("..x..");
   costume._size.subscribe(function(size) {
@@ -256,7 +267,10 @@ var ListEditor = function(obj, kind, active) {
       if (!name) return;
 
       // name must be unique
-      // TODO
+      var others = items().slice();
+      others.splice(others.indexOf(item), 1);
+      name = uniqueName(name, others);
+      this.value = name;
 
       var observable = item.name || item._name;
       Oops(function() {
@@ -475,6 +489,7 @@ var ListEditor = function(obj, kind, active) {
       items.assign(newItems);
     });
   }
+  window.addEventListener('mouseup', drop);
 
   function stopDragging() {
     if (!dragging) return;
@@ -489,7 +504,6 @@ var ListEditor = function(obj, kind, active) {
     clearInterval(dragging.interval);
     dragging = null;
   }
-  window.addEventListener('mouseup', drop);
 
 
   // scroll to bottom on push (eg. import costume)
@@ -526,7 +540,7 @@ function allVariables(sprites) {
 function seenNames(objects) {
   var seen = {};
   objects.forEach(function(obj) {
-    var name = obj._name();
+    var name = (obj._name || obj.name)();
     seen[name] = true;
   });
   return seen;
@@ -1793,9 +1807,13 @@ App.fileDropped = function(f) {
     reader.onloadend = function() {
       var ab = reader.result;
       // import dropped costume
+
       var costume = Project.newCostume(fileName, ext, ab);
       // TODO resize bitmaps to be less than 480x360
-      // TODO ensure unique names
+
+      // ensure unique name
+      costume.name.assign(uniqueName(costume.name(), App.active().costumes()));
+
       Oops(function() {
         App.active().costumes.push(costume);
       });
