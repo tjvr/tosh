@@ -492,11 +492,11 @@ var ListEditor = function(obj, kind, active) {
   window.addEventListener('mouseup', drop);
 
 
-  // scroll to bottom on push (import)
+  // scroll to bottom on push (eg. import costume)
 
   items.subscribe({
     insert: function(index, item) {
-      item._el.scrollIntoView();
+      if (item._el) item._el.scrollIntoView();
       doNext(function() {
         item._el.scrollIntoView();
       });
@@ -1752,6 +1752,7 @@ App.preview = function(start) {
       var s = stage.children[i];
       if (s.isSprite) {
         s._tosh = children[i];
+        // TODO CNR but if you do enough sprite adding/rearranging this can fail
         assert(s._tosh === project.sprites()[s.indexInLibrary - 1]);
       }
     }
