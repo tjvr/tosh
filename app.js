@@ -69,11 +69,17 @@ var Scriptable = function(s, project) {
       })),
 
       pane('data', s._isStage ? [
+        el('h2', "Variable names"),
         NamesEditor(s, 'variable'),
+        el('hr'),
+        el('h2', "List names"),
         NamesEditor(s, 'list'),
       ] : [
+        el('h2', "Variable names"),
         NamesEditor(project, 'variable'),
         NamesEditor(s, 'variable'),
+        el('hr'),
+        el('h2', "List names"),
         NamesEditor(project, 'list'),
         NamesEditor(s, 'list'),
       ]),
@@ -654,7 +660,6 @@ var NamesEditor = function(sprite, kind) {
   });
 
   return el('', [
-    el('h2', kind[0].toUpperCase() + kind.slice(1) + " names"),
     el('ul.reporters', {
       class: kind,
       children: variableList,
