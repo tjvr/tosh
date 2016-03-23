@@ -28,7 +28,7 @@ var Format = (function() {
     // here, we abuse observables as a sort of Promise.
     // move along now...
 
-    var image = ko(null);
+    var image = new Image;
     var src = ko(null);
     var size = ko(null);
 
@@ -37,11 +37,9 @@ var Format = (function() {
       var canvas = el('canvas');
       canvg(canvas, binary, {
       renderCallback: function() {
-        image.assign(new Image);
         src.assign(canvas.toDataURL('image/png'));
       }});
     } else {
-      image.assign(new Image);
       src.assign('data:image/' + ext + ';base64,' + btoa(binary));
     }
 
@@ -53,15 +51,15 @@ var Format = (function() {
     }
 
     src.subscribe(function(src) {
-      image().src = src;
+      image.src = src;
       poll();
-      image().addEventListener('load', poll);
+      image.addEventListener('load', poll);
     });
 
     var timeout;
     function poll() {
-      if (image().naturalWidth) {
-        size.assign(readSize(image()));
+      if (image.naturalWidth) {
+        size.assign(readSize(image));
         clearTimeout(timeout);
         return;
       }
