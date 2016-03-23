@@ -179,12 +179,12 @@ body {
   right: 8px;
   padding: 0 1px 1px; /* phosphorus uses box-shadow for border */
   width: 482px;
-  height: 392px; /* just fwiw */
-  font-size: 16px; /* required! TODO: bug Nathan */
+  height: 392px;
+  font-size: 16px;
   transition: width 250ms ease-in-out, height 250ms ease-in-out;
 }
 .player {
-  background: #fff; /* TODO #555; */
+  background: #fff;
   transition: width 250ms ease-in-out,
               height 250ms ease-in-out;
   overflow: hidden;
