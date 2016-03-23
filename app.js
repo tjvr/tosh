@@ -400,8 +400,8 @@ var ListEditor = function(obj, kind, active) {
     });
   } else {
     itemEls = itemEls.compute(function(els) {
-      if (!els.length) els = [el('.sound.drag-here', "no sounds here")]
-      return els.slice();
+      return els.length ? els.slice()
+                        : [el('.sound.drag-here', "no sounds here")];
     });
   }
 
