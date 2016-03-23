@@ -1700,7 +1700,6 @@ App.sync = function() {
       if (s.isClone) return;
 
       var t = s._tosh;
-      if (!t) return; // TODO figure out how this can happen (CNR!)
 
       // variables could be created after we last sent the project to
       // phosphorus, so we have fallback values
@@ -1750,6 +1749,9 @@ App.preview = function(start) {
   var request = P.IO.loadSB2File(zip.generate({ type: 'blob' }));
   //var request = P.IO.loadSB2ProjectZip(zip);
 
+  // save list of children, in case it changes _while the project is loading_
+  var children = project.children().slice();
+
   player.loadProject(request, function(stage) {
     App.stage = stage;
 
@@ -1757,7 +1759,6 @@ App.preview = function(start) {
     assert(stage._tosh);
 
     // sync() needs references to original scriptable
-    var children = project.children();
     // phosphorus doesn't support list watchers
     children = children.filter(function(obj) {
       if (obj.listName) return false;
@@ -1768,8 +1769,6 @@ App.preview = function(start) {
       var s = stage.children[i];
       if (s.isSprite) {
         s._tosh = children[i];
-        // TODO CNR but if you do enough sprite adding/rearranging this can fail
-        assert(s._tosh === project.sprites()[s.indexInLibrary - 1]);
       }
     }
 
