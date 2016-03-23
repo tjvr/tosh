@@ -221,28 +221,12 @@ body {
   background-image: url(icons.svg);
 }
 
-.flag.needs-preview:after,
-.flag.has-errors:after {
-  content: "▶";
-  display: block;
-  position: absolute;
-  color: #ff9300;
-  border-radius: 4px;
-  bottom: 0px;
-  right: 11px;
-  line-height: 24px;
-  height: 24px;
-  width: 8px;
-  font-weight: 700;
-  font-family: Noto Sans, sans-serif;
-  font-size: 14px;
+.flag.needs-preview {
+  background-position: 0 -4em;
 }
-.flag.has-errors:after {
-  content: "!";
-  color: #e40046;
-  font-size: 16px;
+.flag.has-errors {
+  background-position: -2em -4em;
 }
-
 
 .controls .small-stage {
   float: left;
