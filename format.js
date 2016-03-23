@@ -28,42 +28,45 @@ var Format = (function() {
     // here, we abuse observables as a sort of Promise.
     // move along now...
 
-    var $image = ko(null);
+    var image = ko(null);
+    var src = ko(null);
+    var size = ko(null);
+
     if (ext === 'jpg') ext = 'jpeg';
     if (ext === 'svg') {
       var canvas = el('canvas');
       canvg(canvas, binary, {
       renderCallback: function() {
-        $image.assign(new Image);
-        $image().src = canvas.toDataURL('image/png');
+        image.assign(new Image);
+        src.assign(canvas.toDataURL('image/png'));
       }});
     } else {
-      $image.assign(new Image);
-      $image().src = 'data:image/' + ext + ';base64,' + btoa(binary);
+      image.assign(new Image);
+      src.assign('data:image/' + ext + ';base64,' + btoa(binary));
     }
 
-    var src = ko(null);
-    $image.subscribe(function(image) {
-      if (!image) return;
-      if (image.src) {
-        src.assign(image.src);
-      } else {
-        image.addEventListener('load', function(e) {
-          src.assign(image.src);
-        });
-      }
-    });
-
-    var size = ko(null);
-    src.subscribe(function() {
-      if (!src) return;
-      var image = $image();
-      if (!image) return;
-      size.assign({
+    function readSize(image) {
+      return {
         width: image.naturalWidth,
         height: image.naturalHeight,
-      });
+      };
+    }
+
+    src.subscribe(function(src) {
+      image().src = src;
+      poll();
+      image().addEventListener('load', poll);
     });
+
+    var timeout;
+    function poll() {
+      if (image().naturalWidth) {
+        size.assign(readSize(image()));
+        clearTimeout(timeout);
+        return;
+      }
+      timeout = setTimeout(poll, 100);
+    }
 
     return {
       src: src,
@@ -223,6 +226,7 @@ var Format = (function() {
       _size: details.size,
     };
     details.size.subscribe(function(size) {
+      if (!size) return;
       // TODO bitmapResolution ??
       costume.rotationCenterX = size.width / 2;
       costume.rotationCenterY = size.height / 2;
