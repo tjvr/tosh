@@ -315,7 +315,7 @@ var ListEditor = function(obj, kind, active) {
       }));
     }
 
-    var itemEl = el('li.' + kind, props);
+    var itemEl = item._el = el('li.' + kind, props);
     return itemEl;
   });
 
@@ -490,6 +490,15 @@ var ListEditor = function(obj, kind, active) {
     dragging = null;
   }
   window.addEventListener('mouseup', drop);
+
+
+  // scroll to bottom on push (import)
+
+  items.subscribe({
+    insert: function(index, item) {
+      item._el.scrollIntoView();
+    },
+  });
 
 
   var ul = el('ul.items', {
@@ -1779,6 +1788,7 @@ App.fileDropped = function(f) {
     var reader = new FileReader;
     reader.onloadend = function() {
       var ab = reader.result;
+      // import dropped costume
       var costume = Project.newCostume(fileName, ext, ab);
       // TODO resize bitmaps to be less than 480x360
       // TODO ensure unique names
