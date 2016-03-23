@@ -68,8 +68,13 @@ var Scriptable = function(s, project) {
         });
       })),
 
-      pane('data', [
+      pane('data', s._isStage ? [
         NamesEditor(s, 'variable'),
+        NamesEditor(s, 'list'),
+      ] : [
+        NamesEditor(project, 'variable'),
+        NamesEditor(s, 'variable'),
+        NamesEditor(project, 'list'),
         NamesEditor(s, 'list'),
       ]),
       pane('costumes', ListEditor(s, 'costume')),
