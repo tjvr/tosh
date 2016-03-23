@@ -234,6 +234,8 @@ var ListEditor = function(obj, kind, active) {
       if (this.disabled) return;
       Oops(function() {
         var index = items().indexOf(item);
+        assert(index !== -1);
+
         // update costume index if needed
         if (kind === 'costume') {
           if (obj.currentCostumeIndex() >= index) {
@@ -399,7 +401,7 @@ var ListEditor = function(obj, kind, active) {
   } else {
     itemEls = itemEls.compute(function(els) {
       if (!els.length) els = [el('.sound.drag-here', "no sounds here")]
-      return els;
+      return els.slice();
     });
   }
 
