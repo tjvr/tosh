@@ -1745,9 +1745,8 @@ App.preview = function(start) {
   var project = App.project();
   var zip = Project.save(project);
 
-  // TODO send phosphorus the zip object, to avoid generation
-  var request = P.IO.loadSB2File(zip.generate({ type: 'blob' }));
-  //var request = P.IO.loadSB2ProjectZip(zip);
+  // send phosphorus the zip object
+  var request = P.IO.loadSB2Object(zip);
 
   // save list of children, in case it changes _while the project is loading_
   var children = project.children().slice();
