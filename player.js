@@ -186,6 +186,11 @@ Player = (function() {
     request.onerror = function(e) {
       console.error(e.stack);
     };
+
+    // sometimes the project is already loaded!
+    if (request.isDone) {
+      request.onload(request.getResult());
+    }
   }
 
 
