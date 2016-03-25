@@ -1803,6 +1803,7 @@ App.fileDropped = function(f) {
   var ext = parts.pop();
   var fileName = parts.join('.');
   if (ext === 'png' || ext === 'jpg' || ext == 'jpeg' || ext === 'svg') {
+    if (ext === 'jpeg') ext = 'jpg';
     var reader = new FileReader;
     reader.onloadend = function() {
       var ab = reader.result;
