@@ -1746,7 +1746,7 @@ App.preview = function(start) {
   var zip = Project.save(project);
 
   // send phosphorus the zip object
-  var request = P.IO.loadSB2fromTosh(zip);
+  var request = P.IO.loadSB2Object(zip);
 
   // save list of children, in case it changes _while the project is loading_
   var children = project.children().slice();
@@ -1836,7 +1836,7 @@ App.project.subscribe(function(project) {
     container.destroy();
   }
   container = new Container(project, App.active); // will assign App.active
-  wrap.appendChild(container.el);
+  if (Host.isApp) wrap.appendChild(container.el);
 });
 
 

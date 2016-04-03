@@ -14,7 +14,6 @@ h1, h2, h3, h4, h5, a, button, input {
   list-style: none;
   text-decoration: none;
   background: transparent;
-  color: inherit;
   -webkit-appearance: none;
   outline: none;
 }
@@ -55,6 +54,7 @@ body {
   font-size: 12px;
 
   background: #ececec;
+  color: #000;
 
   overflow: hidden;
   height: 100%;

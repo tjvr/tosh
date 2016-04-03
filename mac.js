@@ -1,6 +1,7 @@
 
 var Host = {};
 Host.isMac = true;
+Host.isApp = true;
 
 Host._call = function(obj) {
   var func = Host[obj.name];

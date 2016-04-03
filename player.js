@@ -7,6 +7,9 @@ Player = (function() {
   var isFullScreen = false; // TODO ko-ify
 
   var player = document.querySelector('.player');
+  if (!player) return {
+    loadProject: function() {},
+  };
 
   var controls = document.querySelector('.controls');
   var flag = document.querySelector('.flag');

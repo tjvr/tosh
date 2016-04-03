@@ -55,7 +55,7 @@ Host.save = function() {
   }
   indicator.clear();
 };
-document.querySelector('#button-save').addEventListener('click', Host.save);
+if (Host.isApp) document.querySelector('#button-save').addEventListener('click', Host.save);
 
 
 // doesn't seem to work in Safari!
@@ -122,32 +122,34 @@ function loadFiles(files, indicator) {
 }
 
 
-// open button shows file dialog
+if (Host.isApp) {
 
-var loadBtn = document.querySelector('#button-load');
-var fileInput = el('input', { type: 'file', });
-loadBtn.appendChild(fileInput);
+  // open button shows file dialog
 
-function handleFileSelect(e) {
-  var indicator = Indicator('Loading');
-  loadFiles(e.target.files, indicator);
-}
-fileInput.addEventListener('change', handleFileSelect, false);
+  var loadBtn = document.querySelector('#button-load');
+  var fileInput = el('input', { type: 'file', });
+  loadBtn.appendChild(fileInput);
+
+  function handleFileSelect(e) {
+    var indicator = Indicator('Loading');
+    loadFiles(e.target.files, indicator);
+  }
+  fileInput.addEventListener('change', handleFileSelect, false);
 
 
-// undo & redo menu items
+  // undo & redo menu items
 
-var canUndo = ko(false);
-var canRedo = ko(false);
-Host.onOops = function() {
-  canUndo.assign(Oops.canUndo());
-  canRedo.assign(Oops.canRedo());
+  var menu = document.querySelector('#menu');
 
-  App.onOops();
-};
+  var canUndo = ko(false);
+  var canRedo = ko(false);
+  Host.onOops = function() {
+    canUndo.assign(Oops.canUndo());
+    canRedo.assign(Oops.canRedo());
 
-var menu = document.querySelector('#menu');
-if (menu) {
+    App.onOops();
+  };
+
   var undoBtn = el('.menu-button', {
     class: ko(function() { return canUndo() ? "" : "hidden" }),
     on_click: Oops.undo,
@@ -162,28 +164,28 @@ if (menu) {
   var helpBtn = document.querySelector('#button-help');
   menu.insertBefore(undoBtn, helpBtn);
   menu.insertBefore(redoBtn, helpBtn);
-
-
-  // show project name in menu bar & title bar
-  var originalTitle = document.title;
-
-  Host.onAppLoad = function() {
-    var projectName = el('.menu-title',
-      ko(function() { return App.project()._fileName })
-    );
-    menu.insertBefore(projectName, helpBtn);
-
-    App.project.subscribe(function(p) {
-      var name = p._fileName || "tosh";
-      document.title = originalTitle.replace(/tosh/, name);
-    });
-
-    // focus CM
-    doNext(function() {
-      App.active()._scriptable.scriptsEditor.cm.focus();
-    });
-  };
 }
+
+// show project name in menu bar & title bar
+var originalTitle = document.title;
+
+Host.onAppLoad = function() {
+  if (!Host.isApp) return;
+  var projectName = el('.menu-title',
+    ko(function() { return App.project()._fileName })
+  );
+  menu.insertBefore(projectName, helpBtn);
+
+  App.project.subscribe(function(p) {
+    var name = p._fileName || "tosh";
+    document.title = originalTitle.replace(/tosh/, name);
+  });
+
+  // focus CM
+  doNext(function() {
+    App.active()._scriptable.scriptsEditor.cm.focus();
+  });
+};
 
 
 // drop file to open
@@ -300,8 +302,7 @@ document.addEventListener('keydown', function(e) {
 
 // project keybindings
 
-document.querySelector('.player').addEventListener('keydown', function(e) {
-  if (!Host.isApp) return;
+if (Host.isApp) document.querySelector('.player').addEventListener('keydown', function(e) {
   if (!App.stage) return;
   if (/INPUT/i.test(e.target.tagName)) return;
   switch (e.keyCode) {
@@ -314,5 +315,4 @@ document.querySelector('.player').addEventListener('keydown', function(e) {
   }
   e.preventDefault();
 }, true);
-
 
