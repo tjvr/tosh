@@ -564,7 +564,7 @@ var NamesEditor = function(sprite, kind) {
           changeTimeout = setTimeout(onNameBlur.bind(this), 500);
 
           // mark code editor dirty
-          sprite._scriptable.scriptsEditor.varsChanged();
+          App.active()._scriptable.scriptsEditor.varsChanged();
         }
 
         function onNameBlur() {
@@ -795,17 +795,10 @@ var ScriptsEditor = function(sprite, project) {
   this.annotate = this.cm.annotateScrollbar('error-annotation');
 
   // repaint when variable/list names change
-  var _this = this;
-  this.sprite.variables.map(function(variable) {
-    variable._name.subscribe(function() {
-      _this.debounceRepaint();
-    }, false);
-  });
-  this.sprite.lists.map(function(list) {
-    list._name.subscribe(function() {
-      _this.debounceRepaint();
-    }, false);
-  });
+  this.bindNames(sprite.variables);
+  this.bindNames(sprite.lists);
+  this.bindNames(project.variables);
+  this.bindNames(project.lists);
 
   // compile after new scripts editor is opened
   // TODO this makes initial load feel slow
@@ -828,6 +821,14 @@ var ScriptsEditor = function(sprite, project) {
   this.cmRedo = this.cm.redo.bind(this.cm);
   this.cm.undo = Oops.undo;
   this.cm.redo = Oops.redo;
+};
+
+ScriptsEditor.prototype.bindNames = function(names) {
+  names.map(function(item) {
+    item._name.subscribe(function() {
+      this.debounceRepaint();
+    }.bind(this), false);
+  }.bind(this));
 };
 
 ScriptsEditor.prototype.fixLayout = function(offset) {
