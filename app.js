@@ -592,11 +592,12 @@ var NamesEditor = function(sprite, kind) {
           var name = input.value;
           if (!name) {
             var index = names().indexOf(variable);
-            assert(index !== -1);
-            Oops(function() {
-              names.remove(index);
-            });
-            return;
+            if (index !== -1) {
+              Oops(function() {
+                names.remove(index);
+              });
+              return;
+            }
           }
 
           var project = App.project();
@@ -614,8 +615,11 @@ var NamesEditor = function(sprite, kind) {
           Oops(function() {
             variable._name.assign(name);
           });
-          if (name !== oldName) {
-            this.setSelectionRange(0, this.value.length);
+          if (variable._isEditing() && name !== oldName) {
+            for (var i=0; i<name.length; i++) {
+              if (name[i] !== oldName[i]) break;
+            }
+            this.setSelectionRange(i, name.length);
           }
         }
 
