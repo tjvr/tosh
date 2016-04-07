@@ -95,6 +95,10 @@ Scriptable.prototype.activated = function() {
   this.scriptsEditor.activated();
 };
 
+Scriptable.prototype.focus = function() {
+  this.scriptsEditor.focus();
+};
+
 Scriptable.prototype.deactivated = function() {
   this.scriptsEditor.repaint();
 };
@@ -1012,6 +1016,10 @@ ScriptsEditor.prototype.activated = function() {
 
     this.debounceRepaint();
   }.bind(this));
+};
+
+ScriptsEditor.prototype.focus = function() {
+  this.cm.focus();
 };
 
 ScriptsEditor.prototype.undo = function() {

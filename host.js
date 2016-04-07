@@ -308,7 +308,7 @@ if (Host.isApp) document.querySelector('.player').addEventListener('keydown', fu
   switch (e.keyCode) {
     case 27: // stop:  ESC
       player.pauseClick({ preventDefault: function(){} });
-      App.active()._scriptable.activated();
+      App.active()._scriptable.focus();
       break;
     default:
       return;
