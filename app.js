@@ -580,7 +580,7 @@ var NamesEditor = function(sprite, kind) {
 
         function onNameChange(e) {
           clearTimeout(changeTimeout);
-          changeTimeout = setTimeout(onNameBlur.bind(this), 500);
+          changeTimeout = setTimeout(onNameBlur.bind(this), 1000);
 
           // mark code editor dirty
           App.active()._scriptable.scriptsEditor.varsChanged();
