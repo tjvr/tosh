@@ -373,6 +373,7 @@ body {
   margin: 1px 0 1px 26px;
   height: 22px;
   padding: 0 6px;
+  text-overflow: ellipsis;
 }
 .ss .sprite .name {
   width: 124px;
