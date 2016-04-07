@@ -70,18 +70,18 @@ var Scriptable = function(s, project) {
 
       pane('data', s._isStage ? [
         el('h2', "Variable names"),
-        NamesEditor(s, 'variable'),
+        new NamesEditor(s, 'variable').el,
         el('hr'),
         el('h2', "List names"),
-        NamesEditor(s, 'list'),
+        new NamesEditor(s, 'list').el,
       ] : [
         el('h2', "Variable names"),
-        NamesEditor(project, 'variable'),
-        NamesEditor(s, 'variable'),
+        new NamesEditor(project, 'variable').el,
+        new NamesEditor(s, 'variable').el,
         el('hr'),
         el('h2', "List names"),
-        NamesEditor(project, 'list'),
-        NamesEditor(s, 'list'),
+        new NamesEditor(project, 'list').el,
+        new NamesEditor(s, 'list').el,
       ]),
       pane('costumes', ListEditor(s, 'costume')),
       pane('sounds', ListEditor(s, 'sound')),
@@ -572,181 +572,196 @@ function seenNames(objects) {
 }
 
 var NamesEditor = function(sprite, kind) {
-
-  var factory = (kind === 'variable' ? Project.newVariable : Project.newList);
   var addText = sprite._isStage ? "＋ for all sprites" : "＋ for this sprite";
-  var names = sprite[kind + 's'];
+  this.factory = (kind === 'variable' ? Project.newVariable : Project.newList);
 
-  var variableList = names.map(function(variable) {
-    return el('li', el('p.cm-s-' + kind, ko(function() {
+  this.names = sprite[kind + 's'];
 
-        var changeTimeout;
+  this.sprite = sprite;
+  this.kind = kind;
 
-        function onNameChange(e) {
-          clearTimeout(changeTimeout);
-          changeTimeout = setTimeout(onNameBlur.bind(this), 1000);
-
-          // mark code editor dirty
-          App.active()._scriptable.scriptsEditor.varsChanged();
-        }
-
-        function onNameBlur() {
-          clearTimeout(changeTimeout);
-
-          var name = input.value;
-          if (!name) {
-            var index = names().indexOf(variable);
-            if (index !== -1) {
-              Oops(function() {
-                names.remove(index);
-              });
-              return;
-            }
-          }
-
-          var project = App.project();
-          var targets = sprite._isStage ? [project].concat(project.sprites())
-										: [sprite, project];
-          var objects = allVariables(targets);
-          var index = objects.indexOf(variable);
-
-          var oldName = name;
-          if (name && index > -1) {
-            objects.splice(index, 1); // remove ourself
-            var seen = seenNames(objects);
-            name = Language.cleanName(kind, name, seen, {});
-          }
-          Oops(function() {
-            variable._name.assign(name);
-          });
-          input.value = name;
-          if (variable._isEditing() && name !== oldName) {
-            for (var i=0; i<name.length; i++) {
-              if (name[i] !== oldName[i]) break;
-            }
-            input.setSelectionRange(i, name.length);
-          }
-        }
-
-        variable._flush = onNameBlur;
-
-        var input = el('input', {
-          value: variable._name,
-          on_input: onNameChange,
-
-          placeholder: "my "+kind,
-
-          on_focus: function() { variable._isEditing.assign(true); },
-          on_blur:  function() {
-            variable._isEditing.assign(false);
-            onNameBlur.apply(this);
-          },
-
-          // TODO clean up
-          on_keydown: function(e) {
-            if (Host.handleUndoKeys(e)) return;
-
-            Oops(function() {
-              if (e.metaKey || e.ctrlKey || e.altKey) return;
-
-              var start = this.selectionStart,
-                  end = this.selectionEnd,
-                  prefix = this.value.slice(0, start),
-                  selection = this.value.slice(start, end),
-                  suffix = this.value.slice(end);
-              switch (e.keyCode) {
-                case 13: // Return
-                  variable._name.assign(prefix.trim());
-
-                  var index = names().indexOf(variable);
-                  var newVar;
-                  if (selection) {
-                    newVar = factory(suffix.trim());
-                    names.insert(index + 1, newVar);
-
-                    newVar = factory(selection.trim());
-                    names.insert(index + 1, newVar);
-                    newVar._isEditing.assign(true);
-                  } else {
-                    newVar = factory(suffix.trim());
-                    names.insert(index + 1, newVar);
-                    newVar._isEditing.assign(true);
-                  }
-                  break;
-                case 8: // Backspace
-                  if (this.value) {
-                    return;
-                  }
-                  var index = names().indexOf(variable);
-                  names.remove(index);
-                  if (names().length) {
-                    var focusIndex = index > 0 ? index - 1 : 0;
-                    names()[focusIndex]._isEditing.assign(true);
-                  }
-                  break;
-                case 46: // Delete
-                  if (this.value) {
-                    return;
-                  }
-                  var index = names().indexOf(variable);
-                  names.remove(index);
-                  if (names().length) {
-                    names()[index]._isEditing.assign(true);
-                  }
-                  break;
-                case 38: // Up
-                  var index = names().indexOf(variable);
-                  if (index - 1 >= 0) {
-                    names()[index - 1]._isEditing.assign(true);
-                  }
-                  break;
-                case 40: // Down
-                  var index = names().indexOf(variable);
-                  if (index + 1 < names().length) {
-                    names()[index + 1]._isEditing.assign(true);
-                  }
-                  break;
-                case 27: // Escape
-                  variable._isEditing.assign(false);
-                  break;
-                default:
-                  return;
-              }
-              e.preventDefault();
-            }.bind(this));
-          },
-        });
-
-        variable._isEditing.subscribe(function(value) {
-          if (value) { input.focus(); } else { input.blur(); }
-        }, false);
-
-        return input;
-      })
-    ));
-  });
-
-  return el('', [
+  this.el = el('', [
     el('ul.reporters', {
       class: kind,
-      children: variableList,
+      children: this.names.map(function(item) {
+        return new NamesEditorItem(item, this).el;
+      }.bind(this)),
     }),
     el('p.new a.new-variable', {
       text: addText,
       on_click: function() {
         Oops(function() {
-          var newVar = factory('');
-          names.push(newVar);
+          var newVar = this.factory('');
+          this.names.push(newVar);
           newVar._isEditing.assign(true);
-        });
-      },
+        }.bind(this));
+      }.bind(this),
     }),
   ]);
+};
 
+var NamesEditorItem = function(item, namesEditor) {
+  this.item = item;
+  this.factory = namesEditor.factory;
+  this.kind = namesEditor.kind;
+  this.names = namesEditor.names;
+  this.sprite = namesEditor.sprite;
+
+  this.changeTimeout = null;
+
+  this.input = el('input', {
+    value: item._name,
+    on_input: this.onNameChange.bind(this),
+
+    placeholder: "my " + namesEditor.kind,
+
+    on_focus: function() { item._isEditing.assign(true); },
+    on_blur:  function() {
+      item._isEditing.assign(false);
+      this.onNameBlur();
+    }.bind(this),
+    on_keydown: this.onKeydown.bind(this),
+  });
+  this.el = el('li', el('p.cm-s-' + namesEditor.kind, this.input));
+
+  item._flush = this.onNameBlur.bind(this);
+
+  item._isEditing.subscribe(function(editing) {
+    if (editing) { this.input.focus(); } else { this.input.blur(); }
+  }.bind(this), false);
+};
+
+NamesEditorItem.prototype.onNameChange = function(e) {
+  clearTimeout(this.changeTimeout);
+  this.changeTimeout = setTimeout(this.onNameBlur.bind(this), 1000);
+
+  // mark code editor dirty
+  App.active()._scriptable.scriptsEditor.varsChanged();
+};
+
+NamesEditorItem.prototype.onNameBlur = function() {
+  clearTimeout(this.changeTimeout);
+
+  var names = this.names;
+  var variable = this.item;
+
+  var name = this.input.value;
+  if (!name) {
+    var index = names().indexOf(variable);
+    if (index !== -1) {
+      Oops(function() {
+        names.remove(index);
+      });
+      return;
+    }
+  }
+
+  var project = App.project();
+  var targets = this.sprite._isStage ? [project].concat(project.sprites())
+                                     : [this.sprite, project];
+  var objects = allVariables(targets);
+  var index = objects.indexOf(variable);
+
+  var oldName = name;
+  if (name && index > -1) {
+    objects.splice(index, 1); // remove ourself
+    var seen = seenNames(objects);
+    name = Language.cleanName(this.kind, name, seen, {});
+  }
+  Oops(function() {
+    variable._name.assign(name);
+  });
+  this.input.value = name;
+  if (variable._isEditing() && name !== oldName) {
+    for (var i=0; i<name.length; i++) {
+      if (name[i] !== oldName[i]) break;
+    }
+    this.input.setSelectionRange(i, name.length);
+  }
+};
+
+NamesEditorItem.prototype.onKeydown = function(e) {
+  if (Host.handleUndoKeys(e)) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+  var input = this.input;
+  var names = this.names;
+  var variable = this.item;
+  var factory = this.factory;
+
+  Oops(function() {
+
+    var start = input.selectionStart,
+        end = input.selectionEnd,
+        prefix = input.value.slice(0, start),
+        selection = input.value.slice(start, end),
+        suffix = input.value.slice(end);
+    switch (e.keyCode) {
+      case 13: // Return
+        variable._name.assign(prefix.trim());
+
+        var index = names().indexOf(variable);
+        var newVar;
+        if (selection) {
+          newVar = factory(suffix.trim());
+          names.insert(index + 1, newVar);
+
+          newVar = factory(selection.trim());
+          names.insert(index + 1, newVar);
+          newVar._isEditing.assign(true);
+        } else {
+          newVar = factory(suffix.trim());
+          names.insert(index + 1, newVar);
+          newVar._isEditing.assign(true);
+        }
+        break;
+      case 8: // Backspace
+        if (input.value) {
+          return;
+        }
+        var index = names().indexOf(variable);
+        names.remove(index);
+        if (names().length) {
+          var focusIndex = index > 0 ? index - 1 : 0;
+          names()[focusIndex]._isEditing.assign(true);
+        }
+        break;
+      case 46: // Delete
+        if (input.value) {
+          return;
+        }
+        var index = names().indexOf(variable);
+        names.remove(index);
+        if (names().length) {
+          var focusIndex = Math.min(index, names().length - 1);
+          names()[index]._isEditing.assign(true);
+        }
+        break;
+      case 38: // Up
+        var index = names().indexOf(variable);
+        if (index - 1 >= 0) {
+          names()[index - 1]._isEditing.assign(true);
+        }
+        break;
+      case 40: // Down
+        var index = names().indexOf(variable);
+        if (index + 1 < names().length) {
+          names()[index + 1]._isEditing.assign(true);
+        }
+        break;
+      case 27: // Escape
+        variable._isEditing.assign(false);
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+  }.bind(this));
 };
 
 
 /* ScriptsEditor */
+
 var extraKeys = {
   'Ctrl-Space': function(cm) {
     if (cm.somethingSelected()) {
@@ -814,7 +829,7 @@ var ScriptsEditor = function(sprite, project) {
   this.cm = CodeMirror(this.el, cmOptions);
 
   var code = Compiler.generate(sprite.scripts);
-  // TODO handle errors in generate() 
+  // TODO handle errors in generate()
   this.hasChangedEver = false;
   this.cm.setValue(code);
   this.needsCompile = ko(true);
