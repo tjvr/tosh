@@ -150,7 +150,12 @@ var renderItem = {
           if (!sprite._isStage && sprite._editingName()) return 'name-editing';
         }),
         on_keydown: function(e) {
-          if (e.keyCode === 13) this.blur();
+          if (e.keyCode === 13) {
+            this.blur();
+          } else if (e.keyCode === 27) {
+            this.value = sprite.objName();
+            this.blur();
+          }
         },
       }),
     ]);
