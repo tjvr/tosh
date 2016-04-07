@@ -605,6 +605,7 @@ var NamesEditor = function(sprite, kind) {
           var objects = allVariables(targets);
           var index = objects.indexOf(variable);
 
+          var oldName = name;
           if (name && index > -1) {
             objects.splice(index, 1); // remove ourself
             var seen = seenNames(objects);
@@ -613,7 +614,9 @@ var NamesEditor = function(sprite, kind) {
           Oops(function() {
             variable._name.assign(name);
           });
-          this.value = name;
+          if (name !== oldName) {
+            this.setSelectionRange(0, this.value.length);
+          }
         }
 
         variable._flush = onNameBlur;
