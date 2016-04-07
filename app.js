@@ -590,6 +590,14 @@ var NamesEditor = function(sprite, kind) {
           clearTimeout(changeTimeout);
 
           var name = input.value;
+          if (!name) {
+            var index = names().indexOf(variable);
+            assert(index !== -1);
+            Oops(function() {
+              names.remove(index);
+            });
+            return;
+          }
 
           var project = App.project();
           var targets = sprite._isStage ? [project].concat(project.sprites())
