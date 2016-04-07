@@ -368,15 +368,18 @@ body {
   margin-top: 3px;
 }
 
-.sprite .name {
-  width: 364px;
-  margin: 1px 0 1px 26px;
-  height: 22px;
-  padding: 0 6px;
-  text-overflow: ellipsis;
+.sprite .name-wrap {
+  position: absolute;
+  left: 34px;
+  right: 80px;
+  top: 1px;
+  bottom: 1px;
 }
-.ss .sprite .name {
-  width: 124px;
+.sprite .name {
+  text-overflow: ellipsis;
+  padding: 0 6px;
+  width: 100%;
+  height: 22px;
 }
 .sprite .name[readonly] {
   cursor: inherit;
@@ -387,11 +390,9 @@ body {
 }
 
 .sprite .buttons {
-  position: relative;
-  top: -24px;
-  margin-top: -1px;
-  margin-right: -4px;
-  float: right;
+  position: absolute;
+  top: 0;
+  right: 4px;
   visibility: hidden;
   background: inherit;
   z-index: 1;

@@ -142,7 +142,7 @@ var renderItem = {
     });
     return el('.details', [
       costumeThumbnail(costume),
-      el('input.name', {
+      el('.name-wrap', el('input.name', {
         value: sprite.objName,
         readOnly: sprite._isStage || sprite._editingName.negate(),
         on_blur: onNameBlur,
@@ -157,7 +157,7 @@ var renderItem = {
             this.blur();
           }
         },
-      }),
+      })),
     ]);
   },
   costume: function(costume, sprite, onNameBlur) {
