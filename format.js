@@ -161,6 +161,7 @@ var Format = (function() {
       objName: ko('turtle'),
       indexInLibrary: 1, // goes stale
       _hasErrors: ko(false),
+      _editingName: ko(false),
 
       scripts: [],
       scriptComments: [],
@@ -287,6 +288,7 @@ var Format = (function() {
 
       // UI-only properties
       s._hasErrors = ko(false);
+      s._editingName = ko(false); 
 
       // koel-ify attrs
       s.objName = ko(s.objName);

@@ -136,13 +136,23 @@ function costumeThumbnail(costume) {
 }
 
 var renderItem = {
-  sprite: function(sprite) {
+  sprite: function(sprite, _, onNameBlur) {
     var costume = ko(function() {
       return sprite.costumes()[sprite.currentCostumeIndex() || 0];
     });
     return el('.details', [
       costumeThumbnail(costume),
-      el('.name', sprite.objName),
+      el('input.name', {
+        value: sprite.objName,
+        readOnly: sprite._isStage || sprite._editingName.negate(),
+        on_blur: onNameBlur,
+        class: ko(function() {
+          if (!sprite._isStage && sprite._editingName()) return 'name-editing';
+        }),
+        on_keydown: function(e) {
+          if (e.keyCode === 13) this.blur();
+        },
+      }),
     ]);
   },
   costume: function(costume, sprite, onNameBlur) {
@@ -214,7 +224,12 @@ var ListEditor = function(obj, kind, active) {
 
       if (!item._isStage) {
         buttons.push(el('.button.button-edit', {
-          on_click: editSpriteName,
+          on_click: function(e) {
+            item._editingName.toggle();
+            if (item._editingName()) {
+              item._el.querySelector('input.name').focus();
+            }
+          },
         }));
       }
     }
@@ -257,16 +272,16 @@ var ListEditor = function(obj, kind, active) {
       });
     }
 
-    function editSpriteName() {
-      var result = prompt("Rename sprite ", item._name());
-      onNameBlur(null, result);
-    }
-
     function onNameBlur(e, name) {
       var name = name || this.value;
+      var observable = item.name || item._name;
+
+      if (kind === 'sprite') {
+        item._editingName.assign(false);
+      }
 
       // name can't be empty
-      if (!name) return;
+      if (!name) name = observable();
 
       // name must be unique
       var others = items().slice();
@@ -274,7 +289,6 @@ var ListEditor = function(obj, kind, active) {
       name = uniqueName(name, others);
       this.value = name;
 
-      var observable = item.name || item._name;
       Oops(function() {
         observable.assign(name);
       });
