@@ -615,11 +615,12 @@ var NamesEditor = function(sprite, kind) {
           Oops(function() {
             variable._name.assign(name);
           });
+          input.value = name;
           if (variable._isEditing() && name !== oldName) {
             for (var i=0; i<name.length; i++) {
               if (name[i] !== oldName[i]) break;
             }
-            this.setSelectionRange(i, name.length);
+            input.setSelectionRange(i, name.length);
           }
         }
 
