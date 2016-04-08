@@ -137,3 +137,18 @@ Host.updateSettings = function(settings) {
   App.active()._scriptable.scriptsEditor.cm.focus();
 };
 
+
+// sounds
+
+P.IO.SOUNDBANK_URL = null;
+
+Object.keys(macSounds).forEach(function(key) {
+  P.IO.wavBuffers[key] = true; // stop P.IO.loadWavs from doing anything
+  var ab = Format.binaryToArrayBuffer(atob(macSounds[key]));
+  P.audioContext.decodeAudioData(ab, function(buffer) {
+    P.IO.wavBuffers[key] = buffer;
+  }, function(err) {
+    console.log(err);
+  });
+});
+
