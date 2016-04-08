@@ -1275,12 +1275,10 @@ var Language = (function(Earley) {
     var grammar = g.copy();
     modeCfg.variables.forEach(function(variable) {
       var name = variable._name();
-      if (!name) return;
       Language.addDefinition(grammar, { name: name, });
     });
     modeCfg.lists.forEach(function(list) {
       var name = list._name();
-      if (!name) return;
       Language.addDefinition(grammar, { name: name, value: [] });
     });
     modeCfg.definitions.forEach(function(result) {

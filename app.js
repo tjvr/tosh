@@ -969,12 +969,25 @@ ScriptsEditor.prototype.makeDirty = function() {
 ScriptsEditor.prototype.getModeCfg = function() {
   var _this = this;
   function getNames(kind) {
+
+    var project = _this.project;
+    var targets = _this.sprite._isStage ? project.sprites().concat([project])
+                                        : [project, App.active()];
+    var objects = allVariables(targets);
+
     var names = _this.sprite[kind]();
     if (!_this.sprite._isStage) {
       // include global var/list names
-      names = names.concat(_this.project[kind]());
+      names = names.concat(project[kind]());
     }
-    return names;
+
+    var seen = {};
+    return names.filter(function(item) {
+      var name = item._name();
+      var index = objects.indexOf(item);
+      var seen = seenNames(objects.slice(0, index));
+      return name && name === Language.cleanName(kind, name, seen, {});
+    });
   }
 
   // force re-highlight --slow!
@@ -1400,7 +1413,7 @@ function computeHint(cm, please) {
   }
 
   expansions.sort(function(a, b) {
-    var aInfo = a.via.rule.process._info; 
+    var aInfo = a.via.rule.process._info;
     var bInfo = b.via.rule.process._info;
 	var aSelector = aInfo ? aInfo.selector : a.via.rule.name;
 	var bSelector = bInfo ? bInfo.selector : b.via.rule.name;
