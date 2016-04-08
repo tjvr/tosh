@@ -285,7 +285,7 @@ var ListEditor = function(obj, kind, active) {
       var name = name || this.value;
       var observable = item.name || item._name;
 
-      if (kind === 'sprite') {
+      if (kind === 'sprite' && !item._isStage) {
         item._editingName.assign(false);
       }
 
@@ -607,28 +607,55 @@ var NamesEditorItem = function(item, namesEditor) {
   this.names = namesEditor.names;
   this.sprite = namesEditor.sprite;
 
+  this.hasErrors = ko.computed(this.computeHasErrors.bind(this));
   this.changeTimeout = null;
 
   this.input = el('input', {
+    placeholder: "my " + namesEditor.kind,
     value: item._name,
     on_input: this.onNameChange.bind(this),
-
-    placeholder: "my " + namesEditor.kind,
-
-    on_focus: function() { item._isEditing.assign(true); },
+    on_focus: function() {
+      item._isEditing.assign(true);
+    },
     on_blur:  function() {
       item._isEditing.assign(false);
       this.onNameBlur();
     }.bind(this),
     on_keydown: this.onKeydown.bind(this),
   });
-  this.el = el('li', el('p.cm-s-' + namesEditor.kind, this.input));
+
+  this.el = el('li', el('p.cm-s-' + namesEditor.kind, {
+    class: ko(function() { if (this.hasErrors()) return 'cm-s-error has-errors'; }.bind(this)),
+    children: [
+      this.input,
+      el('.icon-error', {
+        text: "•",
+      }),
+    ],
+  }));
 
   item._flush = this.onNameBlur.bind(this);
 
   item._isEditing.subscribe(function(editing) {
     if (editing) { this.input.focus(); } else { this.input.blur(); }
   }.bind(this), false);
+};
+
+NamesEditorItem.prototype.computeHasErrors = function() {
+  var name = this.item._name();
+
+  var project = App.project();
+  var targets = App.active()._isStage ? project.sprites().concat([project])
+                                     : [project, App.active()];
+  var objects = allVariables(targets);
+  var index = objects.indexOf(this.item);
+  if (!name || index === -1) return false;
+
+  objects = objects.slice(0, index);
+  var seen = seenNames(objects);
+  var clean = Language.cleanName(this.kind, name, seen, {});
+
+  return name !== clean;
 };
 
 NamesEditorItem.prototype.onNameChange = function(e) {
@@ -642,42 +669,21 @@ NamesEditorItem.prototype.onNameChange = function(e) {
 NamesEditorItem.prototype.onNameBlur = function() {
   clearTimeout(this.changeTimeout);
 
-  var names = this.names;
-  var variable = this.item;
-
+  // remove empty names on blur
   var name = this.input.value;
   if (!name) {
-    var index = names().indexOf(variable);
+    var index = this.names().indexOf(this.item);
     if (index !== -1) {
       Oops(function() {
-        names.remove(index);
-      });
+        this.names.remove(index);
+      }.bind(this));
       return;
     }
   }
 
-  var project = App.project();
-  var targets = this.sprite._isStage ? [project].concat(project.sprites())
-                                     : [this.sprite, project];
-  var objects = allVariables(targets);
-  var index = objects.indexOf(variable);
-
-  var oldName = name;
-  if (name && index > -1) {
-    objects.splice(index, 1); // remove ourself
-    var seen = seenNames(objects);
-    name = Language.cleanName(this.kind, name, seen, {});
-  }
   Oops(function() {
-    variable._name.assign(name);
-  });
-  this.input.value = name;
-  if (variable._isEditing() && name !== oldName) {
-    for (var i=0; i<name.length; i++) {
-      if (name[i] !== oldName[i]) break;
-    }
-    this.input.setSelectionRange(i, name.length);
-  }
+    this.item._name.assign(name);
+  }.bind(this));
 };
 
 NamesEditorItem.prototype.onKeydown = function(e) {
