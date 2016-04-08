@@ -1878,7 +1878,7 @@ App.filesDropped = function(files) {
 
 App.fileDropped = function(f) {
   var parts = f.name.split('.');
-  var ext = parts.pop();
+  var ext = parts.pop().toLowerCase();
   var fileName = parts.join('.');
   if (ext === 'png' || ext === 'jpg' || ext == 'jpeg' || ext === 'svg') {
     if (ext === 'jpeg') ext = 'jpg';
