@@ -292,7 +292,11 @@ var Format = (function() {
 
       // koel-ify attrs
       s.objName = ko(s.objName);
-      s.currentCostumeIndex = ko(s.currentCostumeIndex || 0);
+      var costumeIndex = s.currentCostumeIndex;
+      if (!costumeIndex || costumeIndex < 0 || costumeIndex >= s.costumes.length) {
+        costumeIndex = 0;
+      }
+      s.currentCostumeIndex = ko(costumeIndex);
 
       // sort scripts
       s.scripts.sort(function(a, b) {

@@ -132,6 +132,7 @@ function costumeSize(costume) {
 function costumeThumbnail(costume) {
   var thumb = el('.thumb');
   ko.subscribe(costume, function(costume) {
+    if (!costume) return;
     costume._src.subscribe(function(src) {
       thumb.style.backgroundImage = 'url(' + src + ')';
     });
@@ -142,7 +143,9 @@ function costumeThumbnail(costume) {
 var renderItem = {
   sprite: function(sprite, _, onNameBlur) {
     var costume = ko(function() {
-      return sprite.costumes()[sprite.currentCostumeIndex() || 0];
+      var index = sprite.currentCostumeIndex();
+      var c = sprite.costumes()[index || 0] || sprite.costumes()[0];
+      return c;
     });
     return el('.details', [
       costumeThumbnail(costume),
@@ -1703,6 +1706,7 @@ var App = new (function() {
   this.settings = new Settings({
     smallStage: false,
     keyMap: 'default',
+    enableContextMenu: false,
   });
   this.smallStage = this.settings.smallStage;
   this.isFullScreen = ko(false);
@@ -1831,6 +1835,9 @@ App.preview = function(start) {
 
   player.loadProject(request, function(stage) {
     App.stage = stage;
+    stage.handleError = function(e) {
+      console.error(e.stack || e);
+    };
 
     stage._tosh = project;
     assert(stage._tosh);
