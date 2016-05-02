@@ -83,8 +83,8 @@ var Scriptable = function(s, project) {
         new NamesEditor(project, 'list').el,
         new NamesEditor(s, 'list').el,
       ]),
-      pane('costumes', ListEditor(s, 'costume')),
-      pane('sounds', ListEditor(s, 'sound')),
+      pane('costumes', new ListEditor(s, 'costume').el),
+      pane('sounds', new ListEditor(s, 'sound').el),
 
       s._scriptsEditor.el,
     ],
@@ -202,164 +202,22 @@ var newItem = {
 };
 
 var ListEditor = function(obj, kind, active) {
-  var items = obj[kind + 's'];
-  var displayItems;
+  this.kind = kind;
+  this.obj = obj;
+  this.active = active;
+  var items = this.items = obj[kind + 's'];
 
   if (kind === 'sprite') {
-    displayItems = items.compute(function(sprites) {
+    this.displayItems = items.compute(function(sprites) {
       return [obj].concat(sprites);
     });
   } else {
-    displayItems = items;
+    this.displayItems = items;
   }
 
-  var render = renderItem[kind];
-  var itemEls = displayItems.map(function(item) {
-    item._name = item.objName;
-
-    var props = {};
-    var buttons = [];
-
-    var dragHandle = el('.button.button-handle');
-
-    if (kind === 'sprite') {
-      props.class = active.compute(function(active) {
-        var classes = [];
-        if (active === item) classes.push('sprite-active');
-        if (item._hasErrors()) classes.push('has-errors');
-        return classes;
-      });
-      props.on_click = function(e) {
-        if (e.target.classList.contains('button')) return;
-        active.assign(item);
-      };
-
-      if (!item._isStage) {
-        buttons.push(el('.button.button-edit', {
-          on_click: function(e) {
-            item._editingName.toggle();
-            if (item._editingName()) {
-              item._el.querySelector('input.name').focus();
-            }
-          },
-        }));
-      }
-    }
-
-    if (!item._isStage) {
-      buttons.push(el('.button.button-remove', {
-        on_click: removeItem,
-        disabled: ko(function() {
-          // can't remove last costume
-          return kind === 'costume' && items().length === 1;
-        }),
-      }));
-      buttons.push(dragHandle);
-    }
-
-    function removeItem() {
-      if (this.disabled) return;
-      Oops(function() {
-        var index = items().indexOf(item);
-        assert(index !== -1);
-
-        // update costume index if needed
-        if (kind === 'costume') {
-          if (obj.currentCostumeIndex() >= index) {
-            obj.currentCostumeIndex.assign(Math.max(0, index - 1));
-          }
-        }
-
-        // remove
-        items.remove(index);
-
-        // remove sprite from children array too
-        if (kind === 'sprite') {
-          obj.children.remove(obj.children().indexOf(item));
-
-          if (App.active() === item) {
-            App.active.assign(items()[index] || items()[index - 1] || App.project());
-          }
-        }
-      });
-    }
-
-    function onNameBlur(e, name) {
-      var name = name || this.value;
-      var observable = item.name || item._name;
-
-      if (kind === 'sprite' && !item._isStage) {
-        item._editingName.assign(false);
-      }
-
-      // name can't be empty
-      if (!name) name = observable();
-
-      // name must be unique
-      var others = items().slice();
-      others.splice(others.indexOf(item), 1);
-      name = uniqueName(name, others);
-      this.value = name;
-
-      Oops(function() {
-        observable.assign(name);
-      });
-    }
-
-    // drag to rearrange
-    function pointerDown(e) {
-      if (dragging) {
-        stopDragging();
-        return;
-      }
-
-      if (e.target === dragHandle) {
-        var placeholder = el('li.' + kind + '.drag-placeholder', " ");
-        var index = displayItems().indexOf(item);
-        ul.insertBefore(placeholder, itemEl);
-
-        var mouseY = e.clientY - windowTop(ul) + ul.parentNode.scrollTop;
-        var top = itemEl.offsetTop - itemHeight; // subtract size of placeholder
-        // nb. mouseY + offsetY = top
-        assert(top > -2);
-
-        dragging = {
-          item: item,
-          el: itemEl,
-          placeholder: placeholder,
-          offsetY: top - mouseY,
-          index: index,
-          resetIndex: index,
-          lastClientY: e.clientY,
-          lastMouseY: null,
-          interval: setInterval(dragTick, 20),
-          scrollSpeed: 0,
-        };
-        itemEl.classList.add('dragging');
-        itemEl.style.top = top + "px";
-
-        // move dragged element to end
-        ul.removeChild(itemEl);
-        ul.appendChild(itemEl);
-      }
-    }
-    dragHandle.addEventListener('mousedown', pointerDown);
-
-    // build children
-    props.children = [
-      render(item, obj, onNameBlur),
-      el('.buttons', buttons),
-    ];
-
-    if (kind === 'sprite') {
-      props.children.push(el('.icon-error', {
-        text: "•",
-      }));
-    }
-
-    var itemEl = item._el = el('li.' + kind, props);
-    return itemEl;
-  });
+  var itemEls = this.displayItems.map(function(item) {
+    return new ListEditorItem(item, this).el;
+  }.bind(this));
 
   var newButton;
   if (kind === 'sprite') {
@@ -431,111 +289,15 @@ var ListEditor = function(obj, kind, active) {
     });
   }
 
-
-  // drop to rearrange
-  var dragging = null;
-  var itemHeight = { sprite: 25, costume: 83, sound: 64 }[kind];
-
-  function pointerMove(e) {
-    if (!dragging) return;
-    if (kind !== 'sprite' && App.active() !== obj) return;
-
-    var clientY = e.clientY || dragging.lastClientY;
-    dragging.lastClientY = clientY;
-
-    var mouseY = clientY - windowTop(ul) + ul.parentNode.scrollTop;
-    if (mouseY === dragging.lastMouseY) return;
-    dragging.lastMouseY = mouseY;
-
-    var top = mouseY + dragging.offsetY;
-    top = Math.max(0, top);
-    dragging.el.style.top = top + "px";
-
-    // work out position
-    top -= 4;
-    var itemIndex = top / itemHeight;
-    itemIndex = Math.round(itemIndex);
-    itemIndex = Math.min(itemIndex, displayItems().length - 1);
-    if (kind === 'sprite' && itemIndex < 1) itemIndex = 1;
-
-    // move placeholder if necessary
-    if (itemIndex !== dragging.index) {
-      var placeholder = dragging.placeholder;
-      ul.removeChild(placeholder);
-      var itemEl = ul.children[itemIndex];
-      if (itemEl) {
-        ul.insertBefore(placeholder, itemEl);
-      } else {
-        ul.appendChild(placeholder);
-      }
-      dragging.index = itemIndex;
-    }
-  }
-  window.addEventListener('mousemove', function(e) {
-    pointerMove(e);
-  });
+  this.dragging = null;
+  this.itemHeight = ListEditor.itemHeights[kind];
+  window.addEventListener('mousemove', this.pointerMove.bind(this));
+  window.addEventListener('mouseup', this.drop.bind(this));
   doNext(function() {
-    ul.parentNode.addEventListener('wheel', pointerMove);
-  });
-
-  function dragTick() {
-    if (!dragging) return;
-    if (!dragging.lastMouseY) return;
-    var SPEED = 0.08;
-
-    // hold at edge to auto-scroll
-    var mouseViewportY = dragging.lastClientY - windowTop(ul);
-    dragging.scrollSpeed *= 0.8;
-    if (mouseViewportY < 0) {
-      dragging.scrollSpeed -= SPEED;
-    } else if (mouseViewportY > ul.parentNode.offsetHeight) {
-      dragging.scrollSpeed += SPEED;
-    } else {
-      // slow down
-      dragging.scrollSpeed *= 0.1;
-    }
-
-    ul.parentNode.scrollTop += dragging.scrollSpeed * itemHeight;
-  }
-
-  function drop() {
-    if (!dragging) return;
-
-    var item = dragging.item;
-    var oldIndex = items().indexOf(item);
-    var newIndex = kind === 'sprite' ? dragging.index - 1 : dragging.index;
-    var newItems = items().slice();
-    newItems.splice(oldIndex, 1);
-    newItems.splice(newIndex, 0, item);
-    // get stopDragging to put it back in the right place
-    dragging.resetIndex = dragging.index;
-
-    stopDragging();
-
-    // This refreshes the entire pane, so must happen *after* stopDragging
-    Oops(function() {
-      items.assign(newItems);
-    });
-  }
-  window.addEventListener('mouseup', drop);
-
-  function stopDragging() {
-    if (!dragging) return;
-
-    ul.removeChild(dragging.placeholder); // TODO
-
-    ul.removeChild(dragging.el);
-    ul.insertBefore(dragging.el, ul.children[dragging.resetIndex]);
-
-    dragging.el.classList.remove('dragging');
-    dragging.el.style.top = "";
-    clearInterval(dragging.interval);
-    dragging = null;
-  }
-
+    this.el.parentNode.addEventListener('wheel', this.pointerMove.bind(this));
+  }.bind(this));
 
   // scroll to bottom on push (eg. import costume)
-
   items.subscribe({
     insert: function(index, item) {
       if (item._el) item._el.scrollIntoView();
@@ -545,14 +307,270 @@ var ListEditor = function(obj, kind, active) {
     },
   });
 
-
-  var ul = el('ul.items', {
+  this.el = el('ul.items', {
     class: 'items-' + kind + 's',
     children: itemEls,
   });
-
-  return ul;
 };
+
+ListEditor.itemHeights = {
+  sprite: 25,
+  costume: 83,
+  sound: 64,
+};
+
+ListEditor.prototype.pointerMove = function(e) {
+  if (!this.dragging) return;
+  if (this.kind !== 'sprite' && App.active() !== this.obj) return;
+
+  var clientY = e.clientY || this.dragging.lastClientY;
+  this.dragging.lastClientY = clientY;
+
+  var mouseY = clientY - windowTop(this.el) + this.el.parentNode.scrollTop;
+  if (mouseY === this.dragging.lastMouseY) return;
+  this.dragging.lastMouseY = mouseY;
+
+  var top = mouseY + this.dragging.offsetY;
+  top = Math.max(0, top);
+  this.dragging.el.style.top = top + "px";
+
+  // work out position
+  top -= 4;
+  var itemIndex = top / this.itemHeight;
+  itemIndex = Math.round(itemIndex);
+  itemIndex = Math.min(itemIndex, this.displayItems().length - 1);
+  if (this.kind === 'sprite' && itemIndex < 1) itemIndex = 1;
+
+  // move placeholder if necessary
+  if (itemIndex !== this.dragging.index) {
+    var placeholder = this.dragging.placeholder;
+    this.el.removeChild(placeholder);
+    var itemEl = this.el.children[itemIndex];
+    if (itemEl) {
+      this.el.insertBefore(placeholder, itemEl);
+    } else {
+      this.el.appendChild(placeholder);
+    }
+    this.dragging.index = itemIndex;
+  }
+};
+
+ListEditor.prototype.dragTick = function() {
+  if (!this.dragging) return;
+  if (!this.dragging.lastMouseY) return;
+  var SPEED = 0.08;
+
+  // hold at edge to auto-scroll
+  var mouseViewportY = this.dragging.lastClientY - windowTop(this.el);
+  this.dragging.scrollSpeed *= 0.8;
+  if (mouseViewportY < 0) {
+    this.dragging.scrollSpeed -= SPEED;
+  } else if (mouseViewportY > this.el.parentNode.offsetHeight) {
+    this.dragging.scrollSpeed += SPEED;
+  } else {
+    // slow down
+    this.dragging.scrollSpeed *= 0.1;
+  }
+
+  this.el.parentNode.scrollTop += this.dragging.scrollSpeed * this.itemHeight;
+}
+
+ListEditor.prototype.drop = function() {
+  if (!this.dragging) return;
+
+  var item = this.dragging.item;
+  var oldIndex = this.items().indexOf(item);
+  var newIndex = this.kind === 'sprite' ? this.dragging.index - 1 : this.dragging.index;
+  var newItems = this.items().slice();
+  newItems.splice(oldIndex, 1);
+  newItems.splice(newIndex, 0, item);
+  // get stopDragging to put it back in the right place
+  this.dragging.resetIndex = this.dragging.index;
+
+  this.stopDragging();
+
+  // This refreshes the entire pane, so must happen *after* stopDragging
+  Oops(function() {
+    this.items.assign(newItems);
+  }.bind(this));
+};
+
+ListEditor.prototype.stopDragging = function() {
+  if (!this.dragging) return;
+
+  this.el.removeChild(this.dragging.placeholder); // TODO
+
+  this.el.removeChild(this.dragging.el);
+  this.el.insertBefore(this.dragging.el, this.el.children[this.dragging.resetIndex]);
+
+  this.dragging.el.classList.remove('dragging');
+  this.dragging.el.style.top = "";
+  clearInterval(this.dragging.interval);
+  this.dragging = null;
+};
+
+ListEditor.prototype.pointerDown = function(e, item) {
+  if (this.dragging) {
+    this.stopDragging();
+    return;
+  }
+
+  var placeholder = el('li.' + this.kind + '.drag-placeholder', " ");
+  var index = this.displayItems().indexOf(item);
+  var itemEl = this.el.children[index];
+  this.el.insertBefore(placeholder, itemEl);
+
+  var mouseY = e.clientY - windowTop(this.el) + this.el.parentNode.scrollTop;
+  var top = itemEl.offsetTop - this.itemHeight; // subtract size of placeholder
+  // nb. mouseY + offsetY = top
+  assert(top > -2);
+
+  this.dragging = {
+    item: item,
+    el: itemEl,
+    placeholder: placeholder,
+    offsetY: top - mouseY,
+    index: index,
+    resetIndex: index,
+    lastClientY: e.clientY,
+    lastMouseY: null,
+    interval: setInterval(this.dragTick.bind(this), 20),
+    scrollSpeed: 0,
+  };
+  itemEl.classList.add('dragging');
+  itemEl.style.top = top + "px";
+
+  // move dragged element to end
+  this.el.removeChild(itemEl);
+  this.el.appendChild(itemEl);
+};
+
+
+var ListEditorItem = function(item, listEditor) {
+  this.item = item;
+  this.editor = listEditor;
+
+  var kind = listEditor.kind;
+  var items = listEditor.items;
+  var obj = listEditor.obj;
+  var active = listEditor.active;
+
+  item._name = item.objName;
+
+  var props = {};
+  var buttons = [];
+
+  this.dragHandle = el('.button.button-handle');
+
+  if (kind === 'sprite') {
+    props.class = active.compute(function(active) {
+      var classes = [];
+      if (active === item) classes.push('sprite-active');
+      if (item._hasErrors()) classes.push('has-errors');
+      return classes;
+    });
+    props.on_click = function(e) {
+      if (e.target.classList.contains('button')) return;
+      active.assign(item);
+    };
+
+    if (!item._isStage) {
+      buttons.push(el('.button.button-edit', {
+        on_click: function(e) {
+          item._editingName.toggle();
+          if (item._editingName()) {
+            item._el.querySelector('input.name').focus();
+          }
+        },
+      }));
+    }
+  }
+
+  if (!item._isStage) {
+    buttons.push(el('.button.button-remove', {
+      on_click: removeItem,
+      disabled: ko(function() {
+        // can't remove last costume
+        return kind === 'costume' && items().length === 1;
+      }),
+    }));
+    buttons.push(this.dragHandle);
+  }
+
+  function removeItem() {
+    if (this.disabled) return;
+    Oops(function() {
+      var index = items().indexOf(item);
+      assert(index !== -1);
+
+      // update costume index if needed
+      if (kind === 'costume') {
+        if (obj.currentCostumeIndex() >= index) {
+          obj.currentCostumeIndex.assign(Math.max(0, index - 1));
+        }
+      }
+
+      // remove
+      items.remove(index);
+
+      // remove sprite from children array too
+      if (kind === 'sprite') {
+        obj.children.remove(obj.children().indexOf(item));
+
+        if (App.active() === item) {
+          App.active.assign(items()[index] || items()[index - 1] || App.project());
+        }
+      }
+    });
+  }
+
+  function onNameBlur(e, name) {
+    var name = name || this.value;
+    var observable = item.name || item._name;
+
+    if (kind === 'sprite' && !item._isStage) {
+      item._editingName.assign(false);
+    }
+
+    // name can't be empty
+    if (!name) name = observable();
+
+    // name must be unique
+    var others = items().slice();
+    others.splice(others.indexOf(item), 1);
+    name = uniqueName(name, others);
+    this.value = name;
+
+    Oops(function() {
+      observable.assign(name);
+    });
+  }
+
+  // drag to rearrange
+  this.dragHandle.addEventListener('mousedown', this.pointerDown.bind(this));
+
+  // build children
+  var render = renderItem[kind];
+  props.children = [
+    render(item, obj, onNameBlur),
+    el('.buttons', buttons),
+  ];
+
+  if (kind === 'sprite') {
+    props.children.push(el('.icon-error', {
+      text: "•",
+    }));
+  }
+
+  this.el = item._el = el('li.' + kind, props);
+};
+
+ListEditorItem.prototype.pointerDown = function(e) {
+  if (e.target === this.dragHandle) {
+    this.editor.pointerDown(e, this.item);
+  }
+};
+
 
 
 /* NamesEditor */
@@ -944,9 +962,8 @@ ScriptsEditor.prototype.compile = function() {
     var info = lines[line].info;
     var message = info.shape === 'error' ? info.error : err.message;
 
-    var widgetOptions = {};
     var widgetEl = el('.error-widget', message);
-    var widget = this.cm.addLineWidget(line, widgetEl, widgetOptions);
+    var widget = this.cm.addLineWidget(line, widgetEl, {});
     this.widgets.push(widget);
     anns.push({ from: Pos(line, 0), to: Pos(line, 0) });
     this.annotate.update(anns);
@@ -1658,7 +1675,7 @@ var Container = function(project, active) {
   this.active.subscribe(this.onSwitchSprite);
 
   this.el = el('.container', [
-    el('.switcher', ListEditor(project, 'sprite', active)),
+    el('.switcher', new ListEditor(project, 'sprite', active).el),
     el('.active', this.activeScriptable.compute(function(scriptable) {
       return scriptable ? scriptable.el : "";
     })),
