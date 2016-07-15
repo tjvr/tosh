@@ -460,8 +460,6 @@ var ListEditorItem = function(item, listEditor) {
   var props = {};
   var buttons = [];
 
-  this.dragHandle = el('.button.button-handle');
-
   if (kind === 'sprite') {
     props.class = active.compute(function(active) {
       var classes = [];
@@ -486,6 +484,7 @@ var ListEditorItem = function(item, listEditor) {
     }
   }
 
+  this.dragHandle = null;
   if (!item._isStage) {
     buttons.push(el('.button.button-remove', {
       on_click: removeItem,
@@ -494,7 +493,9 @@ var ListEditorItem = function(item, listEditor) {
         return kind === 'costume' && items().length === 1;
       }),
     }));
-    buttons.push(this.dragHandle);
+    buttons.push(this.dragHandle = el('.button.button-handle', {
+      on_mousedown: this.pointerDown.bind(this),
+    }));
   }
 
   function removeItem() {
@@ -545,9 +546,6 @@ var ListEditorItem = function(item, listEditor) {
       observable.assign(name);
     });
   }
-
-  // drag to rearrange
-  this.dragHandle.addEventListener('mousedown', this.pointerDown.bind(this));
 
   // build children
   var render = renderItem[kind];
