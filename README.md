@@ -49,5 +49,5 @@ License
 
 tosh is released under the [3-clause BSD license](http://choosealicense.com/licenses/bsd-3-clause/); see the LICENSE file for details.
 
-Feel free to read the code, learn from it, contribute code back, and release modified versions. However, I politely request that you seek my permission before distributing tosh to a new platform or operating system. (In particular, I'm already working on a Windows version!) I also request that if you create a modified version, you do not use the name "tosh". Have fun!
+Feel free to read the code, learn from it, contribute code back, and release modified versions. However, I politely request that you seek my permission before distributing tosh to a new platform or operating system. I also request that if you create a modified version, you do not use the name "tosh". Have fun!
 
