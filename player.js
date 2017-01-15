@@ -162,7 +162,7 @@ Player = (function() {
   });
 
 
-  function loadProject(request, loadCallback) {
+  function loadProject(request, cb) {
     if (stage) {
       // TODO is this duplicated in app.js?
       stage.stopAll();
@@ -181,9 +181,9 @@ Player = (function() {
       stage.root.addEventListener('keydown', exitFullScreen);
 
       player.appendChild(stage.root);
-      if (loadCallback) {
-        loadCallback(stage);
-        loadCallback = null;
+      if (cb) {
+        cb(stage);
+        cb = null;
       }
     };
     request.onerror = function(e) {
@@ -192,7 +192,11 @@ Player = (function() {
 
     // sometimes the project is already loaded!
     if (request.isDone) {
-      request.onload(request.getResult());
+      if (request.isError) {
+        console.error(request.result);
+        return;
+      }
+      request.onload(request.result);
     }
   }
 

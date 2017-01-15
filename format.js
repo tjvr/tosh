@@ -92,7 +92,7 @@ var Format = (function() {
     return {
       name: ko('backdrop1'),
       ext: 'svg',
-      file: "<svg width='480px' height='360px'><path fill='#ffffff' d='M 0 0 L 480 0 L 480 360 L 0 360 Z' /></svg>",
+      file: "<svg version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='480px' height='360px'><path fill='#ffffff' d='M 0 0 L 480 0 L 480 360 L 0 360 Z' /></svg>",
       bitmapResolution: 1,
       rotationCenterX: 240,
       rotationCenterY: 180,
@@ -105,7 +105,7 @@ var Format = (function() {
     return {
       name: ko('turtle'),
       ext: 'svg',
-      file: "<svg width='25px' height='20px'><path style='fill:#007de0;stroke:#033042;stroke-width:1;stroke-linejoin:round;' d='M 0,0 20,8 0,16 6,8 Z' /></svg>",
+      file: "<svg version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='25px' height='20px'><path style='fill:#007de0;stroke:#033042;stroke-width:1;stroke-linejoin:round;' d='M 0,0 20,8 0,16 6,8 Z' /></svg>",
       bitmapResolution: 1,
       rotationCenterX: 8,
       rotationCenterY: 8,

@@ -1843,7 +1843,11 @@ App.preview = function(start) {
   var zip = Project.save(project);
 
   // send phosphorus the zip object
-  var request = P.IO.loadSB2fromTosh(zip);
+  var request = P.IO.loadSB2Project(zip);
+  if (request.isError) {
+    console.error(request.result);
+    return;
+  }
 
   // save list of children, in case it changes _while the project is loading_
   var children = project.children().slice();
@@ -1859,10 +1863,7 @@ App.preview = function(start) {
 
     // sync() needs references to original scriptable
     // phosphorus doesn't support list watchers
-    children = children.filter(function(obj) {
-      if (obj.listName) return false;
-      return true;
-    });
+    children = children.filter(function(obj) { return !!obj.objName; })
     assert(stage.children.length === children.length);
     for (var i=0; i<stage.children.length; i++) {
       var s = stage.children[i];
