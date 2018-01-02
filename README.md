@@ -3,6 +3,8 @@ tosh
 
 tosh is a **text-based editor for Scratch projects**. **[Try it out!](http://tosh.tjvr.org/)**
 
+> ⚠ I started a complete rewrite of this project: see **[tjvr/tosh2](https://github.com/tjvr/tosh2)**.
+
 
 Code
 ----
@@ -39,7 +41,7 @@ Before sending a pull request, make sure you understand the following:
 
 - I'm very busy, so please be patient while I respond or review your code.
 
-- Don’t be offended if I don’t accept it! I have pretty specific requirements about code style and quality for this project. Your efforts are still appreciated, believe me :-)
+- Don’t be offended if I don’t accept it! I don't have much bandwidth to work on Tosh, and when I do, it'll probably go towards the new version, not this one :-)
 
 Thanks for your help!
 
