@@ -40,7 +40,7 @@ input {
 }
 
 body {
-  font-family: -apple-system, Lucida Grande, Helvetica Neue, Arial, Helvetica, sans-serif;
+  font-family: Source Code Pro, monospace;
   color: #000;
   font-size: 1rem;
 }
@@ -52,16 +52,16 @@ body {
   min-height: 508px; /* MIN_HEIGHT */
   line-height: 1.5em;
   font-size: 12px;
-
-  background: #ececec;
-  color: #000;
-
+  background: #222;
+  color: #fff;
   overflow: hidden;
   height: 100%;
   max-height: 100%;
   position: absolute;
-  top: 0; bottom: 0; left: 0; right: 0;
-
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   -webkit-user-select: none;
 }
 .mac {
@@ -83,11 +83,15 @@ body {
 
 #menu {
   position: fixed;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   line-height: 24px;
   height: 24px;
-  background: #999;
-  color: #fff;
+  /* background: #555; */
+  /* color: #fff; */
+  color: #4da009;
+  border-bottom: 1px solid #4da009;
 }
 #menu > * {
   display: inline-block;
@@ -286,7 +290,7 @@ body {
   box-shadow: 0 0 8px rgba(0,0,0, 0.8);
 }
 .drag-placeholder {
-  background: #ececec !important;
+  background: #111 !important;
   border: none !important;
 }
 
@@ -327,15 +331,15 @@ body {
 
 .switcher {
   position: absolute;
-  border: 1px solid #999;
-  background: #f7f7f7; /* cf. CodeMirror-gutters */
+  border: 1px solid #4da009;
+  background: #222; /* cf. CodeMirror-gutters */
   bottom: 0;
   overflow: scroll;
   top: 400px;
   right: 8px;
   bottom: 8px;
   width: 482px;
-  font-size: 14px;
+  font-size: 12px;
   transition: top 250ms ease-in-out, width 250ms ease-in-out;
 }
 
@@ -347,18 +351,19 @@ body {
 .sprite {
   padding: 0 8px;
   line-height: 24px;
-  background: #fff;
+  background: #222;
+  color: #ccc;
   cursor: pointer;
   height: 24px;
   position: relative;
 }
 .sprite-active {
-  background: #0669d9;
-  color: #fff;
+  background: #203a0c;
+  color: #e6c719;
 }
 .sprite-new {
-  background: #eee; /* cf. costume-new */
-  color: #888;
+  /* background: #eee; */ /* cf. costume-new */
+  color: #4da009;
 }
 
 .sprite .thumb {
@@ -440,7 +445,7 @@ body {
 /* tabs */
 
 .tabs {
-  border-bottom: 1px solid #999;
+  /* border-bottom: 1px solid #999; */
   line-height: 24px;
   height: 24px;
 }
@@ -450,22 +455,23 @@ body {
   text-transform: capitalize;
   display: inline-block;
   border: 1px solid transparent;
-  border-bottom-color: #999;
-  background: #f7f7f7; /* cf. CodeMirror-gutters */
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
+  border-bottom-color: #000;
+  /* background: #f7f7f7; */ /* cf. CodeMirror-gutters */
+  /* border-top-left-radius: 6px; */
+  /* border-top-right-radius: 6px; */
   vertical-align: top;
   height: 24px;
   min-width: 50px;
   text-align: center;
+  color: #4da009;
 }
 .tab-active, .tab:hover {
-  border-color: #999;
+  /* border-color: #999; */
 }
 .tab-active, .tab-active:hover {
-  background: #fff;
+  background: #222;
   z-index: 1;
-
+  border-color: #4da009;
   border-bottom-color: transparent;
 }
 
@@ -488,15 +494,11 @@ body {
   top: 23px;
   bottom: 0;
   left: 0;
-
-  background: #fff;
-  border: 1px solid #999;
-
+  /* background: #fff; */
+  border: 1px solid #4da009;
   padding: 4px;
-
   overflow-x: hidden;
   overflow-y: scroll;
-
   display: none;
 }
 .pane-active {
@@ -506,9 +508,10 @@ body {
 .pane h2 {
   position: static;
   font-size: 1em;
-  font-weight: 700;
+  font-weight: normal;
   padding: 0;
   text-align: left;
+  color: #4da009;
 }
 
 .pane > div {
@@ -562,7 +565,8 @@ body {
 }
 
 .new-variable {
-  background: #fffeef;
+  /* background: #fffeef; */
+  color: #2ca4e1;
   display: inline-block;
   border-bottom: 0.1em solid transparent;
   margin: 0 0 4px;
@@ -579,14 +583,13 @@ body {
 
 .editor {
   position: absolute;
-  top: 0; bottom: 0;
+  top: 0;
+  bottom: 0;
   margin-left: 8px;
   right: 0;
-
-  border: 1px solid #999;
-  color: rgba(0, 0, 0, 0.8);
-  background: #fff; /* prevents flickering */
-
+  border: 1px solid #4da009;
+  color: rgba(255, 255, 255, 0.8);
+  background: #222; /* prevents flickering */
   overflow: hidden;
 }
 
@@ -601,16 +604,17 @@ body {
 }
 
 .CodeMirror {
-  font-family: Noto Sans, sans-serif;
-  letter-spacing: +0.33px;
-  font-size: 14px;
-  line-height: 20px;
+  font-family: Source Code Pro, monospace;
+  /* letter-spacing: +0.33px; */
+  font-size: 12px;
+  line-height: 16px;
 }
 
 .CodeMirror-linenumber {
   font-family: Source Code Pro, monospace;
   font-size: 12px;
   /*min-width: 18px;*/
+  color: #555;
 }
 
 .CodeMirror-dialog {
@@ -625,7 +629,8 @@ body {
 }
 
 .CodeMirror-gutters {
-  border-right: 1px solid #999;
+  border-right: 1px solid #555;
+  background: #222;
 }
 
 .CodeMirror-overlayscroll-vertical div {
@@ -666,8 +671,10 @@ body {
 
 .CodeMirror-hints {
   max-height: 400px;
-  font-family: Noto Sans, sans-serif;
-  font-size: 14px;
+  /* font-family: Noto Sans, sans-serif; */
+  font-size: 12px;
+  background: #000;
+  border-color: #4da009;
 }
 .CodeMirror-hints .empty {
   height: 6px;
@@ -683,19 +690,22 @@ body {
   position: absolute;
   display: inline-block;
   right: 0;
-  top: 0;
+  top: 1px;
   content: "Tab ⇥";
   text-align: right;
   padding-left: 6px;
   padding-right: 4px;
   font-size: 11px;
-  background: rgba(255,255,255, 0.3);
+  /* background: rgba(255,255,255, 0.3); */
   color: #fff;
-  background: #08f;
-  border-radius: 2px;
+  /* background: #08f; */
+  /* border-radius: 2px; */
 }
 li.CodeMirror-hint-active {
-  background: #aad7ff;
+  box-sizing: border-box;
+  /* background: #9c8711; */
+  background: #000;
+  border: 1px solid #fff;
 }
 
 /*****************************************************************************/
@@ -707,11 +717,12 @@ li.CodeMirror-hint-active {
 }
 .costume,
 .sound {
-  border-bottom: 1px solid #999;
+  border-bottom: 1px solid #4da009;
   height: 83px;
   position: relative;
   padding: 4px;
-  background: #fff;
+  /* background: #fff; */
+  color: #e46d00;
 }
 
 .costume-new {
@@ -728,14 +739,14 @@ li.CodeMirror-hint-active {
 }
 .costume-new,
 .drag-here {
-  background: #eee;
-  color: #888;
+  /* background: #555; */
   height: 32px !important;
   line-height: 24px;
   border-bottom: none;
 }
 .drag-here {
   text-align: center;
+  color: #4da009;
 }
 
 .costume .thumb {
@@ -783,7 +794,7 @@ li.CodeMirror-hint-active {
   font-family: Source Code Pro, monospace;
 }
 .media-number {
-  color: #999;
+  color: #47b1e6;
   font-size: 14px;
 }
 .media-stats {
@@ -819,3 +830,7 @@ li.CodeMirror-hint-active {
   letter-spacing: -4px;
 }
 
+
+.CodeMirror-cursor {
+    border-left: 1px solid #4da009;
+}

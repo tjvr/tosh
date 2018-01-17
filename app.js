@@ -69,17 +69,17 @@ var Scriptable = function(s, project) {
       })),
 
       pane('data', s._isStage ? [
-        el('h2', "Variable names"),
+        el('h2', "Variables"),
         new NamesEditor(s, 'variable').el,
         el('hr'),
-        el('h2', "List names"),
+        el('h2', "Lists"),
         new NamesEditor(s, 'list').el,
       ] : [
-        el('h2', "Variable names"),
+        el('h2', "Variables"),
         new NamesEditor(project, 'variable').el,
         new NamesEditor(s, 'variable').el,
         el('hr'),
-        el('h2', "List names"),
+        el('h2', "Lists"),
         new NamesEditor(project, 'list').el,
         new NamesEditor(s, 'list').el,
       ]),
