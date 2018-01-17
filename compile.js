@@ -420,7 +420,7 @@ var Compiler = (function() {
   /* generate: AST -> tosh */
 
   var images = {
-    '@greenFlag': 'flag',
+    '@greenFlag': 'main',
     '@turnLeft': 'ccw',
     '@turnRight': 'cw',
   };
@@ -488,7 +488,7 @@ var Compiler = (function() {
           names = block[2].slice(),
           defaults = block[3].slice(), // ignore these
           isAtomic = block[4];
-      var result = isAtomic ? 'define-atomic ' : 'define ';
+      var result = isAtomic ? 'def-atomic ' : 'def ';
       return result + spec.split(Scratch.inputPat).map(function(part) {
         var m = Scratch.inputPat.exec(part);
         if (m) {
@@ -524,16 +524,16 @@ var Compiler = (function() {
         var lines = [result];
         lines = lines.concat(generateMouth(args.shift()));
         if (args.length) {
-          lines.push('else');
+          lines.push('} else {');
           lines = lines.concat(generateMouth(args.shift()));
         }
-        lines.push('end');
+        lines.push('}');
         return lines;
       case 'c-block':
       case 'c-block cap':
         var lines = [result];
         lines = lines.concat(generateMouth(args.shift()));
-        lines.push('end');
+        lines.push('}');
         return lines;
       default:
         return [result];

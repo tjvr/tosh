@@ -42,6 +42,12 @@ var Language = (function(Earley) {
     ['lsquare', /\[/],   ['rsquare', /\]/],
     ['cloud',   /[☁]/],
     ['input',   /%[a-z](?:\.[a-zA-Z]+)?/],
+    ['symbol',  /\+\+/],
+    ['symbol',  /\&\&/],
+    ['symbol',  /\|\|/],
+    ['symbol',  /\!/],
+    ['symbol',  /[:+]\=/],
+    ['symbol',  /[;{}]/],
     ['symbol',  /[-%#+*/=^,?]/],                // single character
     ['symbol',  /[_A-Za-z][-_A-Za-z0-9:',.]*/], // word, as in a block
     ['iden',    /[^ \t"'()<>=*\/+-]+/],     // user-defined names
@@ -350,7 +356,7 @@ var Language = (function(Earley) {
   }
 
   function definition(a, parts) {
-    var isAtomic = a === 'define-atomic';
+    var isAtomic = a === 'def-atomic';
 
     var inputNames = [];
     var defaults = [];
@@ -382,8 +388,8 @@ var Language = (function(Earley) {
   var defineGrammar = new Grammar([
       Rule("line", ["define", "spec-seq"], definition),
 
-      Rule("define", [["define"]], paintLiteral("custom")),
-      Rule("define", [["define-atomic"]], paintLiteral("custom")),
+      Rule("define", [["def"]], paintLiteral("custom")),
+      Rule("define", [["def-atomic"]], paintLiteral("custom")),
 
       Rule("spec-seq", ["spec-seq", "spec"], push),
       Rule("spec-seq", ["spec"], box),
@@ -635,13 +641,13 @@ var Language = (function(Earley) {
     Rule("b8", ["b7"], identity),
 
     // require parentheses when nesting and/or
-    Rule("b-and", ["b-and", ["and"], "b7"], infix("&")),
-    Rule("b-and", ["b7", ["and"], "b7"], infix("&")),
+    Rule("b-and", ["b-and", ["&&"], "b7"], infix("&")),
+    Rule("b-and", ["b7", ["&&"], "b7"], infix("&")),
 
-    Rule("b-or", ["b-or", ["or"], "b7"], infix("|")),
-    Rule("b-or", ["b7", ["or"], "b7"], infix("|")),
+    Rule("b-or", ["b-or", ["||"], "b7"], infix("|")),
+    Rule("b-or", ["b7", ["||"], "b7"], infix("|")),
 
-    Rule("b7", [["not"], "b7"], block("not", 1)),
+    Rule("b7", [["!"], "b7"], block("not", 1)),
     Rule("b7", ["b6"], identity),
 
     // nb.  "<" and ">" do not tokenize as normal symbols
@@ -664,11 +670,11 @@ var Language = (function(Earley) {
 
     Rule("n3", ["n3", ["*"],   "n2"], infix("*")),
     Rule("n3", ["n3", ["/"],   "n2"], infix("/")),
-    Rule("n3", ["n3", ["mod"], "n2"], infix("%")),
+    Rule("n3", ["n3", ["%"], "n2"], infix("%")),
     Rule("n3", ["n2"], identity),
 
     Rule("n2", [["round"], "n2"],           block("rounded", 1)),
-    Rule("n2", ["m_mathOp", ["of"], "n2"],  infix("computeFunction:of:")),
+    Rule("n2", ["m_mathOp", "n2"],  block("computeFunction:of:", 0, 1)),
     Rule("n2", [["pick"], ["random"], "n4", ["to"], "n2"],
                                             block("randomFrom:to:", 2, 4)),
     Rule("n2", ["m_attribute", ["of"], "m_spriteOrStage"],
@@ -704,8 +710,7 @@ var Language = (function(Earley) {
 
     /* --------------------------------------------------------------------- */
 
-    Rule("@greenFlag", [["flag"]], paint("green")),
-    Rule("@greenFlag", [["green"], ["flag"]], paint("green")),
+    Rule("@greenFlag", [["main"]], paint("green")),
 
     Rule("@turnLeft",  [["ccw"]], identity),
     Rule("@turnLeft",  [["left"]], identity),
@@ -1268,7 +1273,7 @@ var Language = (function(Earley) {
   /* for parseLines */
 
   function isDefinitionLine(line) {
-    return /^define(-atomic)? /.test(line);
+    return /^def(-atomic)? /.test(line);
   }
 
   function modeGrammar(modeCfg) {

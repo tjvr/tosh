@@ -1371,7 +1371,7 @@ function computeHint(cm, please) {
 
   if (!tokens.length) {
     // TODO move 'define' into main grammar
-    ['define-atomic', 'define'].forEach(function(keyword) {
+    ['def-atomic', 'def'].forEach(function(keyword) {
       completions.splice(0, 0, {
         start: 0,
         end: 0,
@@ -1518,8 +1518,8 @@ function computeHint(cm, please) {
     assert(text);
 
     var indent = state.indent;
-    if (text === "else" && indent.slice().pop() !== 'if') return;
-    if (text === "end" && !indent.length) return;
+    if (text === "} else {" && indent.slice().pop() !== 'if') return;
+    if (text === "}" && !indent.length) return;
 
     // no space before trailing `?`
     text = text.replace(/ \?$/, "?");
@@ -1543,7 +1543,7 @@ function computeHint(cm, please) {
       case 'c-block':
       case 'c-block cap':
       case 'if-block':
-        var after = "\nend";
+        var after = "\n}";
         if (!selection) { // no inputs
           // put cursor at EOL
           selection = { ch: text.length, size: 0 };
